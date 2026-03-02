@@ -159,7 +159,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/menu-update', [CategoryController::class, 'menuUpdate'])->name('menu.update');
             Route::post('/{category}', [CategoryController::class, 'update'])->name('update');
             Route::get('/{category}/toggle', [CategoryController::class, 'statusToggle'])->name('toggle');
-            Route::get('/{category}/delete', [CategoryController::class, 'destroy'])->name('destroy');
+            Route::match(['post', 'delete'], '/{category}/delete', [CategoryController::class, 'destroy'])->name('destroy');
             Route::delete('/{category}/delete', [CategoryController::class, 'destroy']);
         });
 
@@ -171,7 +171,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/menu-update', [CategoryAttributeController::class, 'menuUpdate'])->name('menu.update');
             Route::post('/{categoryAttribute}', [CategoryAttributeController::class, 'update'])->name('update');
             Route::get('/{categoryAttribute}/toggle', [CategoryAttributeController::class, 'statusToggle'])->name('toggle');
-            Route::get('/{categoryAttribute}/delete', [CategoryAttributeController::class, 'destroy'])->name('destroy');
+            Route::match(['post', 'delete'], '/{categoryAttribute}/delete', [CategoryAttributeController::class, 'destroy'])->name('destroy');
         });
 
         Route::prefix('country')->name('country.')->group(function () {
@@ -179,8 +179,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/create', [CountryController::class, 'index'])->name('create');
             Route::post('/', [CountryController::class, 'store'])->name('store');
             Route::put('/{country}', [CountryController::class, 'update'])->name('update');
-            Route::get('/{country}/remove', [CountryController::class, 'destroy'])->name('delete');
-            Route::get('/{country}/delete', [CountryController::class, 'destroy'])->name('destroy');
+            Route::match(['post', 'delete'], '/{country}/remove', [CountryController::class, 'destroy'])->name('delete');
+            Route::match(['post', 'delete'], '/{country}/delete', [CountryController::class, 'destroy'])->name('destroy');
         });
 
         // Listocean (customer web) identity verification requests
@@ -210,21 +210,21 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/', [siteCountryController::class, 'index'])->name('index');
             Route::post('/', [siteCountryController::class, 'store'])->name('store');
             Route::put('/{id}', [siteCountryController::class, 'update'])->name('update')->whereNumber('id');
-            Route::get('/{id}/delete', [siteCountryController::class, 'destroy'])->name('destroy')->whereNumber('id');
+            Route::match(['post', 'delete'], '/{id}/delete', [siteCountryController::class, 'destroy'])->name('destroy')->whereNumber('id');
         });
 
         Route::prefix('site-state')->name('siteState.')->group(function () {
             Route::get('/', [siteStateController::class, 'index'])->name('index');
             Route::post('/', [siteStateController::class, 'store'])->name('store');
             Route::put('/{id}', [siteStateController::class, 'update'])->name('update')->whereNumber('id');
-            Route::get('/{id}/delete', [siteStateController::class, 'destroy'])->name('destroy')->whereNumber('id');
+            Route::match(['post', 'delete'], '/{id}/delete', [siteStateController::class, 'destroy'])->name('destroy')->whereNumber('id');
         });
 
         Route::prefix('site-city')->name('siteCity.')->group(function () {
             Route::get('/', [siteCityController::class, 'index'])->name('index');
             Route::post('/', [siteCityController::class, 'store'])->name('store');
             Route::put('/{id}', [siteCityController::class, 'update'])->name('update')->whereNumber('id');
-            Route::get('/{id}/delete', [siteCityController::class, 'destroy'])->name('destroy')->whereNumber('id');
+            Route::match(['post', 'delete'], '/{id}/delete', [siteCityController::class, 'destroy'])->name('destroy')->whereNumber('id');
         });
 
         Route::prefix('blog')->name('blog.')->group(function () {
@@ -233,9 +233,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/', [BlogController::class, 'store'])->name('store');
             Route::get('/{blog}/edit', [BlogController::class, 'edit'])->name('edit');
             Route::put('/{blog}', [BlogController::class, 'update'])->name('update');
-            Route::get('/{blog}/remove', [BlogController::class, 'destroy'])->name('delete');
+            Route::match(['post', 'delete'], '/{blog}/remove', [BlogController::class, 'destroy'])->name('delete');
             Route::get('/{blog}/toggle', [BlogController::class, 'statusToggle'])->name('toggle');
-            Route::get('/{blog}/delete', [BlogController::class, 'destroy'])->name('destroy');
+            Route::match(['post', 'delete'], '/{blog}/delete', [BlogController::class, 'destroy'])->name('destroy');
             Route::post('/generate-ai-data', [BlogController::class, 'generateAIData'])->name('generate.AI.data');
         });
 
@@ -246,7 +246,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/{banner}/edit', [BannerController::class, 'edit'])->name('edit');
             Route::put('/{banner}', [BannerController::class, 'update'])->name('update');
             Route::get('/{banner}/toggle', [BannerController::class, 'statusToggle'])->name('toggle');
-            Route::get('/{banner}/delete', [BannerController::class, 'destroy'])->name('destroy');
+            Route::match(['post', 'delete'], '/{banner}/delete', [BannerController::class, 'destroy'])->name('destroy');
         });
 
         
@@ -258,7 +258,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/{ad}/edit', [AdController::class, 'edit'])->name('edit');
             Route::put('/{ad}', [AdController::class, 'update'])->name('update');
             Route::get('/{ad}/toggle', [AdController::class, 'statusToggle'])->name('toggle');
-            Route::get('/{ad}/delete', [AdController::class, 'destroy'])->name('destroy');
+            Route::match(['post', 'delete'], '/{ad}/delete', [AdController::class, 'destroy'])->name('destroy');
         });
 
         Route::prefix('brand')->name('brand.')->group(function () {
@@ -286,7 +286,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/{coupon}/edit', [CouponController::class, 'edit'])->name('edit');
             Route::match(['post', 'put', 'patch'], '/{coupon}', [CouponController::class, 'update'])->name('update');
             Route::get('/{coupon}/toggle', [CouponController::class, 'statusToggle'])->name('toggle');
-            Route::get('/{coupon}/delete', [CouponController::class, 'destroy'])->name('destroy');
+            Route::match(['post', 'delete'], '/{coupon}/delete', [CouponController::class, 'destroy'])->name('destroy');
         });
 
         Route::prefix('currency')->name('currency.')->group(function () {
@@ -295,7 +295,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/', [CurrencyController::class, 'store'])->name('store');
             Route::get('/{currency}/edit', [CurrencyController::class, 'edit'])->name('edit');
             Route::match(['post', 'put', 'patch'], '/{currency}', [CurrencyController::class, 'update'])->name('update');
-            Route::get('/{currency}/delete', [CurrencyController::class, 'destroy'])->name('destroy');
+            Route::match(['post', 'delete'], '/{currency}/delete', [CurrencyController::class, 'destroy'])->name('destroy');
         });
 
         Route::prefix('customer')->name('customer.')->group(function () {
@@ -305,7 +305,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/{customer}/edit', [CustomerController::class, 'edit'])->name('edit');
             Route::match(['post', 'put', 'patch'], '/{customer}', [CustomerController::class, 'update'])->name('update');
             Route::post('/{customer}/reset-password', [CustomerController::class, 'resetPassword'])->name('reset-password');
-            Route::get('/{customer}/delete', [CustomerController::class, 'destroy'])->name('destroy');
+            Route::match(['post', 'delete'], '/{customer}/delete', [CustomerController::class, 'destroy'])->name('destroy');
         });
 
         // ListOcean customer-web user management (create/view/edit/reset password)
@@ -336,7 +336,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/', [App\Http\Controllers\Admin\MembershipFeatureController::class, 'store'])->name('store');
             Route::get('/{id}/edit', [App\Http\Controllers\Admin\MembershipFeatureController::class, 'edit'])->name('edit')->whereNumber('id');
             Route::match(['post','put','patch'], '/{id}', [App\Http\Controllers\Admin\MembershipFeatureController::class, 'update'])->name('update')->whereNumber('id');
-            Route::get('/{id}/delete', [App\Http\Controllers\Admin\MembershipFeatureController::class, 'destroy'])->name('destroy')->whereNumber('id');
+            Route::match(['post', 'delete'], '/{id}/delete', [App\Http\Controllers\Admin\MembershipFeatureController::class, 'destroy'])->name('destroy')->whereNumber('id');
         });
 
         // Customer Web wallet management (manual credit/debit + ledger)
@@ -351,7 +351,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/', [featuredAdPackageController::class, 'store'])->name('store');
             Route::get('/{id}/edit', [featuredAdPackageController::class, 'edit'])->name('edit')->whereNumber('id');
             Route::match(['post', 'put', 'patch'], '/{id}', [featuredAdPackageController::class, 'update'])->name('update')->whereNumber('id');
-            Route::get('/{id}/delete', [featuredAdPackageController::class, 'destroy'])->name('destroy')->whereNumber('id');
+            Route::match(['post', 'delete'], '/{id}/delete', [featuredAdPackageController::class, 'destroy'])->name('destroy')->whereNumber('id');
         });
 
         // Commission rules admin
@@ -361,7 +361,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/', [\App\Http\Controllers\Admin\CommissionRuleController::class, 'store'])->name('store');
             Route::get('/{commissionRule}/edit', [\App\Http\Controllers\Admin\CommissionRuleController::class, 'edit'])->name('edit')->whereNumber('commissionRule');
             Route::match(['post','put','patch'], '/{commissionRule}', [\App\Http\Controllers\Admin\CommissionRuleController::class, 'update'])->name('update')->whereNumber('commissionRule');
-            Route::get('/{commissionRule}/delete', [\App\Http\Controllers\Admin\CommissionRuleController::class, 'destroy'])->name('destroy')->whereNumber('commissionRule');
+            Route::match(['post', 'delete'], '/{commissionRule}/delete', [\App\Http\Controllers\Admin\CommissionRuleController::class, 'destroy'])->name('destroy')->whereNumber('commissionRule');
         });
 
         // Boosts admin
@@ -371,7 +371,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/', [\App\Http\Controllers\Admin\BoostController::class, 'store'])->name('store');
             Route::get('/{boost}/edit', [\App\Http\Controllers\Admin\BoostController::class, 'edit'])->name('edit')->whereNumber('boost');
             Route::match(['post','put','patch'], '/{boost}', [\App\Http\Controllers\Admin\BoostController::class, 'update'])->name('update')->whereNumber('boost');
-            Route::get('/{boost}/delete', [\App\Http\Controllers\Admin\BoostController::class, 'destroy'])->name('destroy')->whereNumber('boost');
+            Route::match(['post', 'delete'], '/{boost}/delete', [\App\Http\Controllers\Admin\BoostController::class, 'destroy'])->name('destroy')->whereNumber('boost');
         });
 
         // Helper endpoint for listing autocomplete used by boosts UI
@@ -419,7 +419,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/', [TicketIssueTypeController::class, 'store'])->name('store');
             Route::match(['post', 'put', 'patch'], '/{ticketIssueType}', [TicketIssueTypeController::class, 'update'])->name('update');
             Route::get('/{ticketIssueType}/toggle', [TicketIssueTypeController::class, 'toggleStatus'])->name('toggle');
-            Route::get('/{ticketIssueType}/delete', [TicketIssueTypeController::class, 'destroy'])->name('destroy');
+            Route::match(['post', 'delete'], '/{ticketIssueType}/delete', [TicketIssueTypeController::class, 'destroy'])->name('destroy');
         });
 
         Route::prefix('employee')->name('employee.')->group(function () {
@@ -429,7 +429,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/{employee}/reset-password', [EmployeeManageController::class, 'resetPassword'])->name('reset-password');
             Route::get('/{employee}/permission', [EmployeeManageController::class, 'permission'])->name('permission');
             Route::post('/{employee}/permission', [EmployeeManageController::class, 'updatePermission'])->name('permission.update');
-            Route::get('/{employee}/delete', [EmployeeManageController::class, 'destroy'])->name('destroy');
+            Route::match(['post', 'delete'], '/{employee}/delete', [EmployeeManageController::class, 'destroy'])->name('destroy');
         });
 
         Route::prefix('firebase')->name('firebase.')->group(function () {
@@ -445,7 +445,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::match(['post', 'put', 'patch'], '/{flashSale}', [FlashSaleController::class, 'update'])->name('update');
             Route::get('/{flashSale}/toggle', [FlashSaleController::class, 'statusToggle'])->name('toggle');
             Route::get('/{flashSale}/product', [FlashSaleController::class, 'show'])->name('product');
-            Route::get('/{flashSale}/delete', [FlashSaleController::class, 'destroy'])->name('destroy');
+            Route::match(['post', 'delete'], '/{flashSale}/delete', [FlashSaleController::class, 'destroy'])->name('destroy');
         });
 
         Route::prefix('footer')->name('footer.')->group(function () {
@@ -456,7 +456,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/item-sort', [FooterController::class, 'itemSort'])->name('itemSort');
             Route::post('/added-new', [FooterController::class, 'addedNew'])->name('addedNew');
             Route::post('/disabled', [FooterController::class, 'disabled'])->name('disabled');
-            Route::get('/{footerItem}/delete', [FooterController::class, 'destroy'])->name('destroy')->whereNumber('footerItem');
+            Route::match(['post', 'delete'], '/{footerItem}/delete', [FooterController::class, 'destroy'])->name('destroy')->whereNumber('footerItem');
 
             // Website frontend footer management (single-admin bridge)
             Route::get('/website-logos', [FooterController::class, 'index'])->name('website-logos.get');
@@ -514,8 +514,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/{language}/export', [LanguageController::class, 'export'])->name('export');
             Route::post('/{language}/import', [LanguageController::class, 'import'])->name('import');
             Route::get('/{language}/set-default', [LanguageController::class, 'setDefault'])->name('setDefault');
-            Route::get('/{language}/delete', [LanguageController::class, 'delete'])->name('delete');
-            Route::get('/{language}/destroy', [LanguageController::class, 'delete'])->name('destroy');
+            Route::match(['post', 'delete'], '/{language}/delete', [LanguageController::class, 'delete'])->name('delete');
+            Route::match(['post', 'delete'], '/{language}/destroy', [LanguageController::class, 'delete'])->name('destroy');
         });
 
         Route::prefix('legal-page')->name('legalPage.')->group(function () {
@@ -559,7 +559,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/{id}/edit', [siteNoticeController::class, 'edit'])->name('edit')->whereNumber('id');
             Route::match(['post', 'put', 'patch'], '/{id}', [siteNoticeController::class, 'update'])->name('update')->whereNumber('id');
             Route::get('/{id}/toggle', [siteNoticeController::class, 'toggleStatus'])->name('toggle')->whereNumber('id');
-            Route::get('/{id}/delete', [siteNoticeController::class, 'destroy'])->name('destroy')->whereNumber('id');
+            Route::match(['post', 'delete'], '/{id}/delete', [siteNoticeController::class, 'destroy'])->name('destroy')->whereNumber('id');
         });
 
         // ── ListOcean – Page Settings ────────────────────────────────────────
@@ -607,8 +607,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/', [MenuController::class, 'index'])->name('index');
             Route::post('/', [MenuController::class, 'store'])->name('store');
             Route::match(['post', 'put', 'patch'], '/{menu}', [MenuController::class, 'update'])->name('update');
-            Route::get('/{menu}/remove', [MenuController::class, 'remove'])->name('remove');
-            Route::get('/{menu}/delete', [MenuController::class, 'destroy'])->name('destroy');
+            Route::match(['post', 'delete'], '/{menu}/remove', [MenuController::class, 'remove'])->name('remove');
+            Route::match(['post', 'delete'], '/{menu}/delete', [MenuController::class, 'destroy'])->name('destroy');
             Route::post('/sort', [MenuController::class, 'sort'])->name('sort');
             Route::post('/drag', [MenuController::class, 'drag'])->name('drag');
         });
@@ -653,7 +653,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/{page}/show', [PageController::class, 'show'])->name('show');
             Route::get('/{page}/edit', [PageController::class, 'edit'])->name('edit');
             Route::match(['post', 'put', 'patch'], '/{page}', [PageController::class, 'update'])->name('update');
-            Route::get('/{page}/delete', [PageController::class, 'destroy'])->name('destroy');
+            Route::match(['post', 'delete'], '/{page}/delete', [PageController::class, 'destroy'])->name('destroy');
             Route::post('/generate-ai-data', [PageController::class, 'generateAIData'])->name('generate.AI.data');
         });
 
@@ -672,7 +672,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/list-view', [ProductController::class, 'index'])->name('listView');
             Route::get('/{product}', [ProductController::class, 'show'])->name('show');
             Route::get('/{product}/approve', [ProductController::class, 'approve'])->name('approve');
-            Route::get('/{product}/delete', [ProductController::class, 'destroy'])->name('destroy');
+            Route::match(['post', 'delete'], '/{product}/delete', [ProductController::class, 'destroy'])->name('destroy');
         });
 
         Route::prefix('pwa-setting')->name('pwaSetting.')->group(function () {
@@ -690,7 +690,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::prefix('listocean-reviews')->name('listocean-review.')->group(function () {
             Route::get('/', [ListoceanReviewController::class, 'index'])->name('index');
             Route::get('/{id}/toggle', [ListoceanReviewController::class, 'toggleStatus'])->name('toggle')->whereNumber('id');
-            Route::get('/{id}/delete', [ListoceanReviewController::class, 'destroy'])->name('destroy')->whereNumber('id');
+            Route::match(['post', 'delete'], '/{id}/delete', [ListoceanReviewController::class, 'destroy'])->name('destroy')->whereNumber('id');
         });
 
         Route::prefix('rider')->name('rider.')->group(function () {
@@ -710,7 +710,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/store', [RolePermissionController::class, 'store'])->name('store');
             Route::get('/{role}/edit', [RolePermissionController::class, 'index'])->name('edit');
             Route::match(['post', 'put', 'patch'], '/{role}', [RolePermissionController::class, 'update'])->name('update');
-            Route::get('/{role}/delete', [RolePermissionController::class, 'destroy'])->name('destroy');
+            Route::match(['post', 'delete'], '/{role}/delete', [RolePermissionController::class, 'destroy'])->name('destroy');
             Route::get('/permission/{role}', [RolePermissionController::class, 'rolePermission'])->name('permission');
             Route::post('/permission/{role}', [RolePermissionController::class, 'updateRolePermission'])->name('permission.update');
         });
@@ -740,12 +740,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/', [SubscriptionPlanController::class, 'store'])->name('store');
             Route::get('/{subscriptionPlan}/edit', [SubscriptionPlanController::class, 'edit'])->name('edit');
             Route::match(['post', 'put', 'patch'], '/{subscriptionPlan}', [SubscriptionPlanController::class, 'update'])->name('update');
-            Route::get('/{subscriptionPlan}/delete', [SubscriptionPlanController::class, 'destroy'])->name('destroy');
+            Route::match(['post', 'delete'], '/{subscriptionPlan}/delete', [SubscriptionPlanController::class, 'destroy'])->name('destroy');
         });
 
         Route::prefix('support')->name('support.')->group(function () {
             Route::get('/', [SupportController::class, 'index'])->name('index');
-            Route::get('/{support}/delete', [SupportController::class, 'delete'])->name('delete');
+            Route::match(['post', 'delete'], '/{support}/delete', [SupportController::class, 'delete'])->name('delete');
         });
 
         Route::prefix('listing-report')->name('listingReport.')->group(function () {
@@ -753,7 +753,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             // Use a raw id instead of route-model binding because we moderate Listocean reports via the secondary DB connection.
             Route::get('/{id}', [ListingReportController::class, 'show'])->name('show')->whereNumber('id');
             Route::post('/{id}/status', [ListingReportController::class, 'updateStatus'])->name('status')->whereNumber('id');
-            Route::get('/{id}/delete', [ListingReportController::class, 'destroy'])->name('delete')->whereNumber('id');
+            Route::match(['post', 'delete'], '/{id}/delete', [ListingReportController::class, 'destroy'])->name('delete')->whereNumber('id');
         });
 
         Route::prefix('listing-moderation')->name('listingModeration.')->group(function () {
@@ -763,7 +763,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/{id}/status', [ListingModerationController::class, 'updateStatus'])->name('status')->whereNumber('id');
             Route::post('/{id}/publish', [ListingModerationController::class, 'updatePublishStatus'])->name('publish')->whereNumber('id');
             Route::post('/{id}/featured', [ListingModerationController::class, 'updateFeaturedStatus'])->name('featured')->whereNumber('id');
-            Route::get('/{id}/delete', [ListingModerationController::class, 'destroy'])->name('delete')->whereNumber('id');
+            Route::match(['post', 'delete'], '/{id}/delete', [ListingModerationController::class, 'destroy'])->name('delete')->whereNumber('id');
         });
 
         Route::prefix('video-moderation')->name('videoModeration.')->group(function () {
@@ -813,7 +813,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             // Use raw ids because we manage Listocean report reasons via the secondary DB connection.
             Route::match(['post', 'put', 'patch'], '/{id}', [ReportReasonController::class, 'update'])->name('update')->whereNumber('id');
             Route::get('/{id}/toggle', [ReportReasonController::class, 'toggle'])->name('toggle')->whereNumber('id');
-            Route::get('/{id}/delete', [ReportReasonController::class, 'destroy'])->name('delete')->whereNumber('id');
+            Route::match(['post', 'delete'], '/{id}/delete', [ReportReasonController::class, 'destroy'])->name('delete')->whereNumber('id');
         });
 
         Route::prefix('support-ticket')->name('supportTicket.')->group(function () {
@@ -851,7 +851,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/{ticketIssueType}/edit', [TicketIssueTypeController::class, 'index'])->name('edit');
             Route::match(['post', 'put', 'patch'], '/{ticketIssueType}', [TicketIssueTypeController::class, 'update'])->name('update');
             Route::get('/{ticketIssueType}/toggle', [TicketIssueTypeController::class, 'toggleStatus'])->name('toggle');
-            Route::get('/{ticketIssueType}/delete', [TicketIssueTypeController::class, 'destroy'])->name('delete');
+            Route::match(['post', 'delete'], '/{ticketIssueType}/delete', [TicketIssueTypeController::class, 'destroy'])->name('delete');
         });
 
         Route::prefix('vat-tax')->name('vatTax.')->group(function () {
@@ -861,7 +861,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/{vatTax}/edit', [VatTaxController::class, 'index'])->name('edit');
             Route::match(['post', 'put', 'patch'], '/{vatTax}', [VatTaxController::class, 'update'])->name('update');
             Route::get('/{vatTax}/toggle', [VatTaxController::class, 'toggle'])->name('toggle');
-            Route::get('/{vatTax}/delete', [VatTaxController::class, 'destroy'])->name('destroy');
+            Route::match(['post', 'delete'], '/{vatTax}/delete', [VatTaxController::class, 'destroy'])->name('destroy');
         });
 
         Route::prefix('verification')->name('verification.')->group(function () {
@@ -889,7 +889,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/show', [NotificationController::class, 'show'])->name('show');
             Route::get('/read/{notification}', [NotificationController::class, 'markAsRead'])->name('read');
             Route::get('/read-all', [NotificationController::class, 'markAllAsRead'])->name('readAll');
-            Route::get('/delete/{notification}', [NotificationController::class, 'destroy'])->name('destroy');
+            Route::match(['post', 'delete'], '/delete/{notification}', [NotificationController::class, 'destroy'])->name('destroy');
         });
 
         Route::get('/new-notification', [NotificationController::class, 'index'])->name('new.notification');

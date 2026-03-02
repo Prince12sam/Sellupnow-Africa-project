@@ -859,23 +859,55 @@
             // Get the value of --theme-color
             var themeColor = getComputedStyle(root).getPropertyValue("--theme-color");
 
-            $(".deleteConfirm").on("click", function(e) {
-                e.preventDefault();
-                const url = $(this).attr("href");
-                Swal.fire({
-                    title: "{{ __('Are you sure?') }}",
-                    text: '{{ __('You will not be able to revert this!') }}',
-                    icon: "warning",
-                    showCancelButton: true,
-                    confirmButtonColor: themeColor,
-                    cancelButtonColor: "#d33",
-                    confirmButtonText: "{{ __('Yes, delete it!') }}",
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.href = url;
-                    }
+            const submitDeleteRequest = (url) => {
+                if (!url) return;
+
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = url;
+                form.style.display = 'none';
+
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_token';
+                csrfInput.value = '{{ csrf_token() }}';
+
+                const methodInput = document.createElement('input');
+                methodInput.type = 'hidden';
+                methodInput.name = '_method';
+                methodInput.value = 'DELETE';
+
+                form.appendChild(csrfInput);
+                form.appendChild(methodInput);
+                document.body.appendChild(form);
+                form.submit();
+            };
+
+            const bindDeleteConfirm = (selector) => {
+                $(document).on("click", selector, function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const url = $(this).attr("href") || $(this).data("action");
+                    Swal.fire({
+                        title: "{{ __('Are you sure?') }}",
+                        text: '{{ __('You will not be able to revert this!') }}',
+                        icon: "warning",
+                        showCancelButton: true,
+                        confirmButtonColor: themeColor,
+                        cancelButtonColor: "#d33",
+                        confirmButtonText: "{{ __('Yes, delete it!') }}",
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            submitDeleteRequest(url);
+                        }
+                    });
                 });
-            });
+            };
+
+            bindDeleteConfirm('.deleteConfirm');
+            bindDeleteConfirm('.deleteConfirmAlert');
+            bindDeleteConfirm('.showConfirmAlert');
+            bindDeleteConfirm('.delete-confirm');
 
             $(".logout").on("click", function(e) {
                 e.preventDefault();
