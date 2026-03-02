@@ -8,6 +8,14 @@
 
     $restrictedCountriesJson = $restrictedCountryCodes->toJson();
     $adminDefaultCountry = strtolower(trim(get_static_option('site_default_phone_country') ?? ''));
+    $userCountryCode = '';
+
+    if (\Illuminate\Support\Facades\Auth::guard('web')->check()) {
+        $userCountryId = \Illuminate\Support\Facades\Auth::guard('web')->user()->country_id ?? null;
+        if (!empty($userCountryId)) {
+            $userCountryCode = strtolower(trim(optional($countries->firstWhere('id', (int) $userCountryId))->country_code ?? ''));
+        }
+    }
 @endphp
 
 <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/intlTelInput.min.js"></script>
@@ -25,8 +33,12 @@
 
             const errorMap = ["Invalid number", "Invalid country code", "Too short", "Too long", "Invalid number"];
             const allowedCountryCodes = {!! $restrictedCountriesJson !!};
+            const userCountryCode = '{{ $userCountryCode }}';
             const adminDefault = '{{ $adminDefaultCountry }}';
-            const defaultCountry = adminDefault || (allowedCountryCodes.length ? allowedCountryCodes[0] : 'us');
+            let defaultCountry = userCountryCode || adminDefault || (allowedCountryCodes.length ? allowedCountryCodes[0] : 'us');
+            if (allowedCountryCodes.length && !allowedCountryCodes.includes(defaultCountry)) {
+                defaultCountry = allowedCountryCodes[0];
+            }
 
             const iti = window.intlTelInput(input, {
                 hiddenInput: "full_number",
