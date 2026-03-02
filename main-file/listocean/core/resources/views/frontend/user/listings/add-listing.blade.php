@@ -360,7 +360,7 @@
                                                     </label>
                                                     <div class="input-group mt-3">
                                                         <input type="hidden" id="country-code" name="country_code">
-                                                        <input type="tel" class="input-filed w-100" name="phone" id="phone" value="{{ old('phone') }}" placeholder="{{__('Phone')}}">
+                                                        <input type="tel" class="input-filed w-100" name="phone" id="phone" value="{{ old('phone', Auth::guard('web')->user()->phone ?? get_static_option('site_global_contact')) }}" placeholder="{{__('Phone')}}">
                                                         <span id="phone_availability"></span>
                                                         <div class="d-none">
                                                             <span id="error-msg" class="hide"></span>

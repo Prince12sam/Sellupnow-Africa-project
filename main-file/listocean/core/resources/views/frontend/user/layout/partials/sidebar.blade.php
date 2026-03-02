@@ -1,4 +1,65 @@
+<style>
+    .user-dark-mode .profile-setting,
+    .user-dark-mode .profile-settings-area,
+    .user-dark-mode .profile-setting-wraper,
+    .user-dark-mode .down-body-wraper,
+    .user-dark-mode .main-body,
+    .user-dark-mode .tab-content-wraper,
+    .user-dark-mode .box-shadow1,
+    .user-dark-mode .sidebar-menu-wraper {
+        background: #111827 !important;
+        color: #e5e7eb !important;
+        border-color: #374151 !important;
+    }
+
+    .user-dark-mode .sidebar-menu-wraper .menu-item,
+    .user-dark-mode .sidebar-menu-wraper .menu-item span,
+    .user-dark-mode .main-body h1,
+    .user-dark-mode .main-body h2,
+    .user-dark-mode .main-body h3,
+    .user-dark-mode .main-body h4,
+    .user-dark-mode .main-body p,
+    .user-dark-mode .main-body label {
+        color: #e5e7eb !important;
+    }
+
+    .user-dark-mode .sidebar-menu-wraper .menu-item.active {
+        background: #1f2937 !important;
+    }
+
+    .user-dark-mode input,
+    .user-dark-mode textarea,
+    .user-dark-mode select,
+    .user-dark-mode .input-filed,
+    .user-dark-mode .select2-container--default .select2-selection--single {
+        background: #1f2937 !important;
+        color: #e5e7eb !important;
+        border-color: #374151 !important;
+    }
+
+    .sidebar-dark-mode-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin: 10px 0;
+        padding: 8px 10px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+    }
+
+    .user-dark-mode .sidebar-dark-mode-row {
+        border-color: #374151;
+    }
+</style>
+
 <div class="sidebar-menu-wraper box-shadow1">
+    <div class="sidebar-dark-mode-row">
+        <span>{{ __('Dark Mode') }}</span>
+        <div class="form-check form-switch m-0">
+            <input class="form-check-input" type="checkbox" role="switch" id="globalUserDarkModeToggle">
+        </div>
+    </div>
     <a href="{{ route('user.dashboard') }}" class="menu-item @if(request()->routeIs('user.dashboard')) active @endif">
         <svg width="14" height="20" viewBox="0 0 14 20" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M1 19V17C1 15.9391 1.42143 14.9217 2.17157 14.1716C2.92172 13.4214 3.93913 13 5 13H9C10.0609 13 11.0783 13.4214 11.8284 14.1716C12.5786 14.9217 13 15.9391 13 17V19M3 5C3 6.06087 3.42143 7.07828 4.17157 7.82843C4.92172 8.57857 5.93913 9 7 9C8.06087 9 9.07828 8.57857 9.82843 7.82843C10.5786 7.07828 11 6.06087 11 5C11 3.93913 10.5786 2.92172 9.82843 2.17157C9.07828 1.42143 8.06087 1 7 1C5.93913 1 4.92172 1.42143 4.17157 2.17157C3.42143 2.92172 3 3.93913 3 5Z" stroke="#524EB7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -233,3 +294,28 @@
         <span class="ms-2">{{ __('Log Out') }}</span>
     </a>
 </div>
+
+<script>
+    (function () {
+        const darkModeKey = 'sellupnow_user_dark_mode';
+        const toggle = document.getElementById('globalUserDarkModeToggle');
+
+        if (!toggle) {
+            return;
+        }
+
+        const applyDarkMode = (enabled) => {
+            document.body.classList.toggle('user-dark-mode', enabled);
+            toggle.checked = enabled;
+        };
+
+        const saved = localStorage.getItem(darkModeKey) === '1';
+        applyDarkMode(saved);
+
+        toggle.addEventListener('change', function () {
+            const enabled = !!this.checked;
+            localStorage.setItem(darkModeKey, enabled ? '1' : '0');
+            applyDarkMode(enabled);
+        });
+    })();
+</script>

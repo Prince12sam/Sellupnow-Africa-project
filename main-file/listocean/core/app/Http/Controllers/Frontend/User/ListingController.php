@@ -344,9 +344,9 @@ class ListingController extends Controller
 
         $categories = Category::where('status', 1)->get();
         $sub_categories = SubCategory::where('status', 1);
-        $all_countries = Country::all_countries();
-        $all_states = State::all_states();
-        $all_cities = City::all_cities();
+        $all_countries = DB::connection('listocean')->table('countries')->where('status', 1)->orderBy('country')->get();
+        $all_states = DB::connection('listocean')->table('states')->where('status', 1)->orderBy('state')->get();
+        $all_cities = DB::connection('listocean')->table('cities')->where('status', 1)->orderBy('city')->get();
         $tags = Tag::where('status', 'publish')->get();
         $user = Auth::guard('web')->user();
         $brands = Brand::where('status', 1)->get();
@@ -605,9 +605,9 @@ class ListingController extends Controller
         $categories = Category::where('status', 1)->get();
         $sub_categories = SubCategory::where('status', 1)->get();
         $child_categories = ChildCategory::where('status', 1)->get();
-        $all_countries = Country::all_countries();
-        $all_states = State::all_states();
-        $all_cities = City::all_cities();
+        $all_countries = DB::connection('listocean')->table('countries')->where('status', 1)->orderBy('country')->get();
+        $all_states = DB::connection('listocean')->table('states')->where('status', 1)->orderBy('state')->get();
+        $all_cities = DB::connection('listocean')->table('cities')->where('status', 1)->orderBy('city')->get();
         $brands = Brand::where('status', 1)->get();
         $tags = Tag::where('status', 'publish')->get();
 

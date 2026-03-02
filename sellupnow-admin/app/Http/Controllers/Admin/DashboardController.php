@@ -127,9 +127,21 @@ class DashboardController extends Controller
         $type = request('type');
         $date = request('date');
 
+        $safeListingCount = function (?callable $modify = null): int {
+            try {
+                $query = DB::connection('listocean')->table('listings');
+                if ($modify) {
+                    $query = $modify($query);
+                }
+                return (int) $query->count();
+            } catch (\Throwable $th) {
+                return 0;
+            }
+        };
+
         if ($type == 'daily') {
             if ($date) {
-                $count = Listing::whereDate('created_at', $date)->count();
+                $count = $safeListingCount(fn($q) => $q->whereDate('created_at', $date));
                 return $this->json('single day listing statistics', [
                     'labels' => [\Carbon\Carbon::parse($date)->format('l')],
                     'values' => [$count],
@@ -142,7 +154,7 @@ class DashboardController extends Controller
             for ($d = $startDate->copy(); $d->lte($endDate); $d->addDay()) {
                 $rows[] = [
                     'label' => $d->format('l'),
-                    'value' => Listing::whereDate('created_at', $d->toDateString())->count(),
+                    'value' => $safeListingCount(fn($q) => $q->whereDate('created_at', $d->toDateString())),
                 ];
             }
             return $this->json('daily listing statistics', [
@@ -155,7 +167,7 @@ class DashboardController extends Controller
             for ($d = now()->startOfYear()->copy(); $d->lte(now()->endOfYear()); $d->addMonth()) {
                 $rows[] = [
                     'label' => $d->format('M'),
-                    'value' => Listing::whereMonth('created_at', $d->month)->whereYear('created_at', $d->year)->count(),
+                    'value' => $safeListingCount(fn($q) => $q->whereMonth('created_at', $d->month)->whereYear('created_at', $d->year)),
                 ];
             }
             return $this->json('monthly listing statistics', [
@@ -168,7 +180,7 @@ class DashboardController extends Controller
             for ($d = now()->copy(); $d->year >= now()->subYears(6)->year; $d->subYear()) {
                 $rows[] = [
                     'label' => $d->format('Y'),
-                    'value' => Listing::whereYear('created_at', $d->year)->count(),
+                    'value' => $safeListingCount(fn($q) => $q->whereYear('created_at', $d->year)),
                 ];
             }
             return $this->json('yearly listing statistics', [
