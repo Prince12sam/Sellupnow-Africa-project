@@ -106,8 +106,8 @@ Route::group(['prefix'=>'user','as'=>'user.'],function() {
           Route::controller(MembershipController::class)->group(function () {
               Route::prefix('membership')->group(function () {
                   Route::get('/',          'plans')->name('membership.plans');
-                  Route::post('/subscribe','subscribe')->name('membership.subscribe');
-                  Route::post('/cancel',   'cancel')->name('membership.cancel');
+                  Route::post('/subscribe','subscribe')->name('membership.subscribe')->middleware('throttle:5,1');
+                  Route::post('/cancel',   'cancel')->name('membership.cancel')->middleware('throttle:10,1');
               });
           });
 

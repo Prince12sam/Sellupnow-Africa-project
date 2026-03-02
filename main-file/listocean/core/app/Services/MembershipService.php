@@ -135,9 +135,26 @@ class MembershipService
      */
     public function subscribe(int $userId, int $planId): UserMembership
     {
-        $plan = MembershipPlan::where('id', $planId)->where('is_active', true)->firstOrFail();
+        $plan = MembershipPlan::where('id', $planId)->where('is_active', true)->first();
+        if (! $plan) {
+            throw new RuntimeException(__('Selected membership plan is not available.'));
+        }
 
         return DB::transaction(function () use ($userId, $plan) {
+            $current = UserMembership::where('user_id', $userId)
+                ->where('status', 1)
+                ->where(function ($q) {
+                    $q->whereNull('expire_date')
+                      ->orWhere('expire_date', '>', now());
+                })
+                ->lockForUpdate()
+                ->latest()
+                ->first();
+
+            if ($current && (int) $current->membership_id === (int) $plan->id) {
+                throw new RuntimeException(__('You are already subscribed to this plan.'));
+            }
+
             // Debit wallet (free plans skip this)
             if ((float) $plan->price > 0) {
                 $this->walletService->debit(
