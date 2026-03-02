@@ -9,6 +9,17 @@ use Illuminate\Support\Facades\DB;
 
 class ListoceanCountryController extends Controller
 {
+    private function normalizeIso2(?string $value): ?string
+    {
+        $value = strtoupper(trim((string) $value));
+
+        if ($value === '') {
+            return null;
+        }
+
+        return preg_match('/^[A-Z]{2}$/', $value) ? $value : null;
+    }
+
     public function index(Request $request)
     {
         $search = (string) $request->get('search', '');
@@ -31,10 +42,12 @@ class ListoceanCountryController extends Controller
     {
         $data = $request->validate([
             'country' => 'required|string|max:100',
-            'country_code' => 'nullable|string|max:10',
+            'country_code' => ['nullable', 'regex:/^[A-Za-z]{2}$/'],
             'dial_code' => 'nullable|string|max:10',
             'status' => 'required|in:0,1',
         ]);
+
+        $data['country_code'] = $this->normalizeIso2($data['country_code'] ?? null);
 
         $db = DB::connection('listocean');
 
@@ -48,7 +61,7 @@ class ListoceanCountryController extends Controller
 
         $countryId = (int) $db->table('countries')->insertGetId([
             'country' => $data['country'],
-            'country_code' => $data['country_code'] ?? null,
+            'country_code' => $data['country_code'],
             'dial_code' => $data['dial_code'] ?? null,
             'status' => (int) $data['status'],
             'created_at' => now(),
@@ -86,14 +99,16 @@ class ListoceanCountryController extends Controller
     {
         $data = $request->validate([
             'country' => 'required|string|max:100',
-            'country_code' => 'nullable|string|max:10',
+            'country_code' => ['nullable', 'regex:/^[A-Za-z]{2}$/'],
             'dial_code' => 'nullable|string|max:10',
             'status' => 'required|in:0,1',
         ]);
 
+        $data['country_code'] = $this->normalizeIso2($data['country_code'] ?? null);
+
         DB::connection('listocean')->table('countries')->where('id', $id)->update([
             'country' => $data['country'],
-            'country_code' => $data['country_code'] ?? null,
+            'country_code' => $data['country_code'],
             'dial_code' => $data['dial_code'] ?? null,
             'status' => (int) $data['status'],
             'updated_at' => now(),

@@ -101,8 +101,8 @@
                             <input type="text" name="country" class="form-control" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">{{ __('Country Code') }}</label>
-                            <input type="text" name="country_code" class="form-control" placeholder="e.g. GH">
+                            <label class="form-label">{{ __('Country Code (ISO2)') }}</label>
+                            <input type="text" name="country_code" class="form-control" placeholder="e.g. GH" maxlength="2">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">{{ __('Dial Code') }}</label>
@@ -141,8 +141,8 @@
                             <input type="text" id="u_country" name="country" class="form-control" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">{{ __('Country Code') }}</label>
-                            <input type="text" id="u_country_code" name="country_code" class="form-control">
+                            <label class="form-label">{{ __('Country Code (ISO2)') }}</label>
+                            <input type="text" id="u_country_code" name="country_code" class="form-control" maxlength="2">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">{{ __('Dial Code') }}</label>
