@@ -38,6 +38,7 @@
             const allowedCountryCodes = {!! $restrictedCountriesJson !!};
             const userCountryCode = '{{ $userCountryCode }}';
             const adminDefault = '{{ $adminDefaultCountry }}';
+            const isIso2 = (value) => /^[a-z]{2}$/.test((value || '').toLowerCase());
             let defaultCountry = userCountryCode || adminDefault || (allowedCountryCodes.length ? allowedCountryCodes[0] : 'us');
             if (!/^[a-z]{2}$/.test(defaultCountry)) {
                 defaultCountry = allowedCountryCodes.length ? allowedCountryCodes[0] : 'us';
@@ -46,7 +47,11 @@
                 defaultCountry = allowedCountryCodes[0];
             }
 
-            const iti = window.intlTelInput(input, {
+            if (!isIso2(defaultCountry)) {
+                defaultCountry = 'us';
+            }
+
+            const itiConfig = {
                 hiddenInput: "full_number",
                 nationalMode: false,
                 formatOnDisplay: true,
@@ -59,7 +64,15 @@
                 utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.1.1/js/utils.js",
                 allowDropdown: true,
                 searchCountryFlag: true
-            });
+            };
+
+            let iti;
+            try {
+                iti = window.intlTelInput(input, itiConfig);
+            } catch (error) {
+                itiConfig.initialCountry = 'us';
+                iti = window.intlTelInput(input, itiConfig);
+            }
 
             $('.iti__country').each(function() {
                 const countryDataCode = $(this).attr('data-country-code').toLowerCase();
