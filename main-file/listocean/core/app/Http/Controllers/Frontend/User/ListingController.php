@@ -81,7 +81,10 @@ class ListingController extends Controller
         // Check Membership Status
         if (moduleExists('Membership') && membershipModuleExistsAndEnable('Membership')) {
             $user_membership_check = UserMembership::where('user_id', Auth::guard('web')->user()->id)->first();
-            if ($user_membership_check && $user_membership_check->status === 0 || $user_membership_check->payment_status == 'pending') {
+            if (
+                $user_membership_check
+                && ($user_membership_check->status === 0 || $user_membership_check->payment_status === 'pending')
+            ) {
                 toastr_error(__('Your membership plan is inactive. Please activate your plan before creating listings.'));
                 return redirect()->back();
             }
@@ -109,13 +112,14 @@ class ListingController extends Controller
                     }
 
                     $user_total_listing_count = Listing::where('user_id', Auth::guard('web')->user()->id)->count();
+                    $legacyUnlimitedListings = (int) optional($user_membership->plan)->listing_quota === 0;
 
 
                     // check user membership all listing limit
                     if ($user_membership->listing_limit == 0 && $user_membership->expire_date <= Carbon::now()){
                         session()->flash('message', __('Your Membership is expired'));
                         return redirect()->back();
-                    }elseif ($user_membership->listing_limit === 0){
+                    }elseif (!$legacyUnlimitedListings && $user_membership->listing_limit === 0){
                         toastr_error(__('Your membership listing limit is over!. please renew it'));
                         return redirect()->back();
                     }elseif ($user_membership->expire_date <= Carbon::now()){
@@ -299,7 +303,7 @@ class ListingController extends Controller
                 if (membershipModuleExistsAndEnable('Membership')) {
                     // listing limit
                      UserMembership::where('user_id', $user_id)->update([
-                        'listing_limit' => DB::raw(sprintf("listing_limit - %s", (int)strip_tags(1))),
+                        'listing_limit' => DB::raw(sprintf("GREATEST(0, listing_limit - %s)", (int)strip_tags(1))),
                     ]);
 
                     // is featured listing
@@ -373,7 +377,7 @@ class ListingController extends Controller
         // Use native membership service for quota display
         $nativeMembership = $this->membershipService->activeMembership($user->id);
         if ($nativeMembership && $nativeMembership->plan) {
-            $user_featured_listing_enable = (int) $nativeMembership->plan->featured_listing_limit > 0;
+            $user_featured_listing_enable = (int) $nativeMembership->plan->auto_feature_count > 0;
             $user_listing_limit_check     = ! $nativeMembership->canPostListing();
         } elseif (! $this->membershipService->canPostListing($user->id)) {
             $user_listing_limit_check = true;
@@ -388,10 +392,14 @@ class ListingController extends Controller
         if(moduleExists('Membership')){
             if(membershipModuleExistsAndEnable('Membership')){
                 $user_membership = UserMembership::where('user_id', $user->id)->first();
-                if ($user_membership->featured_listing != 0){
+                if ($user_membership && $user_membership->featured_listing != 0){
                     $user_featured_listing_enable = true;
                 }
-                if ($user_membership->listing_limit === 0){
+                if (
+                    $user_membership
+                    && (int) optional($user_membership->plan)->listing_quota !== 0
+                    && $user_membership->listing_limit === 0
+                ){
                     $user_listing_limit_check = true;
                 }
             }
@@ -635,7 +643,7 @@ class ListingController extends Controller
                    if ($user_membership->featured_listing != 0){
                        $user_featured_listing_enable = true;
                    }
-                   if ($user_membership->listing_limit === 0){
+                   if ((int) optional($user_membership->plan)->listing_quota !== 0 && $user_membership->listing_limit === 0){
                        $user_listing_limit_check = true;
                    }
                }

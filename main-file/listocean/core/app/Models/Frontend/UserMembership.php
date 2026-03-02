@@ -57,8 +57,12 @@ class UserMembership extends Model
         if (! $this->isActive()) {
             return false;
         }
-        // listing_limit = 0 means unlimited; otherwise compare with listings posted
-        $limit = (int) $this->listing_limit;
-        return $limit === 0;
+
+        $planQuota = (int) optional($this->plan)->listing_quota;
+        if ($planQuota === 0) {
+            return true;
+        }
+
+        return (int) $this->listing_limit > 0;
     }
 }

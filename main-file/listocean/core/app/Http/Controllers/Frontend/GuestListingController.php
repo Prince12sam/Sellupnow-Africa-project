@@ -214,12 +214,13 @@ class GuestListingController extends Controller
                             }
 
                             $user_total_listing_count = Listing::where('user_id', Auth::guard('web')->user()->id)->count();
+                            $legacyUnlimitedListings = (int) optional($user_membership->plan)->listing_quota === 0;
 
                             // check user membership all listing limit
                             if ($user_membership->listing_limit == 0 && $user_membership->expire_date <= Carbon::now()) {
                                 session()->flash('message', __('Your Membership is expired'));
                                 return redirect()->back();
-                            } elseif ($user_membership->listing_limit === 0) {
+                            } elseif (!$legacyUnlimitedListings && $user_membership->listing_limit === 0) {
                                 toastr_error(__('Your membership listing limit is over!. please renew it'));
                                 return redirect()->back();
                             } elseif ($user_membership->expire_date <= Carbon::now()) {

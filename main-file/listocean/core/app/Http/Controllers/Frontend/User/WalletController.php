@@ -86,12 +86,22 @@ class WalletController extends Controller
     public function paystackCallback(Request $request)
     {
         $reference = $request->query('ref') ?? $request->query('reference');
-        $userId    = (int) $request->query('uid', Auth::id());
 
         if (!$reference) {
             toastr_error(__('Invalid payment reference.'));
             return redirect()->route('user.wallet.index');
         }
+
+        $pending = WalletHistory::where('reference_type', 'paystack_topup_pending')
+            ->where('transaction_id', $reference)
+            ->first();
+
+        if (!$pending) {
+            toastr_error(__('Invalid or expired payment transaction.'));
+            return redirect()->route('user.wallet.index');
+        }
+
+        $userId = (int) $pending->user_id;
 
         // Idempotency guard — already credited?
         $alreadyCredited = WalletHistory::where('reference_type', 'paystack_topup')

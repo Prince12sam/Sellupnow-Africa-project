@@ -78,9 +78,9 @@ Route::group(['prefix'=>'user','as'=>'user.'],function() {
                   Route::get('all','allListing')->name('all.listing');
                   Route::match(['get','post'],'/add','addListing')->name('add.listing');
                   Route::match(['get','post'],'/edit/{id?}','editListing')->name('edit.listing');
-                  Route::post('delete/{id?}','deleteListing')->name('delete.listing');
-                  Route::post('published-on-off/{id}', 'listingPublishedStatus')->name('listing.published.status');
-                  Route::post('boost/{id}', 'boostListing')->name('listing.boost');
+                  Route::post('delete/{id?}','deleteListing')->name('delete.listing')->middleware('throttle:15,1');
+                  Route::post('published-on-off/{id}', 'listingPublishedStatus')->name('listing.published.status')->middleware('throttle:20,1');
+                  Route::post('boost/{id}', 'boostListing')->name('listing.boost')->middleware('throttle:5,1');
               });
           });
 
@@ -97,7 +97,7 @@ Route::group(['prefix'=>'user','as'=>'user.'],function() {
               Route::prefix('wallet')->group(function () {
                   Route::get('/',                  'index')->name('wallet.index');
                   Route::get('/topup',             'topupForm')->name('wallet.topup');
-                  Route::post('/topup',            'topupSubmit')->name('wallet.topup.submit');
+                  Route::post('/topup',            'topupSubmit')->name('wallet.topup.submit')->middleware('throttle:8,1');
                   Route::get('/paystack/callback', 'paystackCallback')->name('wallet.paystack.callback');
               });
           });
@@ -116,7 +116,7 @@ Route::group(['prefix'=>'user','as'=>'user.'],function() {
               Route::prefix('featured-ads')->group(function () {
                   Route::get('/',          'index')->name('featuredAds.index');
                   Route::get('/packages',  'packages')->name('featuredAds.packages');
-                  Route::post('/purchase', 'purchase')->name('featuredAds.purchase');
+                  Route::post('/purchase', 'purchase')->name('featuredAds.purchase')->middleware('throttle:5,1');
               });
           });
 
@@ -124,13 +124,13 @@ Route::group(['prefix'=>'user','as'=>'user.'],function() {
           Route::controller(EscrowController::class)->group(function () {
               Route::prefix('escrow')->group(function () {
                   Route::get('/start/{slug}',   'start')->name('escrow.start');
-                  Route::post('/checkout',      'checkout')->name('escrow.checkout');
+                  Route::post('/checkout',      'checkout')->name('escrow.checkout')->middleware('throttle:6,1');
                   Route::get('/orders',         'orders')->name('escrow.orders');
                   Route::get('/{id}',           'detail')->name('escrow.detail');
-                  Route::post('/{id}/accept',   'accept')->name('escrow.accept');
-                  Route::post('/{id}/deliver',  'deliver')->name('escrow.deliver');
-                  Route::post('/{id}/confirm',  'confirm')->name('escrow.confirm');
-                  Route::post('/{id}/dispute',  'dispute')->name('escrow.dispute');
+                  Route::post('/{id}/accept',   'accept')->name('escrow.accept')->middleware('throttle:10,1');
+                  Route::post('/{id}/deliver',  'deliver')->name('escrow.deliver')->middleware('throttle:10,1');
+                  Route::post('/{id}/confirm',  'confirm')->name('escrow.confirm')->middleware('throttle:10,1');
+                  Route::post('/{id}/dispute',  'dispute')->name('escrow.dispute')->middleware('throttle:5,1');
               });
           });
 
@@ -139,7 +139,7 @@ Route::group(['prefix'=>'user','as'=>'user.'],function() {
               Route::prefix('banner-ads')->group(function () {
                   Route::get('/',        'index')->name('banner-ads.index');
                   Route::get('/request', 'create')->name('banner-ads.create');
-                  Route::post('/request','store')->name('banner-ads.store');
+                  Route::post('/request','store')->name('banner-ads.store')->middleware('throttle:5,1');
               });
           });
 
