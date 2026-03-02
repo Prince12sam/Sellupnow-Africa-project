@@ -114,10 +114,61 @@
             z-index: 9999999;
         }
 
+        .profile-setting.dark-mode-enabled .down-body-wraper,
+        .profile-setting.dark-mode-enabled .main-body,
+        .profile-setting.dark-mode-enabled .tab-content-wraper,
+        .profile-setting.dark-mode-enabled .account-info {
+            background: #111827 !important;
+            color: #e5e7eb !important;
+        }
+
+        .profile-setting.dark-mode-enabled .head4,
+        .profile-setting.dark-mode-enabled .title,
+        .profile-setting.dark-mode-enabled label,
+        .profile-setting.dark-mode-enabled p,
+        .profile-setting.dark-mode-enabled span,
+        .profile-setting.dark-mode-enabled h3,
+        .profile-setting.dark-mode-enabled h4 {
+            color: #e5e7eb !important;
+        }
+
+        .profile-setting.dark-mode-enabled .setting-tab .nav-link {
+            color: #cbd5e1 !important;
+        }
+
+        .profile-setting.dark-mode-enabled .setting-tab .nav-link.active {
+            color: #ffffff !important;
+            border-color: #374151 !important;
+            background: #1f2937 !important;
+        }
+
+        .profile-setting.dark-mode-enabled input,
+        .profile-setting.dark-mode-enabled textarea,
+        .profile-setting.dark-mode-enabled .select2-container--default .select2-selection--single {
+            background: #1f2937 !important;
+            color: #e5e7eb !important;
+            border-color: #374151 !important;
+        }
+
+        .appearance-toggle-wrap {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 14px;
+        }
+
+        .profile-setting.dark-mode-enabled .appearance-toggle-wrap {
+            border-color: #374151;
+            background: #1f2937;
+        }
+
     </style>
 @endsection
 @section('content')
-<div class="profile-setting setting-page verify-identity section-padding2">
+<div id="accountProfileThemeRoot" class="profile-setting setting-page verify-identity section-padding2">
       <div class="container-1920 plr1">
             <div class="row">
                 <div class="col-12">
@@ -142,6 +193,7 @@
                                                 @endif
                                             @endif
                                         @endif
+                                        <a href="javascript:void(0)" class="nav-link" data-bs-toggle="tab" data-bs-target="#appearance-settings">{{ __('Appearance') }}</a>
                                         <a href="javascript:void(0)" class="nav-link" data-bs-toggle="tab" data-bs-target="#deactivate-delete-account">{{ __('Deactivate/Delete Account') }}</a>
                                     </div>
                                     <div class="setting-tab-content tab-content">
@@ -229,6 +281,22 @@
                                                     </div>
                                                 </div>
                                             @endif
+                                        </div>
+
+                                        <div class="tab-pane fade" id="appearance-settings">
+                                            <div class="tab-content-wraper box-shadow1">
+                                                <h3 class="head4">{{ __('Appearance') }}</h3>
+                                                <p class="dashboard_accountSettings__para mb-24">{{ __('Set your account profile theme preference.') }}</p>
+                                                <div class="appearance-toggle-wrap">
+                                                    <div>
+                                                        <strong>{{ __('Dark Mode') }}</strong>
+                                                        <p class="mb-0">{{ __('Use a darker color scheme on your profile account pages.') }}</p>
+                                                    </div>
+                                                    <div class="form-check form-switch m-0">
+                                                        <input class="form-check-input" type="checkbox" role="switch" id="accountDarkModeToggle">
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <!--business hours  -->
@@ -614,6 +682,24 @@
                 // modal close
                 $('.close').on('click', function (){
                     $('#media_upload_modal').modal('hide');
+                });
+
+                const darkModeKey = 'sellupnow_user_dark_mode';
+                const profileThemeRoot = $('#accountProfileThemeRoot');
+                const darkModeToggle = $('#accountDarkModeToggle');
+
+                const applyDarkModeState = (isDarkMode) => {
+                    profileThemeRoot.toggleClass('dark-mode-enabled', !!isDarkMode);
+                    darkModeToggle.prop('checked', !!isDarkMode);
+                };
+
+                const savedDarkMode = localStorage.getItem(darkModeKey) === '1';
+                applyDarkModeState(savedDarkMode);
+
+                darkModeToggle.on('change', function () {
+                    const enabled = $(this).is(':checked');
+                    localStorage.setItem(darkModeKey, enabled ? '1' : '0');
+                    applyDarkModeState(enabled);
                 });
 
                 $('#reason').select2({
