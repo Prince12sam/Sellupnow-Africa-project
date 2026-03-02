@@ -19,6 +19,8 @@ class Kernel extends HttpKernel
     protected $middleware = [
         // Block /update always; allow /install only when INSTALLER_ENABLED=true
         \App\Http\Middleware\BlockSetupWizards::class,
+        // Legacy membership IPN routes are disabled by default unless explicitly enabled.
+        \App\Http\Middleware\LockLegacyMembershipIpn::class,
         // \App\Http\Middleware\TrustHosts::class,
         \App\Http\Middleware\TrustProxies::class,
         \Illuminate\Http\Middleware\HandleCors::class,
