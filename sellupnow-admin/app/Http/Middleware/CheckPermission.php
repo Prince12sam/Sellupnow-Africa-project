@@ -158,6 +158,28 @@ class CheckPermission
             $customPermissions[] = 'admin.chatOversight.markSeen';
         }
 
+        // Verification settings can be managed by users who already manage customer verification flows.
+        if (
+            in_array('admin.customer.index', $rolePermissions) ||
+            in_array('admin.customer.index', $userPermissions) ||
+            in_array('admin.identityVerification.index', $rolePermissions) ||
+            in_array('admin.identityVerification.index', $userPermissions)
+        ) {
+            $customPermissions[] = 'admin.verification.index';
+            $customPermissions[] = 'admin.verification.update';
+        }
+
+        // Role management remains restricted, but allow it for users who already manage employees.
+        if (in_array('admin.employee.index', $rolePermissions) || in_array('admin.employee.index', $userPermissions)) {
+            $customPermissions[] = 'admin.role.index';
+            $customPermissions[] = 'admin.role.create';
+            $customPermissions[] = 'admin.role.edit';
+            $customPermissions[] = 'admin.role.update';
+            $customPermissions[] = 'admin.role.destroy';
+            $customPermissions[] = 'admin.role.permission';
+            $customPermissions[] = 'admin.role.permission.update';
+        }
+
         // Mail configuration is managed from the single SellUpNow mail config page.
 
         // Listocean: allow identity verification request moderation if user list is allowed.
