@@ -8,6 +8,9 @@
 
     $restrictedCountriesJson = $restrictedCountryCodes->toJson();
     $adminDefaultCountry = strtolower(trim(get_static_option('site_default_phone_country') ?? ''));
+    if (!preg_match('/^[a-z]{2}$/', $adminDefaultCountry)) {
+        $adminDefaultCountry = '';
+    }
     $userCountryCode = '';
 
     if (\Illuminate\Support\Facades\Auth::guard('web')->check()) {
@@ -36,6 +39,9 @@
             const userCountryCode = '{{ $userCountryCode }}';
             const adminDefault = '{{ $adminDefaultCountry }}';
             let defaultCountry = userCountryCode || adminDefault || (allowedCountryCodes.length ? allowedCountryCodes[0] : 'us');
+            if (!/^[a-z]{2}$/.test(defaultCountry)) {
+                defaultCountry = allowedCountryCodes.length ? allowedCountryCodes[0] : 'us';
+            }
             if (allowedCountryCodes.length && !allowedCountryCodes.includes(defaultCountry)) {
                 defaultCountry = allowedCountryCodes[0];
             }
