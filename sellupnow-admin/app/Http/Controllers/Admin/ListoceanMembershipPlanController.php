@@ -15,12 +15,43 @@ class ListoceanMembershipPlanController extends Controller
 
     public function __construct()
     {
-        $this->middleware('permission:admin.membershipPlan.index')->only(['index']);
-        $this->middleware('permission:admin.membershipPlan.create')->only(['create']);
-        $this->middleware('permission:admin.membershipPlan.store')->only(['store']);
-        $this->middleware('permission:admin.membershipPlan.edit')->only(['edit']);
-        $this->middleware('permission:admin.membershipPlan.update')->only(['update']);
-        $this->middleware('permission:admin.membershipPlan.destroy')->only(['destroy']);
+        $this->middleware(function (Request $request, $next) {
+            $method = (string) ($request->route()?->getActionMethod() ?? 'index');
+            $this->authorizeAction($request, $method);
+            return $next($request);
+        })->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
+    }
+
+    private function authorizeAction(Request $request, string $method): void
+    {
+        $user = $request->user();
+        abort_unless($user, 403);
+
+        if ($user->hasRole('root')) {
+            return;
+        }
+
+        $membershipPermissions = [
+            'index' => 'admin.membershipPlan.index',
+            'create' => 'admin.membershipPlan.create',
+            'store' => 'admin.membershipPlan.store',
+            'edit' => 'admin.membershipPlan.edit',
+            'update' => 'admin.membershipPlan.update',
+            'destroy' => 'admin.membershipPlan.destroy',
+        ];
+
+        $required = $membershipPermissions[$method] ?? 'admin.membershipPlan.index';
+
+        // Compatibility with existing admin policy mapping in CheckPermission middleware.
+        $fallbackPermissions = [
+            'admin.customer.index',
+            'admin.paymentGateway.index',
+        ];
+
+        $allowed = $user->hasPermissionTo($required)
+            || $user->hasAnyPermission($fallbackPermissions);
+
+        abort_unless($allowed, 403);
     }
 
     public function index(): View
