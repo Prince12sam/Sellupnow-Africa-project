@@ -74,7 +74,8 @@ class WalletService
         }
 
         return DB::transaction(function () use ($userId, $amount, $note, $referenceType, $referenceId) {
-            $wallet = $this->getOrCreate($userId);
+            $this->getOrCreate($userId);
+            $wallet = Wallet::where('user_id', $userId)->lockForUpdate()->firstOrFail();
 
             if ($wallet->balance < $amount) {
                 throw new RuntimeException(

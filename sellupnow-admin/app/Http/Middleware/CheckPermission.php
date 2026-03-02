@@ -28,17 +28,6 @@ class CheckPermission
             return $next($request);
         }
 
-        // Customer web membership plan management (paid membership catalog)
-        // This admin feature is required for the customer web purchase flow.
-        if ($request->is('admin/membership-plans*')) {
-            return $next($request);
-        }
-
-        // Customer web wallet management (manual credit/debit + ledger)
-        if ($request->is('admin/customer-web-wallet*')) {
-            return $next($request);
-        }
-
         if ($request->is('shop/*', 'shop') && $user->hasRole('shop')) {
             return $next($request);
         }

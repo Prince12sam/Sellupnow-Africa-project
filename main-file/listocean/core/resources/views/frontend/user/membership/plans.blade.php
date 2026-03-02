@@ -95,8 +95,8 @@
                                                 <div class="text-end">
                                                     <span class="text-muted" style="font-size:13px;">{{ __('Current Plan') }}</span><br>
                                                     <strong style="color:var(--main-color-one,#524EB7);">{{ $current->plan->name ?? 'Free' }}</strong>
-                                                    @if($current->expires_at)
-                                                        <br><small class="text-muted">{{ __('Expires') }}: {{ $current->expires_at->format('d M Y') }}</small>
+                                                    @if($current->expire_date)
+                                                        <br><small class="text-muted">{{ __('Expires') }}: {{ $current->expire_date->format('d M Y') }}</small>
                                                     @endif
                                                 </div>
                                             @else
@@ -127,7 +127,7 @@
                                     <div class="row g-4">
                                         @foreach($plans as $plan)
                                             @php
-                                                $isCurrentPlan  = $current && $current->plan_id === $plan->id && $current->isActive();
+                                                $isCurrentPlan  = $current && $current->membership_id === $plan->id && $current->isActive();
                                                 $rawBadgeLabel  = trim($plan->badge_label ?? '');
                                                 $rawColor       = trim($plan->badge_color ?? '');
                                                 $badgeColor     = $rawColor !== '' ? ltrim($rawColor, '#') : 'f97316';

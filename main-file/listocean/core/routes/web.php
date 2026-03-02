@@ -24,6 +24,14 @@ use \App\Http\Controllers\Frontend\FrontendUserProfileController;
 
 require_once __DIR__ . '/user.php';
 
+Route::any('/_ignition/{any?}', function () {
+    abort(404);
+})->where('any', '.*');
+
+Route::any('/update/{any?}', function () {
+    abort(404);
+})->where('any', '.*');
+
 Route::any('/admin/{any?}', function () {
     abort(404);
 })->where('any', '.*');

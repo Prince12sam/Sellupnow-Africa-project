@@ -326,7 +326,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/', [membershipPlanController::class, 'store'])->name('store');
             Route::get('/{id}/edit', [membershipPlanController::class, 'edit'])->name('edit')->whereNumber('id');
             Route::match(['post', 'put', 'patch'], '/{id}', [membershipPlanController::class, 'update'])->name('update')->whereNumber('id');
-            Route::get('/{id}/delete', [membershipPlanController::class, 'destroy'])->name('destroy')->whereNumber('id');
+            Route::delete('/{id}', [membershipPlanController::class, 'destroy'])->name('destroy')->whereNumber('id');
         });
 
         // Admin-managed membership features catalog

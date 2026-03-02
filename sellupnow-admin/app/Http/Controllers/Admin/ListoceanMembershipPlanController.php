@@ -13,6 +13,16 @@ class ListoceanMembershipPlanController extends Controller
 {
     private const CONNECTION = 'listocean';
 
+    public function __construct()
+    {
+        $this->middleware('permission:admin.membershipPlan.index')->only(['index']);
+        $this->middleware('permission:admin.membershipPlan.create')->only(['create']);
+        $this->middleware('permission:admin.membershipPlan.store')->only(['store']);
+        $this->middleware('permission:admin.membershipPlan.edit')->only(['edit']);
+        $this->middleware('permission:admin.membershipPlan.update')->only(['update']);
+        $this->middleware('permission:admin.membershipPlan.destroy')->only(['destroy']);
+    }
+
     public function index(): View
     {
         $hasTable = Schema::connection(self::CONNECTION)->hasTable('membership_plans');

@@ -16,6 +16,8 @@ class Kernel extends HttpKernel
     protected $middleware = [
         // Blocks /update/* always (RCE risk) and /install/* unless INSTALLER_ENABLED=true in .env
         \App\Http\Middleware\BlockSetupWizards::class,
+        // Blocks destructive actions over GET under /admin/* to reduce CSRF/BAC risk on legacy routes
+        \App\Http\Middleware\BlockUnsafeDeleteGets::class,
         // \App\Http\Middleware\TrustHosts::class,
         \App\Http\Middleware\TrustProxies::class,
         \Illuminate\Http\Middleware\HandleCors::class,

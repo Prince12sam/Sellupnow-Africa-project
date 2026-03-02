@@ -53,10 +53,14 @@
                                 </td>
                                 <td class="text-end">
                                     <a href="{{ route('admin.membershipPlan.edit', $plan->id) }}" class="btn btn-sm btn-outline-primary">{{ __('Edit') }}</a>
-                                    <a href="{{ route('admin.membershipPlan.destroy', $plan->id) }}" class="btn btn-sm btn-outline-danger"
-                                       onclick="return confirm('{{ __('Delete this plan?') }}')">
-                                        {{ __('Delete') }}
-                                    </a>
+                                    <form action="{{ route('admin.membershipPlan.destroy', $plan->id) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                onclick="return confirm('{{ __('Delete this plan?') }}')">
+                                            {{ __('Delete') }}
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                         @empty

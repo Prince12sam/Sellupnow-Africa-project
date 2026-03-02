@@ -37,7 +37,7 @@ class Handler extends ExceptionHandler
                 }
 
                 $primary_menu = Menu::where(['status' => 'default'])->first()?->id;
-                return response()->view('frontend.pages.404', compact('primary_menu'));
+                return response()->view('frontend.pages.404', compact('primary_menu'), 404);
             }
 
             if ($exception->getStatusCode() == 500 ) {

@@ -44,6 +44,13 @@ class ListingController extends Controller
         $this->boostService      = $boostService;
     }
 
+    private function ownedListingOrFail(int $id): Listing
+    {
+        return Listing::where('id', $id)
+            ->where('user_id', Auth::guard('web')->id())
+            ->firstOrFail();
+    }
+
 
     public function allListing(Request $request)
     {
@@ -451,7 +458,7 @@ class ListingController extends Controller
             // video file — attached as AdVideo after listing save
             $userId     = Auth::guard('web')->id();
             $videoQuota = $this->membershipService->getVideoQuota($userId);
-            $listing = Listing::findOrFail($id);
+            $listing = $this->ownedListingOrFail((int) $id);
             $was_featured = (int) $listing->is_featured; // capture before any changes
             $listing->user_id = $user->id;
             $listing->category_id = $request->category_id;
@@ -594,7 +601,7 @@ class ListingController extends Controller
         }
 
 
-        $listing = Listing::findOrFail($id);
+        $listing = $this->ownedListingOrFail((int) $id);
         $categories = Category::where('status', 1)->get();
         $sub_categories = SubCategory::where('status', 1)->get();
         $child_categories = ChildCategory::where('status', 1)->get();
@@ -651,18 +658,22 @@ class ListingController extends Controller
 
     public function deleteListing($id = null)
     {
-        if (Listing::find($id)) {
-            ListingTag::where('listing_id', $id)->delete();
-            ListingFavorite::where('listing_id', $id)->delete();
-            ListingReport::where('listing_id', $id)->delete();
+        $listing = Listing::where('id', $id)
+            ->where('user_id', Auth::guard('web')->id())
+            ->first();
+
+        if ($listing) {
+            ListingTag::where('listing_id', $listing->id)->delete();
+            ListingFavorite::where('listing_id', $listing->id)->delete();
+            ListingReport::where('listing_id', $listing->id)->delete();
 
             // Delete the main Listing record
-            Listing::find($id)->delete();
+            $listing->delete();
 
             toastr_error(__('Listing Delete Success---'));
             return redirect()->back();
         } else {
-            toastr_error(__('Listing not found'));
+            toastr_error(__('Listing not found or unauthorized'));
             return redirect()->back();
         }
     }
@@ -670,9 +681,11 @@ class ListingController extends Controller
     public function listingPublishedStatus($id)
     {
         // First check if the listing exists
-        $listing = Listing::find($id);
+        $listing = Listing::where('id', $id)
+            ->where('user_id', Auth::guard('web')->id())
+            ->first();
         if (!$listing) {
-            $message = __('Listing not found.');
+            $message = __('Listing not found or unauthorized.');
             toastr()->error($message);
             return redirect()->back();
         }
