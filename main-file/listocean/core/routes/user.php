@@ -26,14 +26,14 @@ Route::group(['prefix'=>'user','as'=>'user.'],function() {
       Route::group(['middleware'=>['auth','userEmailVerify', 'globalVariable', 'maintains_mode','setlang']],function(){
         Route::controller(UserController::class)->group(function () {
             Route::get('profile/settings','profile')->name('profile');
-            Route::post('profile/edit-profile','edit_profile')->name('profile.edit');
-            Route::match(['get','post'],'profile/identity-verification','identity_verification')->name('identity.verification');
-            Route::post('profile/check-password','check_password')->name('password.check');
-            Route::match(['get','post'],'profile/change-password','change_password')->name('password');
+            Route::post('profile/edit-profile','edit_profile')->name('profile.edit')->middleware('throttle:15,1');
+            Route::match(['get','post'],'profile/identity-verification','identity_verification')->name('identity.verification')->middleware('throttle:8,1');
+            Route::post('profile/check-password','check_password')->name('password.check')->middleware('throttle:20,1');
+            Route::match(['get','post'],'profile/change-password','change_password')->name('password')->middleware('throttle:8,1');
             Route::get('my-reviews','myReviews')->name('my.reviews');
             Route::get('blocked-users','blockedUsers')->name('blocked.users');
-            Route::post('block/{id}','blockUser')->name('block.user');
-            Route::delete('unblock/{id}','unblockUser')->name('unblock.user');
+            Route::post('block/{id}','blockUser')->name('block.user')->middleware('throttle:20,1');
+            Route::delete('unblock/{id}','unblockUser')->name('unblock.user')->middleware('throttle:20,1');
         });
 
         // User video uploads (ad_videos)
@@ -50,17 +50,17 @@ Route::group(['prefix'=>'user','as'=>'user.'],function() {
 
        // user account settings
         Route::controller(AccountSettingController::class)->group(function () {
-            Route::match(['get','post'],'/account-settings','userAccountSetting')->name('account.settings');
-            Route::post('/account-deactive','accountDeactive')->name('account.deactive');
-            Route::get('/account-deactive/cancel/{id}','accountDeactiveCancel')->name('account.deactive.cancel');
-            Route::post('account/delete','accountDelete')->name('account.delete');
+            Route::match(['get','post'],'/account-settings','userAccountSetting')->name('account.settings')->middleware('throttle:10,1');
+            Route::post('/account-deactive','accountDeactive')->name('account.deactive')->middleware('throttle:5,1');
+            Route::get('/account-deactive/cancel/{id}','accountDeactiveCancel')->name('account.deactive.cancel')->middleware('throttle:10,1');
+            Route::post('account/delete','accountDelete')->name('account.delete')->middleware('throttle:5,1');
         });
 
         // notifications
         Route::controller(NotificationController::class)->group(function () {
             Route::group(['prefix'=>'notification'],function(){
                 Route::get('list','index')->name('notification.index');
-                Route::post('read','read_notification')->name('notification.read');
+                Route::post('read','read_notification')->name('notification.read')->middleware('throttle:30,1');
             });
         });
 
@@ -90,7 +90,7 @@ Route::group(['prefix'=>'user','as'=>'user.'],function() {
               ->middleware('throttle:30,1');
 
           //seller profile verify
-          Route::post('user-profile-verify', [AccountSettingController::class, 'userProfileVerify'])->name('profile.verify');
+          Route::post('user-profile-verify', [AccountSettingController::class, 'userProfileVerify'])->name('profile.verify')->middleware('throttle:8,1');
 
           // wallet
           Route::controller(WalletController::class)->group(function () {
