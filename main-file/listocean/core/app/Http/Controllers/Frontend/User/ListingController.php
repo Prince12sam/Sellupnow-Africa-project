@@ -51,6 +51,19 @@ class ListingController extends Controller
             ->firstOrFail();
     }
 
+    private function locationTable(string $table)
+    {
+        try {
+            if (config('database.connections.listocean')) {
+                return DB::connection('listocean')->table($table);
+            }
+        } catch (\Throwable $th) {
+            // fallback to default connection
+        }
+
+        return DB::table($table);
+    }
+
 
     public function allListing(Request $request)
     {
@@ -344,9 +357,9 @@ class ListingController extends Controller
 
         $categories = Category::where('status', 1)->get();
         $sub_categories = SubCategory::where('status', 1);
-        $all_countries = DB::connection('listocean')->table('countries')->where('status', 1)->orderBy('country')->get();
-        $all_states = DB::connection('listocean')->table('states')->where('status', 1)->orderBy('state')->get();
-        $all_cities = DB::connection('listocean')->table('cities')->where('status', 1)->orderBy('city')->get();
+        $all_countries = $this->locationTable('countries')->where('status', 1)->orderBy('country')->get();
+        $all_states = $this->locationTable('states')->where('status', 1)->orderBy('state')->get();
+        $all_cities = $this->locationTable('cities')->where('status', 1)->orderBy('city')->get();
         $tags = Tag::where('status', 'publish')->get();
         $user = Auth::guard('web')->user();
         $brands = Brand::where('status', 1)->get();
@@ -605,9 +618,9 @@ class ListingController extends Controller
         $categories = Category::where('status', 1)->get();
         $sub_categories = SubCategory::where('status', 1)->get();
         $child_categories = ChildCategory::where('status', 1)->get();
-        $all_countries = DB::connection('listocean')->table('countries')->where('status', 1)->orderBy('country')->get();
-        $all_states = DB::connection('listocean')->table('states')->where('status', 1)->orderBy('state')->get();
-        $all_cities = DB::connection('listocean')->table('cities')->where('status', 1)->orderBy('city')->get();
+        $all_countries = $this->locationTable('countries')->where('status', 1)->orderBy('country')->get();
+        $all_states = $this->locationTable('states')->where('status', 1)->orderBy('state')->get();
+        $all_cities = $this->locationTable('cities')->where('status', 1)->orderBy('city')->get();
         $brands = Brand::where('status', 1)->get();
         $tags = Tag::where('status', 'publish')->get();
 
