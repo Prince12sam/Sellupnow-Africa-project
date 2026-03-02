@@ -1,0 +1,22 @@
+{
+    "name": "Blog",
+    "alias": "blog",
+    "description": "This plugin build to manage all blogs of this script",
+    "version": "1.0.0",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Blog\\app\\Providers\\BlogServiceProvider"
+    ],
+    "files": [],
+    "xgMetaData": {
+        "pageBuilderAddon": [
+            {
+                "addon": "Modules\\Blog\\app\\Http\\PageBuilder\\Addons\\BlogTipsOne"
+            },
+            {
+                "addon": "Modules\\Blog\\app\\Http\\PageBuilder\\Addons\\AllBlog"
+            }
+        ]
+    }
+}

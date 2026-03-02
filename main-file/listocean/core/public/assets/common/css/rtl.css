@@ -1,0 +1,148 @@
+/*Home page*/
+/*Navbar Part*/
+.navbar-area .header-cart .single:first-child{
+    margin-left: 20px;
+}
+.navbar-area .header-cart .single:last-child {
+    margin-left: 0;
+}
+.navbar-area .click_show_icon {
+    right: auto;
+    left: 60px;
+}
+@media only screen and (max-width: 991px){
+    .navbar-area .nav-container .responsive-mobile-menu .navbar-toggler {
+        right: auto;
+        left: 0;
+    }
+    .navbar-area .nav-container .nav-right-content {
+        margin-left: unset !important;
+        margin-right: auto !important;
+    }
+}
+/*Reuseable */
+ul, ol {
+ padding-right: 0;
+}
+.see-all-plan-btn i {
+    rotate: 180deg;
+}
+.modal-header .btn-close {
+    margin-left: 0;
+    margin-right: auto;
+}
+.new-style .show_membership_payment_history_modal i{
+    rotate: 180deg;
+    margin-right: 8px;
+}
+/*BreadCrumb*/
+.breadcrumb-item+.breadcrumb-item::before{
+    float: right;
+}
+.breadcrumb .breadcrumb-item + .breadcrumb-item::before {
+    rotate: 180deg;
+}
+/*Catagories*/
+.sliderArrow .next-icon {
+    right: auto;
+    left: 0;
+}
+.sliderArrow .prev-icon {
+    right: auto;
+    left: 52px;
+}
+.sliderArrow i {
+    transform: rotate(180deg);
+}
+.featureListing .see-all i{
+    transform: rotate(180deg);
+}
+.titleWithBtn form {
+    flex-shrink: 0;
+}
+.new-style .singlePrice .listing .listItem .checkicon {
+    margin-right: unset !important;
+    margin-left: .5rem !important;
+}
+/*Add Details*/
+.new-style .proDetails .seller-part .business-hour .head5::after{
+    right: auto;
+    left: 0;
+    top: 6px;
+}
+.new-style .relevant-ads .single-add-card .favourite-icon {
+    right: auto;
+    left: 0;
+}
+.new-style .relevant-ads .single-add-card .locations {
+    margin-bottom: 8px;
+}
+.new-style .relevant-ads .single-add-card .locations, .new-style .relevant-ads .single-add-card .dates {
+    line-height: 1;
+} 
+/*Listing Part*/
+.new-style .select2-container--default .select2-selection--single .select2-selection__arrow {
+    right: auto;
+    left: 20px;
+}
+/*Dashboard*/
+.new-style .seller-part-inner.style-01 .seller-contact{
+    .locations{
+        border-right:none;
+        padding-right:0;
+        border-left: 2px solid #E2E8F0;
+        padding-left: 12px;
+    }
+    .emails {
+        border-right: none;
+        padding-right: 0;
+        border-left: 2px solid #E2E8F0;
+        padding-left: 12px;
+    }
+}
+.new-style .profile-setting.my-listing .single-add-card .location-date .locations {
+    border-right: none;
+    padding-right: 0;
+    margin-right: 0;
+    align-items: start;
+    border-left: 1px solid #E2E8F0;
+    padding-left: 16px;
+    margin-left: 16px;
+}
+.new-style .profile-setting.my-listing .single-add-card .location-date .dates {
+    margin-top: 4px;
+}
+.new-style {
+    & .profile-setting {
+        &.my-listing {
+            .single-add-card {
+                .right-buttons {
+                    .text {
+                        margin-right: auto;
+                        margin-left: 8px;
+                    }
+                    .setting-btn-wraper .settings-wraper{
+                        right: auto;
+                        left: 0;
+                    }
+                }
+            }
+        }
+    }
+}
+.new-style .setting-page-with-table .paymentTable .single-profile-settings-header-flex .search_wrapper {
+    position: relative;
+    i {
+        left: -9px;
+    }
+}
+@media only screen and (max-width: 767.95px) {
+    .new-style .profile-setting .down-body-wraper .sidebar-menu-wraper{
+        left: auto;
+        right: -100%;
+    }
+    .new-style .profile-setting .down-body-wraper .sidebar-menu-wraper.show{
+        left: auto;
+        right: calc(0% + 30px);
+    }
+}

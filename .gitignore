@@ -1,0 +1,61 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Secrets / env
+**/.env
+**/.env.*
+!**/.env.example
+
+# Node / frontend artifacts
+**/node_modules/
+**/dist/
+**/.vite/
+**/npm-debug.log*
+**/yarn-error.log*
+
+# PHP / Laravel artifacts
+**/vendor/
+**/bootstrap/cache/*.php
+**/storage/framework/cache/**
+**/storage/framework/sessions/**
+**/storage/framework/views/**
+**/storage/logs/**
+**/storage/app/public/**
+
+# Flutter / mobile artifacts
+Flutter App/build/
+Flutter App/.dart_tool/
+Flutter App/.packages
+Flutter App/.flutter-plugins
+Flutter App/.flutter-plugins-dependencies
+Flutter App/android/.gradle/
+Flutter App/android/app/build/
+Flutter App/ios/Pods/
+Flutter App/ios/.symlinks/
+Flutter App/macos/Pods/
+Flutter App/windows/flutter/ephemeral/
+Flutter App/linux/flutter/ephemeral/
+Flutter App/web/.dart_tool/
+
+# Generic build / cache
+build/
+coverage/
+.tmp/
+*.tmp
+*.log
+
+# Local helper scripts and dumps
+**/tmp_*.php
+**/cookie*.txt
+**/cookies*.txt
+**/response_headers.txt
+**/database/backups/*.sql
+
+# Backups and archives
+backup/
+*.zip
+*.tar
+*.tar.gz

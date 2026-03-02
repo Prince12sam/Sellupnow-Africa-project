@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "272111225360",
+    "project_id": "sellupnow-6db53",
+    "storage_bucket": "sellupnow-6db53.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:272111225360:android:d1578978019df591b61895",
+        "android_client_info": {
+          "package_name": "com.company.sellupnow"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "272111225360-cms257go6tscqo3qlmg54u88gn1aq2pn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAEP7qlpFjbKzr-VPd-vHto6QZH0vEUjU0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "272111225360-cms257go6tscqo3qlmg54u88gn1aq2pn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

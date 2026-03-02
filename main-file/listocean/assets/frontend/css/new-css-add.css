@@ -1,0 +1,308 @@
+/*hr vi css*/
+span.social-icons {
+    display: flex;
+    font-size: 25px;
+    gap: 8px;
+}
+/*new review css add*/
+i.fa-star {
+    color: var(--color-6);
+}
+.user_img_review {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    overflow: auto;
+    margin:auto;
+}
+
+div#review {
+    text-align: center;
+    font-size: 22px;
+    margin-top: 13px;
+}
+
+.single-input {
+    margin-bottom: 20px; /* Adjust spacing as needed */
+}
+
+.label_title {
+    display: block;
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #333; /* Adjust color as needed */
+}
+
+.textarea-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc; /* Adjust border color as needed */
+    border-radius: 10px;
+    font-size: 14px;
+    resize: vertical; /* Allow vertical resizing */
+}
+
+.textarea-input::placeholder {
+    color: #999; /* Adjust placeholder color as needed */
+}
+
+.modal-btn-wraper{
+    display: flex;
+    gap: 10px;
+    justify-content: end;
+    .modal-btn{
+        font-size: 14px;
+        line-height: 24px;
+        font-weight: 500;
+        padding: 6px 30px;
+        border: 1px solid #E2E8F0;
+        border-radius: 6px;
+        color: #64748B;
+        &.submit{
+            color:#fff;
+            background: var(--main-color-one);
+        }
+    }
+}
+
+.seller-img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: none;
+    .img-inner-wrap {
+        margin: 0;
+      }
+      .attachment-preview {
+        height: 60px;
+        width: 60px;
+      }
+}
+
+.seller-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ensure the image covers the entire container */
+}
+
+
+.new-reviews i.fas.fa-star {
+    color: var(--color-6)!important;
+}
+
+.danger-btn{
+    display: inline-block;
+    color: #fff;
+    background: #cc0000;
+    padding:10px 20px;
+    border: none;
+    border-radius: 6px;
+}
+
+.success-btn{
+    display: inline-block;
+    color: #fff;
+    background: #0aa958;
+    padding:10px 20px;
+    border: none;
+    border-radius: 6px;
+}
+
+.id-upload-btn {
+    border: 1px solid #E2E8F0;
+    border-radius: 6px;
+    padding: 8px;
+    background: linear-gradient(to bottom, #FFFFFF, #acacac3d);
+    text-align: center;
+    width: 100%;
+}
+
+input {
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px #1018280D;
+    color: #71717A;
+}
+
+input#string_search {
+    width: 237px!important;
+    height: 40px!important;
+    padding-left: 45px!important;
+}
+
+span.search_wrapper_icon i {
+    position: absolute;
+    margin-left: 10px !important;
+    padding: 12px;
+    padding-right: 0px;
+}
+.single-profile-settings-header-flex {
+    display: flex;
+    justify-content: space-between;
+}
+
+/*listing add page css start*/
+.radio_disable_color{
+    background: rgb(241,245,249) !important;
+    border: 1px solid rgb(161 161 161) !important;
+
+    &.custom-radio-button {
+        &:checked {
+            &::after {
+                background: transparent;
+            }
+        }
+    }
+
+}
+
+.feature_disable_color{
+    background: rgb(241,245,249) !important;
+    border: 1px solid rgb(161 161 161) !important;
+    position: unset !important;
+}
+/*listing add page css end*/
+
+span.select2.select2-container.select2-container--default {
+    width: 100% !important;
+}
+
+.modal {
+    z-index: 99999 !important;
+}
+
+/*for media modal */
+span.popup_contents__close.popup_close i {
+    font-size: 20px;
+}
+
+.content-wrapper {
+    width: 100%; /* Adjust width as needed */
+    overflow: hidden;
+}
+
+.content {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+
+
+
+/* main card layout design start*/
+.main-card-image {
+    display: block;
+    height: 188px;
+    max-width: 100%;
+    text-align: center;
+    overflow: hidden;
+}
+
+.main-card-image img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+
+/* main card layout design end*/
+
+
+/* for live chat css start*/
+.photo-uploaded-file {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    cursor: pointer;
+    opacity: 0;
+}
+.attach_files_title{
+    font-size: 18px!important;
+}
+/* for live chat css end */
+
+
+
+
+/*google map home page search css start*/
+.card {
+    border: 1px solid #ccc; /* Add border for the card */
+    border-radius: 8px; /* Add rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add shadow for depth */
+    transition: box-shadow 0.3s ease; /* Add transition for smooth hover effect */
+}
+
+.card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Increase shadow on hover */
+}
+.search_thumb {
+    width: 100px; /* Set width */
+    height: 100px; /* Set height */
+    background-size: cover; /* Ensure the image covers the entire area */
+    background-position: center; /* Center the image */
+    border-radius: 6px; /* Add rounded corners */
+}
+.search-text-item {
+    display: block; /* Ensure text appears below the thumbnail */
+    margin-top: 8px; /* Add some space between thumbnail and text */
+    font-size: 16px; /* Adjust font size */
+    color: #333; /* Set text color */
+}
+
+.search-text-item span {
+    font-weight: bold; /* Make the price bold for emphasis */
+    color: #007bff; /* Set price color */
+}
+/*=========*/
+
+.search-with-any-texts {
+    position: relative;
+}
+.search-with-any-texts .search_with_text_section .card-body{
+    position: absolute;
+    left: 0;
+    top: calc(100% + 10px);
+    right: 0;
+}
+
+#submitBtn {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 1;
+    cursor: pointer;
+    z-index: 1;
+}
+
+
+.loader {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+}
+
+.loader-icon {
+    border: 8px solid #f3f3f3;
+    border-top: 8px solid #3498db;
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+
+

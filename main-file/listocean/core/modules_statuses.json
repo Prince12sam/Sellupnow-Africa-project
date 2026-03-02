@@ -1,0 +1,16 @@
+{
+    "PluginManage": true,
+    "Blog": true,
+    "CountryManage": true,
+    "EmailTemplate": true,
+    "Integrations": true,
+    "PaymentGateways": true,
+    "Brand": true,
+    "SMSGateway": false,
+    "Wallet": false,
+    "SupportTicket": true,
+    "RolePermission": true,
+    "Membership": false,
+    "Chat": false,
+    "NewsLetter": true
+  }

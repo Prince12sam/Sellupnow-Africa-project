@@ -1,0 +1,37 @@
+/*Dashbord Right Sidebar*/
+.dashboard__right {
+    margin-right: 260px;
+    margin-left: auto;
+}
+.dashboard__header__author__wrapper {
+    right: auto;
+    left: 0;
+}
+.dashboard__header__notification__wrap {
+    left: 0px;
+    right: auto;
+}
+.alert_dismissible .btn-close {
+    right: auto;
+    left: 0;
+    top: -4px;
+}
+/*Modal*/
+.modal-header .btn-close {
+    margin: calc(-.5 * var(--bs-modal-header-padding-y)) calc(-.5 * var(--bs-modal-header-padding-x)) calc(-.5 * var(--bs-modal-header-padding-y)) 0;
+}
+/*Apperence setting*/
+@media only screen and (min-width: 700px) {
+    .dd {
+        float:right;
+    }
+}
+.dd-item .remove_item {
+    left: 10px;
+    right: auto;
+}
+.dd-item .expand {
+    right: auto;
+    left: 36px;
+}
+

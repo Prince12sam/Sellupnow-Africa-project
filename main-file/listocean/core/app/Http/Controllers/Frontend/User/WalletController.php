@@ -1,0 +1,161 @@
+<?php
+
+namespace App\Http\Controllers\Frontend\User;
+
+use App\Http\Controllers\Controller;
+use App\Models\Frontend\WalletHistory;
+use App\Services\PaystackService;
+use App\Services\WalletService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+
+class WalletController extends Controller
+{
+    public function __construct(
+        protected WalletService   $walletService,
+        protected PaystackService $paystack,
+    ) {}
+
+    // ── Balance & history ────────────────────────────────────────────────────
+
+    public function index()
+    {
+        $userId  = Auth::id();
+        $wallet  = $this->walletService->getOrCreate($userId);
+        $history = $this->walletService->history($userId, 20);
+
+        return view('frontend.user.wallet.index', compact('wallet', 'history'));
+    }
+
+    // ── Top-up form ──────────────────────────────────────────────────────────
+
+    public function topupForm()
+    {
+        $wallet           = $this->walletService->getOrCreate(Auth::id());
+        $paystackEnabled  = $this->paystack->isEnabled();
+        $paystackPublicKey = $this->paystack->publicKey();
+
+        return view('frontend.user.wallet.topup', compact('wallet', 'paystackEnabled', 'paystackPublicKey'));
+    }
+
+    // ── Submit: redirect to Paystack ─────────────────────────────────────────
+
+    public function topupSubmit(Request $request)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:1|max:100000',
+        ]);
+
+        $user   = Auth::user();
+        $amount = (float) $request->amount;
+
+        if (!$this->paystack->isEnabled()) {
+            return back()->withErrors(['amount' => __('Payment gateway is currently unavailable. Please contact the administrator.')]);
+        }
+
+        // Unique reference for this transaction
+        $reference = 'wt_' . strtoupper(Str::random(16)) . '_' . time();
+
+        // Store pending so we can track / deduplicate on callback
+        WalletHistory::create([
+            'user_id'        => $user->id,
+            'type'           => 'credit',
+            'amount'         => $amount,
+            'balance_after'  => $this->walletService->balance($user->id),
+            'note'           => __('Wallet top-up via Paystack — pending'),
+            'reference_type' => 'paystack_topup_pending',
+            'transaction_id' => $reference,
+            'payment_status' => 'pending',
+            'payment_gateway'=> 'paystack',
+        ]);
+
+        try {
+            $callbackUrl   = route('user.wallet.paystack.callback') . '?ref=' . $reference . '&uid=' . $user->id;
+            $authUrl       = $this->paystack->initialize($user->email, $amount, $reference, $callbackUrl);
+        } catch (\RuntimeException $e) {
+            return back()->withErrors(['amount' => $e->getMessage()]);
+        }
+
+        return redirect()->away($authUrl);
+    }
+
+    // ── Paystack callback ────────────────────────────────────────────────────
+
+    public function paystackCallback(Request $request)
+    {
+        $reference = $request->query('ref') ?? $request->query('reference');
+        $userId    = (int) $request->query('uid', Auth::id());
+
+        if (!$reference) {
+            toastr_error(__('Invalid payment reference.'));
+            return redirect()->route('user.wallet.index');
+        }
+
+        // Idempotency guard — already credited?
+        $alreadyCredited = WalletHistory::where('reference_type', 'paystack_topup')
+            ->where('transaction_id', $reference)
+            ->exists();
+
+        if ($alreadyCredited) {
+            toastr_success(__('Your wallet has already been credited for this transaction.'));
+            return redirect()->route('user.wallet.index');
+        }
+
+        // Verify with Paystack
+        $txn = $this->paystack->verify($reference);
+
+        if (!$txn || ($txn->status ?? '') !== 'success') {
+            Log::warning('Paystack callback: verification failed', [
+                'ref'    => $reference,
+                'userId' => $userId,
+                'status' => $txn->status ?? 'null',
+            ]);
+            toastr_error(__('Payment could not be verified. If you were charged, please contact support with reference: ') . $reference);
+            return redirect()->route('user.wallet.index');
+        }
+
+        // Amount from Paystack is in pesewas (GHS smallest unit); convert to Ghana Cedis
+        $amountGhs = ($txn->amount ?? 0) / \App\Services\PaystackService::CURRENCY_SUBUNIT;
+
+        if ($amountGhs <= 0) {
+            toastr_error(__('Invalid payment amount received from gateway.'));
+            return redirect()->route('user.wallet.index');
+        }
+
+        try {
+            // Credit wallet in GHS
+            $this->walletService->credit(
+                $userId,
+                $amountGhs,
+                __('Wallet top-up via Paystack (ref: :ref)', ['ref' => $reference]),
+                'paystack_topup',
+                null
+            );
+
+            // Mark the pending row as confirmed
+            WalletHistory::where('reference_type', 'paystack_topup_pending')
+                ->where('transaction_id', $reference)
+                ->update([
+                    'reference_type' => 'paystack_topup',
+                    'payment_status' => 'success',
+                    'note'           => __('Wallet top-up via Paystack (ref: :ref)', ['ref' => $reference]),
+                ]);
+
+            toastr_success(__('Wallet credited with :amount successfully!', [
+                'amount' => amount_with_currency_symbol($amountGhs),
+            ]));
+        } catch (\Throwable $e) {
+            Log::error('Wallet credit failed after Paystack callback', [
+                'ref'    => $reference,
+                'userId' => $userId,
+                'error'  => $e->getMessage(),
+            ]);
+            toastr_error(__('Payment verified but wallet credit failed. Please contact support with reference: ') . $reference);
+        }
+
+        return redirect()->route('user.wallet.index');
+    }
+}
+

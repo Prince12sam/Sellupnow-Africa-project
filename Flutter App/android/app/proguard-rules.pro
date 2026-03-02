@@ -1,0 +1,2 @@
+-keep class io.flutter.plugins.imagepicker.** { *; }
+-keep class io.flutter.plugins.imagepicker.ImagePickerPlugin { *; }
