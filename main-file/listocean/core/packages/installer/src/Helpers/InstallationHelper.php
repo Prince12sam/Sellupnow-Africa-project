@@ -27,7 +27,9 @@ class InstallationHelper
     }
     public static function isInstallerNeeded()
     {
-        return env('DB_CONNECTION') === null;
+        // Use config() so this works correctly even when config:cache is active.
+        // env() returns null when config is cached, causing a false "not installed" state.
+        return config('database.default') === null;
     }
 
 
