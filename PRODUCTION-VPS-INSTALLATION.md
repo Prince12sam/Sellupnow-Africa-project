@@ -239,6 +239,8 @@ Run for **both** apps:
 
 > **Private packages note:** The three Xgenious private packages (`installer`, `paymentgateway`, `xgapiclient`) are bundled directly in the repo under `main-file/listocean/core/packages/`. Composer loads them from there with no GitHub token required. Do **not** run `composer install` from the original Codecanyon zip — always use this repo.
 
+> **Important — do NOT run `php artisan config:cache` until after the web installer completes.** Running `config:cache` before installation causes `env()` to return null, which makes the installer think the app is not configured and redirects all traffic to `/install`. Run the caches in Step 7 (Post-Install) only.
+
 ```bash
 # ── Frontend ──────────────────────────────────────────────────────────────
 cd /var/www/sellupnow/main-file/listocean/core
