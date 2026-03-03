@@ -265,6 +265,12 @@ The platform ships with `joynala/web-installer` — a web wizard that creates al
 
 > `INSTALLER_ENABLED=true` must be set in **both** `.env` files before this step.
 
+> **Note on purchase verification:** Both installers have had the external purchase-verification API calls disabled. The original flow contacted the Xgenious/Joynala license servers which:
+> - For the **frontend**: downloaded and imported a SQL dump that replaced the database with original Codecanyon demo data
+> - For the **admin**: returned "restore" items that overwrote custom PHP source files with original Codecanyon code
+>
+> The frontend installer now runs `php artisan migrate:fresh --seed` (our own migrations + seeders). The admin installer skips the verify step entirely. **Do not enter a purchase code when prompted — just click Next/Skip.**
+
 ### 6.1 Run the Admin installer first
 
 Open in your browser:
@@ -277,9 +283,10 @@ Follow the wizard steps:
 2. **Server Requirements** — all items must be green
 3. **Folder Permissions** — all items must be green
 4. **Database Configuration** — enter: host `127.0.0.1`, database `sellupnow_admin`, user `sellupnow`, password
-5. **Application Setup** — fill app name, admin email, admin password
-6. **Installation** — wizard runs migrations + seeders
-7. **Finish** — confirm you see the success screen
+5. **Application Setup** — fill app name (`SellUpNow Admin`), admin email, admin password, app URL (`https://admin.yourdomain.com`)
+6. **Purchase Verification** — this step is disabled; if shown, click Skip or Next without entering a code
+7. **Installation** — wizard runs `migrate:fresh --seed` — creates all tables and seeds roles/permissions
+8. **Finish** — confirm you see the success screen
 
 ### 6.2 Run the Frontend installer
 
@@ -288,7 +295,13 @@ Open in your browser:
 https://yourdomain.com/install
 ```
 
-Follow the same steps, using database `listocean_db` this time.
+Follow the same steps, using database `listocean_db` and frontend URL (`https://yourdomain.com`).
+
+The frontend installer runs `php artisan migrate:fresh --seed` which creates all tables and seeds:
+- 4 admin roles (Super Admin, Admin, Editor, Manager) with 212 permissions
+- English (UK) default language
+
+After completion the installer calls `create_admin()` to insert the admin user you specified into the `admins` table.
 
 ### 6.3 Disable the installer immediately after both complete
 
