@@ -23,9 +23,9 @@
         "spatie/laravel-sitemap": "^7.0",
         "stevebauman/location": "^7.3.2",
         "twilio/sdk": "^7.15",
-        "xgenious/installer": "^1.0.4",
-        "xgenious/paymentgateway": "^4.6.0",
-        "xgenious/xgapiclient": "^3.0"
+        "xgenious/installer": "dev-main",
+        "xgenious/paymentgateway": "*",
+        "xgenious/xgapiclient": "dev-main"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",
@@ -70,6 +70,23 @@
             "@php artisan key:generate --ansi"
         ]
     },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "packages/installer",
+            "options": { "symlink": false }
+        },
+        {
+            "type": "path",
+            "url": "packages/paymentgateway",
+            "options": { "symlink": false }
+        },
+        {
+            "type": "path",
+            "url": "packages/xgapiclient",
+            "options": { "symlink": false }
+        }
+    ],
     "extra": {
         "laravel": {
             "dont-discover": []
