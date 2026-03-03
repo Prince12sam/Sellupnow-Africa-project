@@ -179,19 +179,31 @@ class InstallationHelper
 
     public  static  function insert_database_sql_file($db_host,$db_name,$db_user,$db_pass)
     {
+        // The original implementation downloaded a SQL dump from the Xgenious
+        // license server and imported it. That dump contains the original
+        // Codecanyon demo data and would overwrite our custom schema/seeds.
+        //
+        // Instead we run Laravel migrations + seeders, which always produce a
+        // clean, up-to-date database from our own migration files.
+        self::set_temp_db_connection($db_host, $db_name, $db_user, $db_pass);
 
-        $db = new \PDO("mysql:host=$db_host;dbname=$db_name", $db_user, $db_pass);
-        // set the PDO error mode to exception
-        $db->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        // Point the default connection at the temp DB so migrate picks it up
+        \Illuminate\Support\Facades\Config::set('database.default', 'temp');
+        \Illuminate\Support\Facades\DB::purge('mysql');
 
-        $query = Storage::drive('local')->get("database.sql");
-        $stmt = $db->prepare($query);
-        $result = (bool)$stmt->execute();
-
-        return [
-            'type' => $result ? 'success':'danger',
-            'msg' => $result ? 'Database insert success' : 'SQL file not found.'
-        ];
+        try {
+            \Illuminate\Support\Facades\Artisan::call('migrate:fresh', [
+                '--force'    => true,
+                '--database' => 'temp',
+            ]);
+            \Illuminate\Support\Facades\Artisan::call('db:seed', [
+                '--force'    => true,
+                '--database' => 'temp',
+            ]);
+            return ['type' => 'success', 'msg' => 'Database migrations completed successfully'];
+        } catch (\Exception $e) {
+            return ['type' => 'danger', 'msg' => $e->getMessage()];
+        }
     }
 
     public static  function create_admin($admin_email,$admin_password,$admin_username,$admin_name,$db_host,$db_name,$db_user,$db_pass)

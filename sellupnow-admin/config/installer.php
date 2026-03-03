@@ -164,7 +164,7 @@ return [
     'productId' => 60154192,
     'admin_role' => 'root',
     'verify_code' => '1ZSrm/fAmszsB+FDhXKh0EdSeERKWkVDSGRqWW51WHBsNG5NMTlYbnFJVjBDd01PMmp6T2FubHFscy9zK2NTTEsrQlVjSnNrZE9CYmRQUXlzWk5NL01ubmlkbnVlZFliWnlOaXRRPT0=',
-    'verify_purchase' => true,
+    'verify_purchase' => false, // Disabled: the Joynala API returns restore items that overwrite customized source files with original Codecanyon code.
     'verify_rules' => [
         'email' => [
             'rule' => 'required|string',

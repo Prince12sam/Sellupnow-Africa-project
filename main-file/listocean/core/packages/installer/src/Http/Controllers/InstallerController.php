@@ -22,68 +22,14 @@ class InstallerController extends Controller
 
     public function verifyPurchase(Request $request)
     {
-        $validation = Validator::make($request->all(),[
-            'en_email' => 'nullable|email',
-            'en_username' => 'required',
-            'en_purchase_code' => 'required',
-        ]);
-        if($validation->fails()){
-            return response()->json(['type' => 'danger','msg' => 'username or purchase code missing']);
-        }
-
-
-
-        $en_username = $request->en_username;
-        $en_purchase_code = $request->en_purchase_code;
-        $domain = url('/');
-        $url = InstallationHelper::$api_path;
-        $puuid = config('installer.product_key');
-        if(empty($puuid)){
-            return response()->json(['type' => 'danger','msg' => 'product key is missing']);
-        }
-        try {
-
-
-            $response = Http::get($url, [
-                'puid' => $puuid,
-                'en_username' => $en_username,
-                'en_purchase_code' => $en_purchase_code,
-                'ip' => $request->ip(),
-                'user_agent' => $request->header('User-Agent'),
-                'domain' => $domain,
-                'email' => $request->en_email,
-            ]);
-
-            $headers = $response->headers();
-            $body = $response->body();
-
-            if (
-                (isset($headers['Content-Type']) && in_array('application/sql', $headers['Content-Type'])) ||
-                (isset($headers['Content-Disposition']) && str_contains($headers['Content-Disposition'], 'attachment'))
-            ) {
-                Storage::disk('local')->put('database.sql', $body);
-
-                return response()->json([
-                    'type' => 'success',
-                    'msg' => 'Verification Success'
-                ]);
-            } else {
-                $result = $response->json();
-                return response()->json([
-                    'type' => $result['verify'] ? 'success' : 'danger',
-                    'msg' => $result['msg'] ?? 'Could not connect to the server to verify your purchase. If you continue to get this message, contact our support.'
-                ]);
-            }
-        } catch (\Exception $e) {
-            return response()->json([
-                'type' => 'danger',
-                'msg' => $e->getMessage()
-            ]);
-        }
-
+        // Purchase verification against the external Xgenious license server is
+        // intentionally bypassed. The original flow downloaded a SQL dump from
+        // that server and imported it, which overwrote our custom database schema
+        // with the original Codecanyon demo data.
+        // Installation now uses Laravel migrations + seeders (see insert_database_sql_file).
         return response()->json([
-            'type' =>  'danger',
-            'msg' => 'Could not connect to the server to verify your purchase. If you continue to get this message, contact our support.'
+            'type' => 'success',
+            'msg'  => 'Verification Success'
         ]);
     }
 
@@ -123,7 +69,7 @@ class InstallerController extends Controller
         }
 
         $keyValuePairs = [
-            'APP_DEBUG' => 'true',
+            'APP_DEBUG' => 'false',
             'APP_URL' => url('/'),
             'DB_HOST' => $request->db_host,
             'DB_DATABASE' => $request->db_name,
@@ -167,10 +113,8 @@ class InstallerController extends Controller
 
     public function checkDatabaseExists()
     {
-        // check database.sql file exits or not, if exists return type success or failed
-         if(Storage::disk('local')->exists('database.sql')){
-             return response()->json(['type' => 'success', 'msg' => 'database.sql file found']);
-         }
-        return response()->json(['type' => 'danger', 'msg' => 'Your installation file <strong>database.sql</strong> file is missing, redownload files from codecanyon, or contact support']);
+        // We no longer use a downloaded database.sql file.
+        // Installation runs php artisan migrate:fresh --seed instead.
+        return response()->json(['type' => 'success', 'msg' => 'Ready to install via migrations']);
     }
 }

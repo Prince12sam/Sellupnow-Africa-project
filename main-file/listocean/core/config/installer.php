@@ -15,7 +15,7 @@ return [
     'env_example_path' => public_path('env-sample.txt'),
     'broadcast_driver' => 'log',
     'cache_driver' => 'file',
-    'queue_connection' => 'sync',
+    'queue_connection' => 'database',
     'mail_port' => '587',
     'mail_encryption' => 'tls',
     'model_has_roles' => true,
