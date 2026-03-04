@@ -620,7 +620,7 @@ class GeneraleSettingController extends Controller
 
         $targetDir = $this->resolvePrimaryListoceanMediaUploaderDirectory();
         if (! $targetDir) {
-            $targetDir = base_path('../main-file/listocean/assets/uploads/media-uploader');
+            $targetDir = listocean_core_path('public/assets/uploads/media-uploader');
         }
         if (! File::exists($targetDir)) {
             File::makeDirectory($targetDir, 0775, true);
@@ -699,8 +699,6 @@ class GeneraleSettingController extends Controller
 
         // Primary fallback: inside core/public so Laravel's public_path() finds uploaded files.
         $candidates[] = rtrim(str_replace('\\', '/', listocean_core_path('public/assets/uploads/media-uploader')), '/');
-        // Secondary fallback: outer assets dir (kept for backward compat / copy mirroring).
-        $candidates[] = rtrim(str_replace('\\', '/', base_path('../main-file/listocean/assets/uploads/media-uploader')), '/');
 
         $valid = [];
         foreach ($candidates as $candidate) {

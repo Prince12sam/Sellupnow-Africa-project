@@ -263,7 +263,7 @@ class ListoceanHomepageHeroController extends Controller
     {
         $targetDir = $this->resolvePrimaryListoceanMediaUploaderDirectory();
         if (! $targetDir) {
-            $targetDir = base_path('../main-file/listocean/assets/uploads/media-uploader');
+            $targetDir = listocean_core_path('public/assets/uploads/media-uploader');
         }
         if (!is_dir($targetDir)) {
             @mkdir($targetDir, 0775, true);
@@ -337,6 +337,7 @@ class ListoceanHomepageHeroController extends Controller
     {
         $candidates = [];
 
+        // 1. Explicit override env var
         $configured = trim((string) env('LISTOCEAN_MEDIA_UPLOADER_DIR', ''));
         if ($configured !== '') {
             $configured = rtrim(str_replace('\\', '/', $configured), '/');
@@ -346,7 +347,15 @@ class ListoceanHomepageHeroController extends Controller
             $candidates[] = $configured;
         }
 
-        $candidates[] = rtrim(str_replace('\\', '/', base_path('../main-file/listocean/assets/uploads/media-uploader')), '/');
+        // 2. Derive from LISTOCEAN_PUBLIC_PATH (same env var used by the listocean_media
+        //    filesystem disk in filesystems.php and MediaRepository — use this on VPS)
+        $publicPath = trim((string) env('LISTOCEAN_PUBLIC_PATH', ''));
+        if ($publicPath !== '') {
+            $candidates[] = rtrim(str_replace('\\', '/', $publicPath), '/') . '/assets/uploads/media-uploader';
+        }
+
+        // 3. Relative fallback — correct path after listocean/assets/ was removed
+        $candidates[] = rtrim(str_replace('\\', '/', base_path('../main-file/listocean/core/public/assets/uploads/media-uploader')), '/');
 
         $valid = [];
         foreach ($candidates as $candidate) {

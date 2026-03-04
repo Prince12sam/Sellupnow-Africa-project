@@ -392,7 +392,9 @@ class FooterController extends Controller
         $timestamp = time();
         $fileName = $slug . $timestamp . ($extension ? ('.' . $extension) : '');
 
-        $targetDir = base_path('../main-file/listocean/assets/uploads/media-uploader');
+        $targetDir = env('LISTOCEAN_PUBLIC_PATH')
+            ? rtrim(str_replace('\\', '/', env('LISTOCEAN_PUBLIC_PATH')), '/') . '/assets/uploads/media-uploader'
+            : listocean_core_path('public/assets/uploads/media-uploader');
         if (! File::exists($targetDir)) {
             File::makeDirectory($targetDir, 0775, true);
         }

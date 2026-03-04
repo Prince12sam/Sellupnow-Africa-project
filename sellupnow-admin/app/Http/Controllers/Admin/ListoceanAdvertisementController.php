@@ -20,7 +20,9 @@ class ListoceanAdvertisementController extends Controller
      */
     private function uploadImageFile(UploadedFile $file): int
     {
-        $targetDir = base_path('../main-file/listocean/assets/uploads/media-uploader');
+        $targetDir = env('LISTOCEAN_PUBLIC_PATH')
+            ? rtrim(str_replace('\\', '/', env('LISTOCEAN_PUBLIC_PATH')), '/') . '/assets/uploads/media-uploader'
+            : listocean_core_path('public/assets/uploads/media-uploader');
         if (!is_dir($targetDir)) {
             @mkdir($targetDir, 0775, true);
         }
@@ -63,7 +65,9 @@ class ListoceanAdvertisementController extends Controller
      */
     private function uploadVideoFile(\Illuminate\Http\UploadedFile $file): int
     {
-        $targetDir = base_path('../main-file/listocean/assets/uploads/media-uploader');
+        $targetDir = env('LISTOCEAN_PUBLIC_PATH')
+            ? rtrim(str_replace('\\', '/', env('LISTOCEAN_PUBLIC_PATH')), '/') . '/assets/uploads/media-uploader'
+            : listocean_core_path('public/assets/uploads/media-uploader');
         if (!is_dir($targetDir)) {
             @mkdir($targetDir, 0775, true);
         }

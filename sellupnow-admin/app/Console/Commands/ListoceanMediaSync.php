@@ -24,7 +24,9 @@ class ListoceanMediaSync extends Command
 
     public function handle(): int
     {
-        $mediaDir = base_path('../main-file/listocean/assets/uploads/media-uploader');
+        $mediaDir = env('LISTOCEAN_PUBLIC_PATH')
+            ? rtrim(str_replace('\\', '/', env('LISTOCEAN_PUBLIC_PATH')), '/') . '/assets/uploads/media-uploader'
+            : listocean_core_path('public/assets/uploads/media-uploader');
         if (! File::exists($mediaDir)) {
             $this->error("Listocean media directory not found: {$mediaDir}");
             return self::FAILURE;
