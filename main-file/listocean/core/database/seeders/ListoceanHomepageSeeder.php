@@ -84,17 +84,13 @@ class ListoceanHomepageSeeder extends Seeder
 
         // ------------------------------------------------------------------ //
         // 3. Seed PageBuilder addons for the homepage
-        //    (skipped if addons already exist for this page to avoid duplicates)
+        //    Always delete and re-insert so re-running the seeder fixes stale
+        //    settings (e.g. wrong keys from a previous run).
         // ------------------------------------------------------------------ //
-        $addonCount = DB::table('page_builders')
+        DB::table('page_builders')
             ->where('addon_page_id', $homePageId)
             ->where('addon_page_type', 'dynamic_page')
-            ->count();
-
-        if ($addonCount > 0) {
-            // Addons already present — nothing to do
-            return;
-        }
+            ->delete();
 
         $addons = [
             [
@@ -105,8 +101,14 @@ class ListoceanHomepageSeeder extends Seeder
                 'addon_order'     => 1,
                 'addon_page_id'   => $homePageId,
                 'addon_page_type' => 'dynamic_page',
-                // Hero settings: empty to use addon defaults; customise via admin panel
-                'addon_settings'  => '{}',
+                // Hero settings: images are configured via admin panel after first login
+                'addon_settings'  => json_encode([
+                    'title'            => 'Find What You Need',
+                    'subtitle'         => 'Browse thousands of listings across Ghana',
+                    'top_title'        => 'Welcome to SellUpNow',
+                    'padding_top'      => '100',
+                    'padding_bottom'   => '100',
+                ]),
                 'created_at'      => now(),
                 'updated_at'      => now(),
             ],
@@ -119,9 +121,15 @@ class ListoceanHomepageSeeder extends Seeder
                 'addon_page_id'   => $homePageId,
                 'addon_page_type' => 'dynamic_page',
                 'addon_settings'  => json_encode([
-                    'title'            => 'Browse Categories',
-                    'item_show_count'  => '8',
-                    'icon_variant'     => 'icon',
+                    'title'                    => 'Browse Categories',
+                    'order_by'                 => 'id',
+                    'order'                    => 'asc',
+                    'items'                    => '12',
+                    // '1' = show categories even when they have no listings yet
+                    // Essential on a fresh install — production has no listings on day 1
+                    'empty_category_show_hide' => '1',
+                    'padding_top'              => '60',
+                    'padding_bottom'           => '60',
                 ]),
                 'created_at'      => now(),
                 'updated_at'      => now(),
@@ -135,9 +143,13 @@ class ListoceanHomepageSeeder extends Seeder
                 'addon_page_id'   => $homePageId,
                 'addon_page_type' => 'dynamic_page',
                 'addon_settings'  => json_encode([
-                    'title'           => 'Featured Listings',
-                    'item_show_count' => '8',
-                    'listing_type'    => 'featured',
+                    'title'    => 'All Listings',
+                    'order_by' => 'created_at',
+                    'order'    => 'desc',
+                    'items'    => '12',
+                    'columns'  => '3',
+                    'padding_top'    => '60',
+                    'padding_bottom' => '60',
                 ]),
                 'created_at'      => now(),
                 'updated_at'      => now(),
@@ -151,8 +163,11 @@ class ListoceanHomepageSeeder extends Seeder
                 'addon_page_id'   => $homePageId,
                 'addon_page_type' => 'dynamic_page',
                 'addon_settings'  => json_encode([
-                    'title'           => 'Recent Listings',
-                    'item_show_count' => '8',
+                    'title'          => 'Recent Listings',
+                    'explore_all'    => 'View All',
+                    'items'          => '8',
+                    'padding_top'    => '60',
+                    'padding_bottom' => '60',
                 ]),
                 'created_at'      => now(),
                 'updated_at'      => now(),
@@ -166,8 +181,11 @@ class ListoceanHomepageSeeder extends Seeder
                 'addon_page_id'   => $homePageId,
                 'addon_page_type' => 'dynamic_page',
                 'addon_settings'  => json_encode([
-                    'title'           => 'Top Listings',
-                    'item_show_count' => '8',
+                    'title'          => 'Top Listings',
+                    'explore_all'    => 'View All',
+                    'items'          => '8',
+                    'padding_top'    => '60',
+                    'padding_bottom' => '60',
                 ]),
                 'created_at'      => now(),
                 'updated_at'      => now(),
@@ -180,9 +198,16 @@ class ListoceanHomepageSeeder extends Seeder
                 'addon_order'     => 6,
                 'addon_page_id'   => $homePageId,
                 'addon_page_type' => 'dynamic_page',
+                // MarketPlaceOne is a CTA/promotional banner — no item count needed
                 'addon_settings'  => json_encode([
-                    'title'           => 'Explore Marketplace',
-                    'item_show_count' => '6',
+                    'title'           => 'Sell Faster, Buy Smarter',
+                    'subtitle'        => 'Join thousands of buyers and sellers on SellUpNow Africa',
+                    'button_one_title' => 'Post a Listing',
+                    'button_one_link'  => '/listing/create',
+                    'button_two_title' => 'Browse All',
+                    'button_two_link'  => '/listings',
+                    'padding_top'      => '60',
+                    'padding_bottom'   => '60',
                 ]),
                 'created_at'      => now(),
                 'updated_at'      => now(),
