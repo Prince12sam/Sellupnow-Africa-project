@@ -342,6 +342,11 @@ CUSTOMER_WEB_URL=https://yourdomain.com
 LISTOCEAN_APP_URL=https://yourdomain.com
 LISTOCEAN_API_BASE=https://yourdomain.com
 
+# ── Cross-app file-system path — admin mirrors uploaded images to the frontend
+# Must be the absolute server path to the frontend's public/ directory.
+# Without this, hero images and media uploaded via admin will NOT appear on the frontend.
+LISTOCEAN_PUBLIC_PATH=/var/www/sellupnow/main-file/listocean/core/public
+
 # ── Cross-app API key (admin calls frontend badge-upload endpoint) ────────
 # Generate a secure key with: openssl rand -hex 32
 LISTOCEAN_ADMIN_API_KEY=replace_with_a_long_random_secret_key
@@ -447,6 +452,7 @@ Use the same wizard, entering:
 **The frontend installer seeds:**
 - 4 user roles with permissions
 - English (UK) as the default language
+- Homepage page record, `static_options.home_page` pointer, and 6 starter PageBuilder sections (Header, Browse Categories, Listings, Recent Listings, Top Listings, Marketplace) — the homepage will render sections immediately after install
 
 ---
 
@@ -489,9 +495,6 @@ php artisan queue:table 2>/dev/null; true
 php artisan session:table 2>/dev/null; true
 php artisan migrate --force
 
-# Import Ghana location data (regions → cities for listing address dropdowns)
-php artisan listocean:import-locations --country="Ghana"
-
 # Optimise for production (run ONLY after INSTALLER_ENABLED=false)
 php artisan config:cache
 php artisan route:cache
@@ -508,6 +511,10 @@ php artisan storage:link
 php artisan queue:table 2>/dev/null; true
 php artisan session:table 2>/dev/null; true
 php artisan migrate --force
+
+# Import Ghana location data (regions → cities for listing address dropdowns)
+# NOTE: This command belongs to the admin app — run it from sellupnow-admin, not the frontend.
+php artisan listocean:import-locations --country="Ghana"
 
 php artisan config:cache
 php artisan route:cache
@@ -776,6 +783,8 @@ sudo crontab -l -u www-data
 ---
 
 ## 14. File Permissions
+
+> ⚠️ **Run this section immediately after uploading the codebase (Section 4) and before running the web installer (Section 8).** The installer writes to `storage/` and `bootstrap/cache/` — if those directories are not writable by `www-data`, the installer will fail with a cryptic error.
 
 ```bash
 # Set ownership
