@@ -355,7 +355,9 @@ class ListoceanHomepageHeroController extends Controller
         }
 
         // 3. Relative fallback — correct path after listocean/assets/ was removed
-        $candidates[] = rtrim(str_replace('\\', '/', base_path('../main-file/listocean/core/public/assets/uploads/media-uploader')), '/');
+        //    listocean_core_path() resolves the parent directory with realpath() so
+        //    mkdir never receives a path containing unresolved '..' segments.
+        $candidates[] = rtrim(str_replace('\\', '/', listocean_core_path('public/assets/uploads/media-uploader')), '/');
 
         $valid = [];
         foreach ($candidates as $candidate) {

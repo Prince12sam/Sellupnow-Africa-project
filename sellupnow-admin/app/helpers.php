@@ -26,10 +26,20 @@ if (! function_exists('listocean_core_path')) {
      */
     function listocean_core_path(string $path = ''): string
     {
-        $base = rtrim(
-            env('LISTOCEAN_CORE_PATH', base_path('../main-file/listocean/core')),
-            '/\\'
-        );
+        // base_path('../main-file/...') keeps literal '..' which causes mkdir to fail
+        // on Windows. Resolve the parent directory (which always exists) with realpath()
+        // so the returned path never contains unresolved '..' segments.
+        $envPath = env('LISTOCEAN_CORE_PATH', '');
+        if ($envPath !== '' && $envPath !== null) {
+            $base = rtrim((string) $envPath, '/\\');
+        } else {
+            $parentDir = realpath(base_path('..'));
+            if ($parentDir === false) {
+                $parentDir = dirname(rtrim(base_path(), '/\\'));
+            }
+            $base = $parentDir . DIRECTORY_SEPARATOR
+                  . implode(DIRECTORY_SEPARATOR, ['main-file', 'listocean', 'core']);
+        }
         if ($path === '') {
             return $base;
         }

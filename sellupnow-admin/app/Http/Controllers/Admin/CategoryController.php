@@ -477,18 +477,28 @@ class CategoryController extends Controller
 
     private function resolveListoceanMediaUploaderDirectory(): ?string
     {
+        // 1. Explicit override env var
         $configured = trim((string) env('LISTOCEAN_MEDIA_UPLOADER_DIR', ''));
         if ($configured !== '') {
             $configured = rtrim(str_replace('\\', '/', $configured), '/');
             if (! str_ends_with($configured, 'media-uploader')) {
                 $configured .= '/assets/uploads/media-uploader';
             }
-
             return $configured;
         }
 
+        // 2. Derive from LISTOCEAN_PUBLIC_PATH (same env var used by the listocean_media
+        //    filesystem disk in filesystems.php and MediaRepository — use this on VPS)
+        $publicPath = trim((string) env('LISTOCEAN_PUBLIC_PATH', ''));
+        if ($publicPath !== '') {
+            return rtrim(str_replace('\\', '/', $publicPath), '/') . '/assets/uploads/media-uploader';
+        }
+
+        // 3. Relative fallback — correct path after listocean/assets/ was removed
+        //    listocean_core_path() resolves the parent directory with realpath() so
+        //    mkdir never receives a path containing unresolved '..' segments.
         $candidates = [
-            base_path('../main-file/listocean/assets/uploads/media-uploader'),
+            listocean_core_path('public/assets/uploads/media-uploader'),
         ];
 
         foreach ($candidates as $candidate) {
