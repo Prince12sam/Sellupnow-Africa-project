@@ -12,24 +12,27 @@ class FrontendSearchController extends Controller
 {
     public function home_search(Request $request)
     {
-
-        $memberIds = [0];
-        // get all users ids from the users table according to listing table datas
-        if (moduleExists('Membership') && membershipModuleExistsAndEnable('Membership')){
-            $memberIds = Listing::query()->select('listings.user_id')
-                ->join('user_memberships', 'user_memberships.user_id','=','listings.user_id')
-                ->whereNot('listings.user_id', 0)
-                ->where('user_memberships.expire_date','>=',date('Y-m-d'))
-                ->distinct()
-                ->pluck('user_id')->push(0)->toArray(); // this gives us the user ids
-        }
-
-        $listings = Listing::query()->where(function ($query) use ($memberIds){
-            return $query->whereIn('listings.user_id', $memberIds)
-                ->orWhereNotNull('admin_id');
-            })
+        $listings = Listing::query()
             ->where('status', 1)
             ->where('is_published', 1);
+
+        if (moduleExists('Membership') && membershipModuleExistsAndEnable('Membership')) {
+            $memberIds = Listing::query()->select('listings.user_id')
+                ->join('user_memberships', 'user_memberships.user_id', '=', 'listings.user_id')
+                ->whereNot('listings.user_id', 0)
+                ->where('user_memberships.expire_date', '>=', date('Y-m-d'))
+                ->distinct()
+                ->pluck('user_id')
+                ->push(0)
+                ->toArray();
+
+            if (count($memberIds) > 1) {
+                $listings->where(function ($query) use ($memberIds) {
+                    return $query->whereIn('listings.user_id', $memberIds)
+                        ->orWhereNotNull('admin_id');
+                });
+            }
+        }
 
 
         if (!isset($request->country_id) || !isset($request->state_id) || !isset($request->city_id)) {
