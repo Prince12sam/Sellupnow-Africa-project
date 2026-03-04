@@ -69,7 +69,7 @@
 
                     <div class="col-span-1 items-center order-1 lg:order-2">
                         <div class="lg:max-w-[450px] lg:max-h-[450px] rounded-2xl overflow-hidden">
-                            <img src="../../../public/assets/images/contact-us.png" alt="image" class="w-full h-full object-cover">
+                            <img src="/assets/images/contact-us.png" alt="image" class="w-full h-full object-cover">
                         </div>
                     </div>
 

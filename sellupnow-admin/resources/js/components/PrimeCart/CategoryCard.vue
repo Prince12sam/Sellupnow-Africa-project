@@ -15,7 +15,7 @@
             <img
                 v-else
                 class="w-full h-full object-cover"
-                src="../../../../public/assets/images/homepage/default-cat.png"
+                src="/assets/images/homepage/default-cat.png"
                 alt="icon"
             />
         </div>

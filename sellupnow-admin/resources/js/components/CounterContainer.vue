@@ -74,7 +74,7 @@ const breakpoints = {
                     <div class="counterItem">
                         <div class="icon">
                             <img
-                                src="../../../public/assets/images/counter-icon/counter-icon-01.png"
+                                src="/assets/images/counter-icon/counter-icon-01.png"
                                 alt="icon"
                             />
                         </div>
@@ -94,7 +94,7 @@ const breakpoints = {
                     <div class="counterItem">
                         <div class="icon">
                             <img
-                                src="../../../public/assets/images/counter-icon/counter-icon-02.png"
+                                src="/assets/images/counter-icon/counter-icon-02.png"
                                 alt="icon"
                             />
                         </div>
@@ -115,7 +115,7 @@ const breakpoints = {
                     <div class="counterItem">
                         <div class="icon">
                             <img
-                                src="../../../public/assets/images/counter-icon/counter-icon-03.png"
+                                src="/assets/images/counter-icon/counter-icon-03.png"
                                 alt="icon"
                             />
                         </div>
@@ -134,7 +134,7 @@ const breakpoints = {
                     <div class="counterItem">
                         <div class="icon">
                             <img
-                                src="../../../public/assets/images/counter-icon/counter-icon-04.png"
+                                src="/assets/images/counter-icon/counter-icon-04.png"
                                 alt="icon"
                             />
                         </div>

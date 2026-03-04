@@ -312,7 +312,7 @@
                             <div class="flex justify-start items-center gap-1">
                                 <span class="star">
                                     <img
-                                        src="../../../../public/assets/images/box-check.png"
+                                        src="/assets/images/box-check.png"
                                         alt="check"
                                     />
                                 </span>

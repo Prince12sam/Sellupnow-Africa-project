@@ -2,7 +2,7 @@
     "PluginManage": true,
     "Blog": true,
     "CountryManage": true,
-    "EmailTemplate": true,
+    "EmailTemplate": false,
     "Integrations": true,
     "PaymentGateways": true,
     "Brand": true,

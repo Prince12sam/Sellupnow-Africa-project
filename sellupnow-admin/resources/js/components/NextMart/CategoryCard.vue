@@ -15,7 +15,7 @@
             <img
                 v-else
                 class="w-full h-full object-cover relative z-0 scale-100 transition-all duration-700 ease-in-out group-hover:scale-110"
-                src="../../../../public/assets/images/homepage/default-cat.png"
+                src="/assets/images/homepage/default-cat.png"
                 alt="icon"
             />
 

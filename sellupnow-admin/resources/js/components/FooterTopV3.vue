@@ -10,7 +10,7 @@
                     />
                     <img
                         v-else
-                        src="../../../public/assets/logo.png"
+                        src="/assets/logo.png"
                         loading="lazy"
                     />
                 </RouterLink>
@@ -30,7 +30,7 @@
                     class="w-full md:w-32 h-10 lg:w-52 lg:h-16 relative rounded-xl shadow-[0px_2px_4px_0px_rgba(0,0,0,1.00)] shadow-[inset_0px_0px_13px_0px_rgba(0,0,0,1.00)] overflow-hidden cursor-pointer"
                 >
                     <img
-                        src="../../../public/assets/images/playstore_icon.png"
+                        src="/assets/images/playstore_icon.png"
                         alt="google"
                     />
                 </a>
@@ -39,7 +39,7 @@
                     class="w-full md:w-32 h-10 lg:w-52 lg:h-16 relative rounded-xl shadow-[0px_2px_4px_0px_rgba(0,0,0,1.00)] shadow-[inset_0px_0px_13px_0px_rgba(0,0,0,1.00)] overflow-hidden cursor-pointer"
                 >
                     <img
-                        src="../../../public/assets/images/appstore_icon.png"
+                        src="/assets/images/appstore_icon.png"
                         alt="ios"
                     />
                 </a>

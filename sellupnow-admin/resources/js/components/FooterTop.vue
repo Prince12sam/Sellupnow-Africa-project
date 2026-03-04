@@ -11,7 +11,7 @@
                     />
                     <img
                         v-else
-                        src="../../../public/assets/logo.png"
+                        src="/assets/logo.png"
                         loading="lazy"
                         class="object-contain"
                     />

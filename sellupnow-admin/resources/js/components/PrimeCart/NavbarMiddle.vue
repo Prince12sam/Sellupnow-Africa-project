@@ -11,7 +11,7 @@
             />
             <img
                 v-else
-                src="../../../../public/assets/logo.png"
+                src="/assets/images/placeholder-logo.png"
                 class="h-full w-full object-contain"
             />
         </RouterLink>

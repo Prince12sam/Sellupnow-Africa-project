@@ -13,13 +13,13 @@
             <div v-if="master.showDownloadApp" class="apps__thumb">
                 <a :href="master.playStoreLink" class="cursor-pointer">
                     <img
-                        src="../../../public/assets/images/playstore_icon.png"
+                        src="/assets/images/playstore_icon.png"
                         alt="google"
                     />
                 </a>
                 <a :href="master.appStoreLink" class="cursor-pointer">
                     <img
-                        src="../../../public/assets/images/appstore_icon.png"
+                        src="/assets/images/appstore_icon.png"
                         alt="ios"
                     />
                 </a>

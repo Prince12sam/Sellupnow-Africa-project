@@ -46,13 +46,13 @@ const slots = useSlots();
                     <div class="flex justify-center">
                         <img
                             v-if="isCenter"
-                            src="../../../public/assets/images/homepage/border-line.svg"
+                            src="/assets/images/homepage/border-line.svg"
                             alt=""
                             class="hidden lg:block"
                         />
                         <img
                             v-if="!isCenter"
-                            src="../../../public/assets/images/homepage/border-line-2.svg"
+                            src="/assets/images/homepage/border-line-2.svg"
                             alt=""
                             class="hidden lg:block"
                         />

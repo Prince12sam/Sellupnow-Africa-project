@@ -4,7 +4,7 @@
     >
         <RouterLink class="w-48 h-14 flex items-center" to="/">
             <img v-if="master.logo" :src="master.logo" alt="" class="object-contain" />
-            <img v-else src="../../../../public/assets/logo.png" class="object-contain"/>
+            <img v-else src="/assets/images/placeholder-logo.png" class="object-contain"/>
         </RouterLink>
 
         <!-- menu pages  -->

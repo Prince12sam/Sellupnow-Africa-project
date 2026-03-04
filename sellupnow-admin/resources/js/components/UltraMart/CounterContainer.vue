@@ -25,7 +25,7 @@
                                 class="w-8 h-8 md:w-12 md:h-12 relative overflow-hidden"
                             >
                                 <img
-                                    src="../../../../public/assets/images/counter-icon/payment-gate.svg"
+                                    src="/assets/images/counter-icon/payment-gate.svg"
                                     alt="icon"
                                     class="w-full h-full"
                                 />
@@ -55,7 +55,7 @@
                                 class="w-8 h-8 md:w-12 md:h-12 relative overflow-hidden"
                             >
                                 <img
-                                    src="../../../../public/assets/images/counter-icon/return.svg"
+                                    src="/assets/images/counter-icon/return.svg"
                                     alt="icon"
                                     class="w-full h-full"
                                 />
@@ -85,7 +85,7 @@
                                 class="w-8 h-8 md:w-12 md:h-12 relative overflow-hidden"
                             >
                                 <img
-                                    src="../../../../public/assets/images/counter-icon/varified.svg"
+                                    src="/assets/images/counter-icon/varified.svg"
                                     alt="icon"
                                     class="w-full h-full"
                                 />
@@ -115,7 +115,7 @@
                                 class="w-8 h-8 md:w-12 md:h-12 relative overflow-hidden"
                             >
                                 <img
-                                    src="../../../../public/assets/images/counter-icon/response.svg"
+                                    src="/assets/images/counter-icon/response.svg"
                                     alt="icon"
                                     class="w-full h-full"
                                 />
@@ -145,7 +145,7 @@
                                 class="w-8 h-8 md:w-12 md:h-12 relative overflow-hidden"
                             >
                                 <img
-                                    src="../../../../public/assets/images/counter-icon/support.svg"
+                                    src="/assets/images/counter-icon/support.svg"
                                     alt="icon"
                                     class="w-full h-full"
                                 />

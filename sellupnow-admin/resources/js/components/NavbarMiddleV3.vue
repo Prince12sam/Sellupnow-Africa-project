@@ -9,7 +9,7 @@
                 alt=""
                 class="h-full w-full"
             />
-            <img v-else src="../../../public/assets/logo.png" />
+            <img v-else src="/assets/logo.png" />
         </RouterLink>
 
         <div class="hidden lg:block">

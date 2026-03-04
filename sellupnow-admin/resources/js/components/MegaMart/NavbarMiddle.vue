@@ -10,7 +10,7 @@
                     alt=""
                     class="h-full w-full"
                 />
-                <img v-else src="../../../../public/assets/logo.png" />
+                <img v-else src="/assets/images/placeholder-logo.png" />
             </RouterLink>
 
             <MenuPagesV4 />

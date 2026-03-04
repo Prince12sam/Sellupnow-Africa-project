@@ -2,12 +2,12 @@
     <div class="main-container py-3 flex justify-start items-center gap-8">
         <RouterLink class="" to="/">
             <img v-if="master.logo" :src="master.logo" alt="" class="h-[40px] w-full object-contain" />
-            <img v-else src="../../../../public/assets/logo.png" class="h-[40px] w-full object-contain" />
+            <img v-else src="/assets/images/placeholder-logo.png" class="h-[40px] w-full object-contain" />
         </RouterLink>
         <div class="text-slate-500 flex items-center gap-1 font-normal text-sm leading-[22px]">
             <div class="icon">
                 <img
-                    src="../../../../public/assets/images/location-pin.svg"
+                    src="/assets/images/location-pin.svg"
                     alt=""
                     class="w-6 h-6"
                 />
@@ -26,7 +26,7 @@
                     <RouterLink to="/wishlist">
                         <div class="icon">
                             <img
-                                src="../../../../public/assets/images/heart.svg"
+                                src="/assets/images/heart.svg"
                                 alt="icon"
                             />
                         </div>
@@ -50,7 +50,7 @@
                     >
                         <div class="icon">
                             <img
-                                src="../../../../public/assets/images/cart-bag.svg"
+                                src="/assets/images/cart-bag.svg"
                                 alt="icon"
                             />
                         </div>
@@ -88,7 +88,7 @@
                 @click="showSearch = true"
             >
                 <img
-                    src="../../../../public/assets/images/search-icon.svg"
+                    src="/assets/images/search-icon.svg"
                     alt=""
                 />
             </button>
@@ -227,7 +227,7 @@
                                                     class="flex items-center gap-1"
                                                 >
                                                     <img
-                                                        src="../../../../public/assets/images/heart.svg"
+                                                        src="/assets/images/heart.svg"
                                                         class="w-6 h-6 text-slate-950"
                                                     />
                                                     <div
@@ -259,7 +259,7 @@
                                                     class="flex items-center gap-1"
                                                 >
                                                     <img
-                                                        src="../../../../public/assets/images/cart-bag.svg"
+                                                        src="/assets/images/cart-bag.svg"
                                                         class="w-6 h-6 text-slate-950"
                                                     />
                                                     <div

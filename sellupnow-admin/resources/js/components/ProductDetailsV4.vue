@@ -326,7 +326,7 @@
                             >
                                 <span class="star">
                                     <img
-                                        src="../../../public/assets/images/box-check.png"
+                                        src="/assets/images/box-check.png"
                                         alt="check"
                                     />
                                 </span>

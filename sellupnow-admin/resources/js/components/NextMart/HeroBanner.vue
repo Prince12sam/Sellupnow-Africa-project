@@ -56,7 +56,7 @@
                 class="w-full h-full flex justify-center lg:justify-end items-end z-10 relative"
             >
                 <img
-                    src="../../../../public/assets/images/homepage/hero-banner3.png"
+                    src="/assets/images/homepage/hero-banner3.png"
                     alt=""
                     class="max-w-[300px] lg:max-w-[450px] xl:max-w-[658px]"
                 />

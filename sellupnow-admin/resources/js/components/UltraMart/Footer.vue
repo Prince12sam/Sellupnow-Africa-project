@@ -7,7 +7,7 @@
                 <div class="col-span-12 xl:col-span-4">
                     <div class="h-full w-fit relative">
                         <img
-                            src="../../../../public/assets/images/footer/app-img.png"
+                            src="/assets/images/footer/app-img.png"
                             alt="h-full w-auto"
                         />
 
@@ -29,7 +29,7 @@
                                     class="w-28 h-9 cursor-pointer inline-block"
                                 >
                                     <img
-                                        src="../../../../public/assets/images/footer/googlePlay.png"
+                                        src="/assets/images/footer/googlePlay.png"
                                         alt="google-play"
                                         class="w-full h-full"
                                     />
@@ -40,7 +40,7 @@
                                     class="w-28 h-9 cursor-pointer inline-block"
                                 >
                                     <img
-                                        src="../../../../public/assets/images/footer/apple.png"
+                                        src="/assets/images/footer/apple.png"
                                         alt="apple-store"
                                         class="w-full h-full"
                                     />
@@ -60,7 +60,7 @@
                         />
                         <img
                             v-else
-                            src="../../../../public/assets/logo.png"
+                            src="/assets/images/placeholder-logo.png"
                             loading="lazy"
                             class="h-full w-full"
                         />
@@ -221,7 +221,7 @@
                     />
                     <img
                         v-else
-                        src="../../../../public/assets/logo.png"
+                        src="/assets/images/placeholder-logo.png"
                         loading="lazy"
                         class="h-full w-full object-contain"
                     />

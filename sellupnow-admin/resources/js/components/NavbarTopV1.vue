@@ -18,7 +18,7 @@
                         class="w-[14px] h-[14px] md:w-6 md:h-6 flex justify-center items-center"
                     >
                         <img
-                            src="../../../public/assets/images/phone.svg"
+                            src="/assets/images/phone.svg"
                             alt=""
                         />
                     </span>
@@ -38,7 +38,7 @@
                         class="w-[14px] h-[14px] md:w-6 md:h-6 flex justify-center items-center"
                     >
                         <img
-                            src="../../../public/assets/images/email.svg"
+                            src="/assets/images/email.svg"
                             alt=""
                         />
                     </span>
