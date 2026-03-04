@@ -66,6 +66,10 @@ coverage/
 
 # Backups and archives
 backup/
+
+# Old Codecanyon dual-root structure — not served by Nginx (root is core/public/)
+# All uploads and static assets live in main-file/listocean/core/public/assets/
+main-file/listocean/assets/
 *.zip
 *.tar
 *.tar.gz
