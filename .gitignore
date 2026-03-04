@@ -52,7 +52,17 @@ coverage/
 **/cookie*.txt
 **/cookies*.txt
 **/response_headers.txt
-**/database/backups/*.sql
+
+# Database dumps, backups and SQLite files — NEVER commit these to git.
+# The production VPS gets a clean database via migrations + seeders, not SQL dumps.
+**/storage/app/*.sql
+**/storage/app/*.sqlite
+**/storage/app/*.sqlite3
+**/database/backups/
+**/database/*.sqlite
+**/database/*.sqlite3
+**/database/*.sqlite-shm
+**/database/*.sqlite-wal
 
 # Backups and archives
 backup/
