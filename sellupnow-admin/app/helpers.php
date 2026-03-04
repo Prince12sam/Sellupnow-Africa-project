@@ -40,13 +40,17 @@ if (! function_exists('listocean_core_path')) {
             $base = $parentDir . DIRECTORY_SEPARATOR
                   . implode(DIRECTORY_SEPARATOR, ['main-file', 'listocean', 'core']);
         }
+
+        // Normalize ALL slashes to forward slashes so that realpath()'s forward-slash
+        // output and DIRECTORY_SEPARATOR's backslash on Windows don't mix, which causes
+        // PHP's mkdir() to fail even when parent dirs exist.
+        $base = str_replace('\\', '/', $base);
+
         if ($path === '') {
             return $base;
         }
-        return $base . DIRECTORY_SEPARATOR . ltrim(
-            str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path),
-            DIRECTORY_SEPARATOR
-        );
+        $path = str_replace('\\', '/', $path);
+        return $base . '/' . ltrim($path, '/');
     }
 }
 
