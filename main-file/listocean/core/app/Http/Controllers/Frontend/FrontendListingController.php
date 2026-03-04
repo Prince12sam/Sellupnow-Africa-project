@@ -12,8 +12,12 @@ use Illuminate\Http\Request;
 class FrontendListingController extends Controller
 {
     //Listing Details
-    public function frontendListingDetails($slug)
+    public function frontendListingDetails($slug = null)
     {
+        if (empty($slug)) {
+            return redirect()->route('frontend.home.search');
+        }
+
         $listing = Listing::with('user','brand','tags','metaData')->where('slug', $slug)->firstOrFail();
 
         if (empty($listing)) {
