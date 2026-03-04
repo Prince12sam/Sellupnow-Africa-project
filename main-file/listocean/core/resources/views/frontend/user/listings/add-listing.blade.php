@@ -138,7 +138,7 @@
                 <div class="row w-50 align-items-center mx-auto">
                     <div class="col-lg-12 mt-1">
                         <div class="alert alert-warning d-flex justify-content-between">
-                            <a href="{{ route('user.membership.all') }}">
+                            <a href="{{ route('user.membership.plans') }}">
                              {{ __('Your membership package listing limit has been reached. Please consider upgrading your membership to continue listing:') }}
                             </a>
                         </div>

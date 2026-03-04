@@ -27,6 +27,7 @@
 17. [Security Checklist](#17-security-checklist)
 18. [Deploying Code Updates](#18-deploying-code-updates)
 19. [Quick Reference Commands](#19-quick-reference-commands)
+20. [Troubleshooting](#20-troubleshooting)
 
 ---
 
@@ -1115,4 +1116,211 @@ cd /var/www/sellupnow/main-file/listocean/core && php artisan schedule:list
 
 # Manually run the scheduler (for testing)
 php artisan schedule:run
+```
+
+---
+
+## 20. Troubleshooting
+
+### 20.1 `Failed to load resource: 500 Internal Server Error`
+
+A 500 response in the browser console means Laravel threw an unhandled exception before producing a response. Work through the steps below in order.
+
+#### Step 1 — Read the real error from the log
+
+```bash
+# Frontend app
+tail -n 50 /var/www/sellupnow/main-file/listocean/core/storage/logs/laravel.log
+
+# Admin panel
+tail -n 50 /var/www/sellupnow/sellupnow-admin/storage/logs/laravel.log
+
+# Nginx — catches PHP-FPM fatals that Laravel never sees
+sudo tail -n 50 /var/log/nginx/error.log
+```
+
+The `local.ERROR` or `CRITICAL` line will name the exact file and line. **Fix that specific error first** before continuing with the steps below.
+
+#### Step 2 — Clear all caches
+
+Stale compiled views or config cache from a previous `git pull` frequently causes 500s.
+
+```bash
+# Frontend
+cd /var/www/sellupnow/main-file/listocean/core
+php artisan config:clear && php artisan cache:clear && php artisan view:clear && php artisan route:clear
+
+# Admin
+cd /var/www/sellupnow/sellupnow-admin
+php artisan config:clear && php artisan cache:clear && php artisan view:clear && php artisan route:clear
+```
+
+Then re-cache:
+
+```bash
+php artisan config:cache && php artisan route:cache && php artisan view:cache
+```
+
+#### Step 3 — Verify storage & upload directory permissions
+
+PHP-FPM runs as `www-data`. If it cannot write to `storage/` or `public/assets/uploads/`, Laravel throws a 500 on any page that attempts file I/O.
+
+```bash
+sudo chown -R www-data:www-data \
+  /var/www/sellupnow/main-file/listocean/core/storage \
+  /var/www/sellupnow/main-file/listocean/core/public/assets/uploads \
+  /var/www/sellupnow/sellupnow-admin/storage
+
+sudo chmod -R 775 \
+  /var/www/sellupnow/main-file/listocean/core/storage \
+  /var/www/sellupnow/main-file/listocean/core/public/assets/uploads \
+  /var/www/sellupnow/sellupnow-admin/storage
+```
+
+Also check for **broken symlinks** masquerading as directories (this was a known failure point on this project):
+
+```bash
+find /var/www/sellupnow/main-file/listocean/core/public/assets/uploads -maxdepth 2 -type l | while read l; do
+  [ -e "$l" ] || echo "BROKEN SYMLINK: $l"
+done
+```
+
+If a broken symlink is found, replace it with a real directory:
+
+```bash
+rm /path/to/broken-symlink
+mkdir -p /path/to/broken-symlink
+sudo chown www-data:www-data /path/to/broken-symlink
+sudo chmod 775 /path/to/broken-symlink
+```
+
+#### Step 4 — Confirm `.env` is present and `APP_KEY` is set
+
+```bash
+grep APP_KEY /var/www/sellupnow/main-file/listocean/core/.env
+grep APP_KEY /var/www/sellupnow/sellupnow-admin/.env
+```
+
+If either is blank or the file is missing, generate a key:
+
+```bash
+cd /var/www/sellupnow/main-file/listocean/core && php artisan key:generate --force
+cd /var/www/sellupnow/sellupnow-admin              && php artisan key:generate --force
+```
+
+#### Step 5 — Confirm Vite asset manifest exists
+
+A missing `public/build/manifest.json` causes 500s on every page because Laravel's `@vite()` directive throws when it cannot find the manifest.
+
+```bash
+ls -la /var/www/sellupnow/main-file/listocean/core/public/build/manifest.json
+ls -la /var/www/sellupnow/sellupnow-admin/public/build/manifest.json
+```
+
+If either is absent, rebuild:
+
+```bash
+cd /var/www/sellupnow/main-file/listocean/core && npm ci && npm run build
+cd /var/www/sellupnow/sellupnow-admin           && npm ci && npm run build
+```
+
+#### Step 6 — Restart PHP-FPM and queue workers
+
+```bash
+sudo systemctl restart php8.2-fpm
+sudo supervisorctl restart all
+```
+
+#### Step 7 — Ensure `APP_DEBUG=false` in production
+
+`APP_DEBUG=true` does not cause 500s, but it exposes database credentials, file paths, and stack traces to the browser. Always keep it off in production `.env` files:
+
+```env
+APP_DEBUG=false
+APP_ENV=production
+```
+
+---
+
+### 20.2 `GET /user/listing/add` → 500 Internal Server Error
+
+This route belongs to the **frontend app** (ListOcean). It loads the "Post a Listing" form for authenticated users. The 500 almost always comes from one of the issues below.
+
+#### Step 1 — Check the log first
+
+```bash
+tail -n 80 /var/www/sellupnow/main-file/listocean/core/storage/logs/laravel.log | grep -A 5 "ERROR\|Exception"
+```
+
+The stack trace will identify the exact cause. Common messages and their fixes are listed below.
+
+#### Step 2 — Upload directory missing or not writable
+
+The listing-add controller creates thumbnails and saves images under `public/assets/uploads/media-uploader/`. If that directory does not exist or is not writable by `www-data`, the page 500s immediately on load.
+
+```bash
+# Confirm the directory exists and is a real directory (not a broken symlink)
+ls -la /var/www/sellupnow/main-file/listocean/core/public/assets/uploads/media-uploader
+
+# If it is a broken symlink, remove it and create a real directory
+rm /var/www/sellupnow/main-file/listocean/core/public/assets/uploads/media-uploader
+mkdir -p /var/www/sellupnow/main-file/listocean/core/public/assets/uploads/media-uploader/tiny
+sudo chown -R www-data:www-data /var/www/sellupnow/main-file/listocean/core/public/assets/uploads
+sudo chmod -R 775 /var/www/sellupnow/main-file/listocean/core/public/assets/uploads
+```
+
+#### Step 3 — No listing packages / membership plans configured
+
+The listing-add page queries the `packages` or `listing_packages` table to populate the plan selector. If the table is empty the controller may throw rather than returning an empty collection.
+
+```bash
+mysql -u root -p listocean_db -e "SELECT COUNT(*) FROM packages;"
+```
+
+If zero rows, go to **Admin → Packages** and create at least one free plan, then refresh.
+
+#### Step 4 — No categories in the database
+
+The form requires at least one category to populate the category dropdown. If the table is empty the controller can throw.
+
+```bash
+mysql -u root -p listocean_db -e "SELECT id, name FROM categories LIMIT 10;"
+```
+
+If no rows, seed categories via **Admin → Categories → Add Category**, then refresh.
+
+#### Step 5 — Missing or misconfigured `listocean_core_path()`
+
+`sellupnow-admin/app/helpers.php` contains the `listocean_core_path()` helper used by upload controllers to resolve the correct absolute path to the frontend's `core/` directory. If that helper resolves to a wrong path, `mkdir()` will fail silently and the controller will 500.
+
+Verify the helper returns the correct path:
+
+```bash
+cd /var/www/sellupnow/sellupnow-admin
+php artisan tinker --execute="echo listocean_core_path('public/assets/uploads/media-uploader');"
+```
+
+Expected output: `/var/www/sellupnow/main-file/listocean/core/public/assets/uploads/media-uploader`
+
+If the path is wrong, check the `listocean_core_path()` function in `app/helpers.php` and ensure `realpath(base_path('..'))` resolves to `/var/www/sellupnow/sellupnow-admin/..` = `/var/www/sellupnow`, and that slashes are all forward slashes.
+
+#### Step 6 — User not in a valid membership / not logged in
+
+`/user/listing/add` requires an authenticated user. If session cookies are not being set (misconfigured `SESSION_DOMAIN`, wrong `APP_URL`, or HTTP vs HTTPS mismatch), the middleware redirects or throws.
+
+```bash
+grep -E "APP_URL|SESSION_DOMAIN|SESSION_DRIVER" /var/www/sellupnow/main-file/listocean/core/.env
+```
+
+Ensure `APP_URL` matches the actual domain being accessed (including `https://` in production).
+
+#### Step 7 — Clear caches and retry
+
+After any of the above fixes:
+
+```bash
+cd /var/www/sellupnow/main-file/listocean/core
+php artisan config:clear && php artisan cache:clear && php artisan view:clear
+php artisan config:cache && php artisan route:cache && php artisan view:cache
+sudo systemctl restart php8.2-fpm
 ```
