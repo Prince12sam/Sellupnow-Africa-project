@@ -43,7 +43,6 @@ class SellerUserResource extends JsonResource
             'first_name' => $this->name,
             'last_name' => $this->last_name,
             'phone' => $this->phone,
-            'email' => $this->email,
             'profile_photo' => $this->thumbnail,
             'gender' => $this->gender,
             'date_of_birth' => $this->date_of_birth,

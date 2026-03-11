@@ -27,7 +27,6 @@ class ListingResource extends JsonResource
                 'name'          => $user->name,
                 'profileImage'  => $user->thumbnail,
                 'phoneNumber'   => $user->phone,
-                'email'         => $user->email,
                 'isVerified'    => (bool) ($user->verified_status ?? false),
                 'averageRating' => 0,
                 'totalRating'   => 0,
