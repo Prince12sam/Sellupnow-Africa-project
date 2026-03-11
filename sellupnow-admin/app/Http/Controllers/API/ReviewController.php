@@ -8,6 +8,8 @@ use App\Repositories\ProductRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ShopRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class ReviewController extends Controller
 {
@@ -19,6 +21,11 @@ class ReviewController extends Controller
      */
     public function index(Request $request)
     {
+        $sellerUserId = (int) ($request->query('userId') ?? $request->query('user_id') ?? 0);
+        if ($sellerUserId > 0) {
+            return $this->sellerReviews($sellerUserId);
+        }
+
         $request->validate([
             'product_id' => 'nullable|exists:products,id',
             'shop_id' => 'nullable|exists:shops,id',
@@ -91,6 +98,76 @@ class ReviewController extends Controller
             'average_rating_percentage' => $averageRatingAndPercentage,
             'total' => $total,
             'reviews' => ReviewResource::collection($reviews),
+        ]);
+    }
+
+    private function sellerReviews(int $sellerUserId)
+    {
+        $rows = DB::connection('listocean')
+            ->table('reviews as r')
+            ->leftJoin('users as reviewer', 'reviewer.id', '=', 'r.reviewer_id')
+            ->select(
+                'r.id',
+                'r.rating',
+                'r.message',
+                'r.status',
+                'r.created_at',
+                'reviewer.id as reviewer_id',
+                DB::raw("CONCAT(COALESCE(reviewer.first_name, ''), ' ', COALESCE(reviewer.last_name, '')) as reviewer_name"),
+                'reviewer.image as reviewer_image'
+            )
+            ->where('r.user_id', $sellerUserId)
+            ->where('r.status', 'approved')
+            ->orderByDesc('r.id')
+            ->get();
+
+        $receivedReviews = $rows->map(function ($row) {
+            $reviewerName = trim((string) ($row->reviewer_name ?? ''));
+
+            return [
+                '_id' => (string) $row->id,
+                'reviewer' => [
+                    '_id' => $row->reviewer_id ? (string) $row->reviewer_id : '',
+                    'name' => $reviewerName,
+                    'profileImage' => $row->reviewer_image ? asset('assets/uploads/profile/' . ltrim((string) $row->reviewer_image, '/')) : null,
+                ],
+                'rating' => (float) $row->rating,
+                'reviewText' => $row->message,
+                'reviewedAt' => optional(Carbon::parse($row->created_at))->toIso8601String(),
+            ];
+        })->values();
+
+        $totalReview = $receivedReviews->count();
+        $averageRating = $totalReview > 0
+            ? round($receivedReviews->avg('rating'), 1)
+            : 0.0;
+
+        $percentages = [];
+        foreach ([1, 2, 3, 4, 5] as $star) {
+            $count = $receivedReviews->filter(function ($review) use ($star) {
+                return (int) round((float) ($review['rating'] ?? 0)) === $star;
+            })->count();
+
+            $percentages[(string) $star] = $totalReview > 0
+                ? round(($count / $totalReview) * 100, 2)
+                : 0.0;
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'reviews',
+            'receivedReviews' => $receivedReviews,
+            'averageRating' => $averageRating,
+            'totalRating' => $totalReview,
+            'data' => [
+                'average_rating_percentage' => [
+                    'rating' => $averageRating,
+                    'total_review' => $totalReview,
+                    'percentages' => $percentages,
+                ],
+                'total' => $totalReview,
+                'reviews' => $receivedReviews,
+            ],
         ]);
     }
 }

@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:listify/ui/home_screen/model/most_like_response_model.dart';
 import 'package:listify/ui/my_ads_screen/model/all_ads_response_model.dart' hide Seller;
+import 'package:listify/ui/product_detail_screen/model/product_detail_response_model.dart' as product_detail_model;
 import 'package:listify/ui/review_screen/api/get_review_api.dart';
 import 'package:listify/ui/review_screen/model/get_review_response_model.dart';
 import 'package:listify/ui/seller_detail_screen/api/seller_get_ads_api.dart';
@@ -16,7 +17,7 @@ class SellerDetailScreenController extends GetxController {
   String? image;
   String? register;
   String? userId;
-  Seller? user;
+  product_detail_model.Seller? user;
   final Map<String, dynamic> arguments = Get.arguments ?? {};
   var rating = 0.0.obs;
   bool isReview = false;
@@ -36,7 +37,10 @@ class SellerDetailScreenController extends GetxController {
     image = arguments['image'];
     register = arguments['register'];
     userId = arguments['userId'];
-    // user = arguments['user'];
+    final sellerArg = arguments['user'];
+    if (sellerArg is product_detail_model.Seller) {
+      user = sellerArg;
+    }
 
     if (register != null) {
       register = formatRegisterDate(register);
@@ -57,10 +61,8 @@ class SellerDetailScreenController extends GetxController {
     if (dateString == null || dateString.isEmpty) return "";
 
     try {
-      // Parse the incoming string "8/6/2025, 10:12:53 AM"
-      final parsedDate = DateFormat("M/d/yyyy, h:mm:ss a").parse(dateString);
+      final parsedDate = DateTime.tryParse(dateString) ?? DateFormat("M/d/yyyy, h:mm:ss a").parse(dateString);
 
-      // Format as "March 2025"
       return DateFormat("MMMM yyyy").format(parsedDate);
     } catch (e) {
       Utils.showLog("Date parsing error: $e");
@@ -97,11 +99,9 @@ class SellerDetailScreenController extends GetxController {
       uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
     );
 
-    if (reviewRes != null && reviewRes.status == true) {
-      // 🔹 Save data into list
-      reviews = (reviewRes?.status == true) ? (reviewRes?.receivedReviews ?? []) : [];
+    if (reviewRes != null) {
+      reviews = reviewRes.receivedReviews ?? [];
 
-      // Debug Utils.showLog
       for (var review in reviews) {
         Utils.showLog("Reviewer: ${review.reviewer?.name}");
         Utils.showLog("Rating: ${review.rating}");
@@ -152,13 +152,13 @@ class SellerDetailScreenController extends GetxController {
         loginUserId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
       );
 
-      if (response != null && response.status == true) {
+      if (response != null) {
         userAllAds.clear();
         userAllAds.addAll(response.data);
       }
     } finally {
       isLoading = false;
-      update([Constant.idAllAds]);
+      update([Constant.idAllAds, Constant.idUserAds]);
     }
   }
 
@@ -309,7 +309,7 @@ class SellerDetailScreenController extends GetxController {
 
 
 // controller માં (API response થી totalRatings મૂકી દો)
-  int totalRatingsFromApi = Database.getUserProfileResponseModel?.user?.totalRating ?? 0;
+  int get totalRatingsFromApi => user?.totalRating ?? reviews.length;
 
   double percentForStarUsingApiTotal(int star) {
     final total = totalRatingsFromApi;

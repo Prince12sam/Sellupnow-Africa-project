@@ -13,7 +13,9 @@ class Controller extends BaseController
 
     protected function json(?string $message = null, $data = [], $statusCode = 200, array $headers = [])
     {
-        $content = [];
+        $content = [
+            'status' => $statusCode >= 200 && $statusCode < 300,
+        ];
         if ($message) {
             $content['message'] = $message;
         }

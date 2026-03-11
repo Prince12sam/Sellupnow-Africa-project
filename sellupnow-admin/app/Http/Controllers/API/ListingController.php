@@ -945,6 +945,9 @@ class ListingController extends Controller
         $query = Listing::query()
             ->with([
                 'category',
+                'user',
+                'user.media',
+                'mediaUpload',
                 'favorites' => function ($q) use ($userId) {
                     if ($userId) {
                         $q->where('user_id', $userId);

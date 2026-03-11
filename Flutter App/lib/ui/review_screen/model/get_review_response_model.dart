@@ -12,24 +12,37 @@ class GetReviewResponseModel {
   bool? status;
   String? message;
   List<ReceivedReview>? receivedReviews;
+  double? averageRating;
+  int? totalRating;
 
   GetReviewResponseModel({
     this.status,
     this.message,
     this.receivedReviews,
+    this.averageRating,
+    this.totalRating,
   });
 
   factory GetReviewResponseModel.fromJson(Map<String, dynamic> json) => GetReviewResponseModel(
-        status: json["status"],
+        status: json["status"] ?? true,
         message: json["message"],
-        receivedReviews:
-            json["receivedReviews"] == null ? [] : List<ReceivedReview>.from(json["receivedReviews"]!.map((x) => ReceivedReview.fromJson(x))),
+        receivedReviews: json["receivedReviews"] != null
+            ? List<ReceivedReview>.from(json["receivedReviews"]!.map((x) => ReceivedReview.fromJson(x)))
+            : json["data"]?["reviews"] != null
+                ? List<ReceivedReview>.from(json["data"]["reviews"]!.map((x) => ReceivedReview.fromLegacyJson(x)))
+                : [],
+        averageRating: (json["averageRating"] ?? json["data"]?["average_rating_percentage"]?["rating"])?.toDouble(),
+        totalRating: (json["totalRating"] ?? json["data"]?["average_rating_percentage"]?["total_review"]) is num
+            ? (json["totalRating"] ?? json["data"]?["average_rating_percentage"]?["total_review"]).toInt()
+            : null,
       );
 
   Map<String, dynamic> toJson() => {
         "status": status,
         "message": message,
         "receivedReviews": receivedReviews == null ? [] : List<dynamic>.from(receivedReviews!.map((x) => x.toJson())),
+        "averageRating": averageRating,
+        "totalRating": totalRating,
       };
 }
 
@@ -54,6 +67,20 @@ class ReceivedReview {
         rating: json["rating"]?.toDouble(),
         reviewText: json["reviewText"],
         reviewedAt: json["reviewedAt"] == null ? null : DateTime.parse(json["reviewedAt"]),
+      );
+
+  factory ReceivedReview.fromLegacyJson(Map<String, dynamic> json) => ReceivedReview(
+        id: (json["_id"] ?? json["id"])?.toString(),
+        reviewer: Reviewer(
+          id: '',
+          name: json["customer_name"],
+          profileImage: json["customer_profile"],
+        ),
+        rating: json["rating"]?.toDouble(),
+        reviewText: json["reviewText"] ?? json["description"],
+        reviewedAt: json["reviewedAt"] != null
+            ? DateTime.tryParse(json["reviewedAt"])
+            : DateTime.tryParse(json["created_at"] ?? ''),
       );
 
   Map<String, dynamic> toJson() => {
