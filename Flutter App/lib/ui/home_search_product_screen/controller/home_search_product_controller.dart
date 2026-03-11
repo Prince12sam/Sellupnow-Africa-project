@@ -476,7 +476,7 @@ class HomeSearchProductController extends GetxController {
 
     try {
       likeResponseModel = await PopularProductApi.fetchPopularAds(
-        userId: Database.getUserProfileResponseModel?.user?.id ?? "",
+        userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
         categoryId: _qCategoryId,
         country: _qCountry,
         state: _qState,
@@ -539,7 +539,7 @@ class HomeSearchProductController extends GetxController {
 
     try {
       final resp = await PopularProductApi.fetchPopularAds(
-        userId: Database.getUserProfileResponseModel?.user?.id ?? "",
+        userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
         categoryId: _qCategoryId,
         country: _qCountry,
         state: _qState,
@@ -601,7 +601,7 @@ class HomeSearchProductController extends GetxController {
     try {
       final resp = await AddLikeApi.callApi(
         adId: adId,
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       );
 
       if (resp != null && resp.status == true) {
@@ -642,7 +642,7 @@ class HomeSearchProductController extends GetxController {
     update([Constant.idAllAds]);
 
     final resp = await PopularProductApi.fetchPopularAds(
-      userId: Database.getUserProfileResponseModel?.user?.id ?? "",
+      userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
       search: _qSearch,
       sort: _qSort,
       start: startPagination,
@@ -683,7 +683,7 @@ class HomeSearchProductController extends GetxController {
     update([Constant.idAllAds]);
 
     final result = await PopularProductApi.fetchPopularAds(
-      userId: Database.getUserProfileResponseModel?.user?.id ?? "",
+      userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
       search: _qSearch,
       sort: _qSort,
       start: startPagination,
@@ -733,7 +733,7 @@ class HomeSearchProductController extends GetxController {
     hasMore = true;
 
     final resp = await PopularProductApi.fetchPopularAds(
-      userId: Database.getUserProfileResponseModel?.user?.id ?? '',
+      userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
       categoryId: _qCategoryId,
       country: _qCountry,
       state: _qState,

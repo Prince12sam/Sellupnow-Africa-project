@@ -42,6 +42,8 @@
                             toastr.success(res.message);
                             $('#reviewModal').modal('hide');
                             form[0].reset();
+                            // Reload page after short delay so user sees new review
+                            setTimeout(function(){ location.reload(); }, 800);
                         }
                     },  error: function(xhr, status, error) {
                         // Handle other types of errors, if necessary

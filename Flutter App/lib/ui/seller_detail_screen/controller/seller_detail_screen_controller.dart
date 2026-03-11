@@ -94,7 +94,7 @@ class SellerDetailScreenController extends GetxController {
       userId: userId ?? "",
       start: 1,
       limit: 20,
-      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? '',
+      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
     );
 
     if (reviewRes != null && reviewRes.status == true) {
@@ -148,8 +148,8 @@ class SellerDetailScreenController extends GetxController {
         sellerId: userId ?? "",
         start: start,
         limit: limit,
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
-        loginUserId: Database.getUserProfileResponseModel?.user?.id ?? "",
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
+        loginUserId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
       );
 
       if (response != null && response.status == true) {
@@ -212,7 +212,7 @@ class SellerDetailScreenController extends GetxController {
       // 2) API call
       final resp = await AddLikeApi.callApi(
         adId: adId,
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       );
 
       final serverIsLiked = resp?.like;
@@ -248,7 +248,7 @@ class SellerDetailScreenController extends GetxController {
     try {
       final resp = await AddLikeApi.callApi(
         adId: adId,
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       );
 
       if (resp != null && resp.status == true) {

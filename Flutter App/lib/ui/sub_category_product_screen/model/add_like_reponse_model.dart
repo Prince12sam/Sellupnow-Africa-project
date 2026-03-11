@@ -22,7 +22,7 @@ class AddLikeResponseModel {
   factory AddLikeResponseModel.fromJson(Map<String, dynamic> json) => AddLikeResponseModel(
         status: json["status"],
         message: json["message"],
-        like: json["like"],
+      like: json["like"] ?? json["is_favorite"],
       );
 
   Map<String, dynamic> toJson() => {

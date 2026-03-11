@@ -15,7 +15,7 @@ class FrontendListingController extends Controller
     public function frontendListingDetails($slug = null)
     {
         if (empty($slug)) {
-            return redirect()->route('frontend.home.search');
+            return redirect()->route('frontend.all.listings');
         }
 
         $listing = Listing::with('user','brand','tags','metaData')->where('slug', $slug)->firstOrFail();
@@ -61,7 +61,7 @@ class FrontendListingController extends Controller
         if (!empty(get_static_option('left_listing_details_page_advertisement_size'))){
             $add_query = $add_query->where('size',get_static_option('left_listing_details_page_advertisement_size'));
         }
-        $add = $add_query->where('status',1)->inRandomOrder()->first();
+        $add = $add_query->whereNull('slot')->where('status',1)->inRandomOrder()->first();
         $image_markup = '';
         $redirect_url = '';
         $slot = '';
@@ -93,7 +93,7 @@ class FrontendListingController extends Controller
         if (!empty(get_static_option('right_listing_details_page_advertisement_size'))){
             $right_add_query = $right_add_query->where('size',get_static_option('right_listing_details_page_advertisement_size'));
         }
-        $add_right = $right_add_query->where('status',1)->inRandomOrder()->first();
+        $add_right = $right_add_query->whereNull('slot')->where('status',1)->inRandomOrder()->first();
 
         $right_image_markup = '';
         $right_redirect_url = '';

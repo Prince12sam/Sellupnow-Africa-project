@@ -1,8 +1,11 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:listify/custom/app_bar/custom_app_bar.dart';
 import 'package:listify/custom/app_button/primary_app_button.dart';
+import 'package:listify/custom/bottom_sheet/escrow_bottom_sheet.dart';
 import 'package:listify/custom/bottom_sheet/report_bottom_sheet.dart';
 import 'package:listify/custom/bottom_sheet/safety_tips_bottom_sheet.dart';
 import 'package:listify/custom/bottom_sheet/specific_ad_like_bottom_sheet.dart';
@@ -10,6 +13,7 @@ import 'package:listify/custom/bottom_sheet/specific_ad_view_bottom_sheet.dart';
 import 'package:listify/custom/custom_image_view/custom_image_view.dart';
 import 'package:listify/custom/custom_profile/custom_profile_image.dart';
 import 'package:listify/custom/dialog/bid_dialog.dart';
+import 'package:listify/custom/map_fallback/map_unavailable_fallback.dart';
 import 'package:listify/custom/dialog/remove_product_dialog.dart';
 import 'package:listify/custom/no_data_found/no_data_found_widget.dart';
 import 'package:listify/custom/product_view/grid_product_view.dart';
@@ -19,7 +23,6 @@ import 'package:listify/ui/near_by_listing_screen/controller/map_controller.dart
 import 'package:listify/ui/product_detail_screen/controller/product_detail_screen_controller.dart';
 import 'package:listify/ui/product_detail_screen/controller/specific_product_like_show_controller.dart';
 import 'package:listify/ui/product_detail_screen/shimmer/views_shimmer.dart';
-import 'package:listify/ui/product_detail_screen/view/product_detail_screen_view.dart';
 import 'package:listify/ui/sub_category_product_screen/shimmer/product_gridview_shimmer.dart';
 import 'package:listify/utils/api.dart';
 import 'package:listify/utils/app_asset.dart';
@@ -28,6 +31,7 @@ import 'package:listify/utils/constant.dart';
 import 'package:listify/utils/database.dart';
 import 'package:listify/utils/enums.dart';
 import 'package:listify/utils/font_style.dart';
+import 'package:listify/utils/google_maps_runtime.dart';
 import 'package:listify/utils/like_manager.dart';
 import 'package:listify/utils/utils.dart';
 import 'package:map_location_picker/map_location_picker.dart';
@@ -43,6 +47,7 @@ class DetailTopView extends StatefulWidget {
 class _DetailTopViewState extends State<DetailTopView> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+  bool _galleryPreloaded = false;
 
   final List<String> imageList = [
     AppAsset.acImage,
@@ -53,6 +58,18 @@ class _DetailTopViewState extends State<DetailTopView> {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<ProductDetailScreenController>(builder: (controller) {
+      // Preload all gallery images once available so swipe is instant
+      final gallery = controller.productDetail?.data?.galleryImages;
+      if (gallery != null && gallery.length > 1 && !_galleryPreloaded) {
+        _galleryPreloaded = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          for (final url in gallery) {
+            if (url.startsWith('http') && mounted) {
+              precacheImage(CachedNetworkImageProvider(url), context);
+            }
+          }
+        });
+      }
       return Stack(
         children: [
           SizedBox(
@@ -131,12 +148,7 @@ class ProductDetailView extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      // color: Colors.red,
-                      width: controller.productDetail?.data?.isAuctionEnabled ==
-                              true
-                          ? Get.width * 0.65
-                          : Get.width,
+                    Flexible(
                       child: Text(
                         controller.productDetail?.data?.title ?? '',
                         style: AppFontStyle.fontStyleW700(
@@ -301,6 +313,12 @@ class ProductDescriptionDetailView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<ProductDetailScreenController>(builder: (controller) {
+      final hierarchy = controller.productDetail?.data?.categoryHierarchy ?? [];
+      final fallbackCategory = controller.productDetail?.data?.category;
+      final categoryNodes = hierarchy.isNotEmpty
+          ? hierarchy
+          : (fallbackCategory != null ? [fallbackCategory] : []);
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -310,7 +328,7 @@ class ProductDescriptionDetailView extends StatelessWidget {
                 fontSize: 16, fontColor: AppColors.black),
           ).paddingOnly(left: 14, bottom: 4),
           Text(
-            controller.productDetail?.data?.description ?? '',
+            Utils.stripHtml(controller.productDetail?.data?.description),
             style: AppFontStyle.fontStyleW5003(
                 fontSize: 12, fontColor: AppColors.productDesColor),
           ).paddingOnly(right: 14, left: 14, bottom: 20),
@@ -339,11 +357,9 @@ class ProductDescriptionDetailView extends StatelessWidget {
                 child: Wrap(
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: List.generate(
-                    controller.productDetail?.data?.categoryHierarchy?.length ??
-                        0,
+                    categoryNodes.length,
                     (index) {
-                      final category = controller
-                          .productDetail!.data!.categoryHierarchy![index];
+                      final category = categoryNodes[index];
                       return Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -354,10 +370,7 @@ class ProductDescriptionDetailView extends StatelessWidget {
                               fontColor: AppColors.productDesColor,
                             ),
                           ),
-                          if (index !=
-                              (controller.productDetail!.data!
-                                      .categoryHierarchy!.length -
-                                  1))
+                          if (index != (categoryNodes.length - 1))
                             Text(
                               " > ",
                               style: AppFontStyle.fontStyleW500(
@@ -449,6 +462,27 @@ class ProductDescriptionDetailView extends StatelessWidget {
                           valueText = attr.value.join(', ');
                         }
 
+                        final imgSource = (attr.image ?? '').trim();
+                        final isSvg = imgSource.toLowerCase().contains('.svg');
+                        final isNetwork = imgSource.startsWith('http://') || imgSource.startsWith('https://');
+                        final imgUrl = isNetwork ? imgSource : (imgSource.isNotEmpty ? '${Api.baseUrl}$imgSource' : '');
+
+                        Widget iconWidget;
+                        if (imgSource.isEmpty) {
+                          iconWidget = Icon(Icons.category_outlined, color: AppColors.popularProductText, size: 22);
+                        } else if (isSvg) {
+                          iconWidget = SvgPicture.network(
+                            imgUrl,
+                            colorFilter: ColorFilter.mode(AppColors.popularProductText, BlendMode.srcIn),
+                            placeholderBuilder: (_) => Icon(Icons.category_outlined, color: AppColors.popularProductText, size: 22),
+                          );
+                        } else {
+                          iconWidget = CustomImageView(
+                            image: imgSource,
+                            fit: BoxFit.cover,
+                          );
+                        }
+
                         return Container(
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -456,10 +490,7 @@ class ProductDescriptionDetailView extends StatelessWidget {
                               SizedBox(
                                 width: 40,
                                 height: 36,
-                                child: CustomImageView(
-                                  image: attr.image ?? '',
-                                  fit: BoxFit.cover,
-                                ),
+                                child: iconWidget,
                               ).paddingOnly(top: 3),
                               const SizedBox(width: 14),
                               Expanded(
@@ -661,6 +692,12 @@ class ProductLocationView extends StatelessWidget {
                 child: GetBuilder<MapController>(
                   id: Constant.location,
                   builder: (mapController) {
+                    if (!GoogleMapsRuntime.nativeMapsEnabled) {
+                      return const MapUnavailableFallback(
+                        borderRadius: BorderRadius.all(Radius.circular(20)),
+                      );
+                    }
+
                     return mapController.latitude != null &&
                             mapController.longitude != null
                         ? GoogleMap(
@@ -965,13 +1002,20 @@ class ReportAdsRelatedProductView extends StatelessWidget {
                               // },
 
                               onTap: () {
-                                Get.offNamed(AppRoutes.productDetailScreen,
-                                    arguments: {
-                                      'sellerDetail': true,
-                                      'relatedProduct': true,
-                                      'viewLikeCount': true,
-                                      'adId': relatedProduct.id,
-                                    });
+                                final targetId = (relatedProduct.id ?? '').trim();
+                                if (targetId.isEmpty) {
+                                  Utils.showToast(Get.context!, 'Unable to open this listing.');
+                                  return;
+                                }
+
+                                Get.toNamed(AppRoutes.productDetailScreen, arguments: {
+                                  'sellerDetail': true,
+                                  'relatedProduct': true,
+                                  'viewLikeCount': true,
+                                  'adId': targetId,
+                                  'listing_id': targetId,
+                                  'id': targetId,
+                                }, preventDuplicates: false);
                               },
                               child: ProductGridView(
                                 isVerify:
@@ -1024,22 +1068,24 @@ class DetailBottomView extends StatelessWidget {
         builder: (controller) {
           return controller.isDetailLoading
               ? SizedBox()
-              : Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.black.withValues(alpha: 0.1),
-                            blurRadius: 12,
-                            offset: Offset(0, -2),
-                            spreadRadius: 0,
-                          ),
-                        ],
-                      ),
-                      child: controller.productDetail?.data?.seller?.id ==
+              : SafeArea(
+                  top: false,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.black.withValues(alpha: 0.1),
+                              blurRadius: 12,
+                              offset: Offset(0, -2),
+                              spreadRadius: 0,
+                            ),
+                          ],
+                        ),
+                        child: controller.productDetail?.data?.seller?.id ==
                               Database.getUserProfileResponseModel?.user?.id
                           ? Row(
                               children: [
@@ -1090,7 +1136,29 @@ class DetailBottomView extends StatelessWidget {
                               ],
                             ).paddingOnly(
                               right: 16, left: 16, bottom: 12, top: 12)
-                          : Row(
+                          : Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (controller.productDetail?.data?.escrowEnabled == true)
+                                  PrimaryAppButton(
+                                    onTap: () {
+                                      Get.bottomSheet(
+                                        EscrowBottomSheet(
+                                          listingId: controller.productDetail?.data?.id ?? '',
+                                          listingTitle: controller.productDetail?.data?.title ?? '',
+                                          listingImage: controller.productDetail?.data?.primaryImage ?? '',
+                                        ),
+                                        isScrollControlled: true,
+                                        backgroundColor: Colors.transparent,
+                                        barrierColor: AppColors.black.withValues(alpha: 0.8),
+                                      );
+                                    },
+                                    height: 48,
+                                    color: AppColors.green,
+                                    widget: Icon(Icons.shield_outlined, color: AppColors.white, size: 22),
+                                    text: 'Buy with Escrow',
+                                  ).paddingOnly(right: 16, left: 16, top: 12),
+                                Row(
                               children: [
                                 Expanded(
                                   child: PrimaryAppButton(
@@ -1315,8 +1383,11 @@ class DetailBottomView extends StatelessWidget {
                               ],
                             ).paddingOnly(
                               right: 16, left: 16, bottom: 12, top: 12),
-                    )
-                  ],
+                              ],
+                            ),
+                      ),
+                    ],
+                  ),
                 );
         });
   }
@@ -1451,25 +1522,27 @@ class FullMapScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(EnumLocale.txtProductLocation.name.tr),
       ),
-      body: GoogleMap(
-        initialCameraPosition: CameraPosition(
-          target: apiLatLng,
-          zoom: 16,
-        ),
-        markers: {
-          Marker(
-            markerId: MarkerId("product_location"),
-            position: apiLatLng,
-            infoWindow: InfoWindow(
-              title: location.city ?? "Location",
-              snippet: location.fullAddress ?? "",
-            ),
-          ),
-        },
-        myLocationEnabled: false,
-        zoomControlsEnabled: true,
-        mapType: MapType.normal,
-      ),
+      body: GoogleMapsRuntime.nativeMapsEnabled
+          ? GoogleMap(
+              initialCameraPosition: CameraPosition(
+                target: apiLatLng,
+                zoom: 16,
+              ),
+              markers: {
+                Marker(
+                  markerId: MarkerId("product_location"),
+                  position: apiLatLng,
+                  infoWindow: InfoWindow(
+                    title: location.city ?? "Location",
+                    snippet: location.fullAddress ?? "",
+                  ),
+                ),
+              },
+              myLocationEnabled: false,
+              zoomControlsEnabled: true,
+              mapType: MapType.normal,
+            )
+          : const MapUnavailableFallback(expand: true),
     );
   }
 }

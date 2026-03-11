@@ -4,16 +4,17 @@ import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:listify/custom/app_bar/custom_app_bar.dart';
 import 'package:listify/custom/app_button/primary_app_button.dart';
+import 'package:listify/custom/map_fallback/map_unavailable_fallback.dart';
 import 'package:listify/routes/app_routes.dart';
 import 'package:listify/ui/near_by_listing_screen/controller/map_controller.dart';
 import 'package:listify/ui/near_by_listing_screen/controller/near_by_listing_screen_controller.dart';
 import 'package:listify/ui/sub_category_product_screen/controller/gloable_controller.dart';
-import 'package:listify/utils/app_asset.dart';
 import 'package:listify/utils/app_color.dart';
 import 'package:listify/utils/constant.dart';
 import 'package:listify/utils/database.dart';
 import 'package:listify/utils/enums.dart';
 import 'package:listify/utils/font_style.dart';
+import 'package:listify/utils/google_maps_runtime.dart';
 import 'package:listify/utils/utils.dart';
 
 class NearByListingScreenAppBar extends StatelessWidget {
@@ -39,82 +40,63 @@ class MapView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<MapController>();
+    return Container(
+      margin: const EdgeInsets.only(top: 18, left: 12, right: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+      ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: GetBuilder<MapController>(
+            id: Constant.location,
+            builder: (mapController) {
+              if (mapController.latitude == null ||
+                  mapController.longitude == null) {
+                return const Center(child: CupertinoActivityIndicator());
+              }
 
-    return Column(
-      children: [
-        Stack(
-          children: [
-            Container(
-              height: Get.height * 0.49,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: GetBuilder<MapController>(
-                  id: Constant.location,
-                  builder: (mapController) {
-                    if (mapController.latitude == null ||
-                        mapController.longitude == null) {
-                      return const Center(child: CupertinoActivityIndicator());
-                    }
+              if (!GoogleMapsRuntime.nativeMapsEnabled) {
+                return const MapUnavailableFallback(
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                );
+              }
 
-                    return GoogleMap(
-                      markers: mapController.markers,
-                      circles: mapController.circles,
-                      initialCameraPosition: CameraPosition(
-                        target: LatLng(
-                          mapController.latitude!,
-                          mapController.longitude!,
-                        ),
-                        zoom: 15.5,
-                      ),
-                      myLocationEnabled: true,
-                      myLocationButtonEnabled: true,
-                      mapType: MapType.normal,
-                      zoomGesturesEnabled: true, // ✅ always allow zoom
-                      scrollGesturesEnabled: true, // ✅ enable drag
-                      rotateGesturesEnabled: true, // ✅ enable rotate
-                      tiltGesturesEnabled: true, // ✅ enable tilt
-                      zoomControlsEnabled: false,
-                      // onMapCreated: (GoogleMapController gctl) async {
-                      //   mapController.mapController = gctl;
-                      //
-                      //   if (mapController.center == null &&
-                      //       mapController.latitude != null &&
-                      //       mapController.longitude != null) {
-                      //     final c = LatLng(
-                      //       mapController.latitude!,
-                      //       mapController.longitude!,
-                      //     );
-                      //     await mapController.onHandleTapPoint(c);
-                      //   }
-                      // },
-
-                      onMapCreated: (gctl) async {
-                        mapController.mapController = gctl;
-
-                        if (mapController.center == null &&
-                            mapController.latitude != null &&
-                            mapController.longitude != null) {
-                          final c = LatLng(mapController.latitude!, mapController.longitude!);
-                          await mapController.onHandleTapPoint(c); // this fits bounds
-                        } else {
-                          await mapController.fitCircleInView(paddingPx: 60);
-                        }
-                      },
-
-                      onTap: mapController.onHandleTapPoint, // ✅ always active
-                    );
-                  },
+              return GoogleMap(
+                markers: mapController.markers,
+                circles: mapController.circles,
+                initialCameraPosition: CameraPosition(
+                  target: LatLng(
+                    mapController.latitude!,
+                    mapController.longitude!,
+                  ),
+                  zoom: 15.5,
                 ),
-              ),
-            ),
-          ],
-        )
-      ],
-    ).paddingOnly(top: 18, left: 12, right: 12);
+                myLocationEnabled: true,
+                myLocationButtonEnabled: true,
+                mapType: MapType.normal,
+                zoomGesturesEnabled: true,
+                scrollGesturesEnabled: true,
+                rotateGesturesEnabled: true,
+                tiltGesturesEnabled: true,
+                zoomControlsEnabled: false,
+                onMapCreated: (gctl) async {
+                  mapController.mapController = gctl;
+
+                  if (mapController.center == null &&
+                      mapController.latitude != null &&
+                      mapController.longitude != null) {
+                    final c = LatLng(mapController.latitude!, mapController.longitude!);
+                    await mapController.onHandleTapPoint(c);
+                  } else {
+                    await mapController.fitCircleInView(paddingPx: 60);
+                  }
+                },
+                onTap: mapController.onHandleTapPoint,
+              );
+            },
+          ),
+        ),
+    );
   }
 }
 

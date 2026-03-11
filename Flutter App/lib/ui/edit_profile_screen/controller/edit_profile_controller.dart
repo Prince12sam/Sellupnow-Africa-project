@@ -41,17 +41,24 @@ class EditProfileController extends GetxController {
     // TODO: implement onInit
     super.onInit();
 
-    name.text = Database.getUserProfileResponseModel?.user?.name ?? "";
+    name.text = Database.getUserProfileResponseModel?.user?.name ?? Database.loginUserName;
     address.text = Database.getUserProfileResponseModel?.user?.address ?? "";
-    number.text = Database.getUserProfileResponseModel?.user?.phoneNumber ?? "";
-    email.text = Database.getUserProfileResponseModel?.user?.email ?? "";
+    number.text = Database.getUserProfileResponseModel?.user?.phoneNumber ?? Database.loginUserPhoneNumber;
+    email.text = Database.getUserProfileResponseModel?.user?.email ?? Database.loginUserEmail;
     isNotificationSwitch = Database.getUserProfileResponseModel?.user?.isNotificationsAllowed ?? false;
     isContactInfoSwitch = Database.getUserProfileResponseModel?.user?.isContactInfoVisible ?? false;
 
     log("name.text::${name.text}");
     log("Database.getUserProfileResponseModel?.user?.profileImage${Database.getUserProfileResponseModel?.user?.profileImage}");
 
-    dialCode = Database.dialCode;
+    // Use country code from backend if available, otherwise fall back to local storage
+    final backendCountry = Database.getUserProfileResponseModel?.user?.country;
+    if (backendCountry != null && backendCountry.isNotEmpty) {
+      selectedCountryCode = backendCountry;
+      Database.onSetSelectedCountryCode(backendCountry);
+    }
+
+    dialCode = Database.getUserProfileResponseModel?.user?.phoneCode ?? Database.dialCode;
   }
 
   ///SWITCH
@@ -96,25 +103,44 @@ class EditProfileController extends GetxController {
 
     editProfileModel = await EditProfileApi.callApi(
       address: address.text,
-      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       image: pickImage == "" ? photo : pickImage,
       phoneNumber: number.text,
       name: name.text,
       email: email.text,
+      phoneCode: dialCode,
+      country: countryCodeToSave,
       isNotificationsAllowed:isNotificationSwitch,
       isContactInfoVisible:isContactInfoSwitch,
     );
 
     if (editProfileModel?.status == true) {
-      Database.getUserProfileResponseModel =
-          await GetUserProfileApi.callApi(loginUserId: Database.getUserProfileResponseModel?.user?.firebaseUid ?? '');
-      Database.onSetLoginUserProfilePic(Database.getUserProfileResponseModel?.user?.profileImage ?? "");
-      Database.onSetLoginUserName(Database.getUserProfileResponseModel!.user!.name!);
-      Database.onSetLoginUserNickName(Database.getUserProfileResponseModel?.user?.name ?? "");
-      Database.onSetLoginUserEmail(Database.getUserProfileResponseModel!.user!.email!);
-      Database.onSetLoginUserPhoneNumber(Database.getUserProfileResponseModel?.user?.phoneNumber ?? "");
+      // Update local Database values immediately from the form data
+      Database.onSetLoginUserName(name.text);
+      Database.onSetLoginUserNickName(name.text);
+      Database.onSetLoginUserEmail(email.text);
+      Database.onSetLoginUserPhoneNumber(number.text);
       Database.onSetSelectedCountryCode(countryCodeToSave);
-      Database.getUserProfileResponseModel = getUserProfileResponseModel;
+      if (pickImage != null && pickImage!.isNotEmpty) {
+        Database.onSetLoginUserProfilePic(pickImage!);
+      }
+
+      // Try to refresh full profile from API (non-critical)
+      try {
+        final profileResult = await GetUserProfileApi.callApi(
+            loginUserId: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId);
+        if (profileResult != null) {
+          getUserProfileResponseModel = profileResult;
+          Database.getUserProfileResponseModel = profileResult;
+          Database.onSetLoginUserProfilePic(profileResult.user?.profileImage ?? "");
+          Database.onSetLoginUserName(profileResult.user?.name ?? name.text);
+          Database.onSetLoginUserNickName(profileResult.user?.name ?? name.text);
+          Database.onSetLoginUserEmail(profileResult.user?.email ?? email.text);
+          Database.onSetLoginUserPhoneNumber(profileResult.user?.phoneNumber ?? number.text);
+        }
+      } catch (e) {
+        Utils.showLog("Edit profile refresh failed (non-critical): $e");
+      }
 
       log(" loginUserProfilePic ::: ${Database.loginUserProfilePic}");
 
@@ -122,8 +148,6 @@ class EditProfileController extends GetxController {
 
       Get.back();
       log("${Database.getUserProfileResponseModel?.user}");
-      getUserProfileResponseModel = await GetUserProfileApi.callApi(loginUserId: Database.loginUserFirebaseId);
-      Database.getUserProfileResponseModel = getUserProfileResponseModel;
 
       Utils.showLog("data>>>>>>>>>>>${Database.getUserProfileResponseModel?.user?.name}");
     } else {
@@ -153,7 +177,7 @@ class EditProfileController extends GetxController {
 
     // Call API
     final response = await NotificationPermissionApi.updateUserPermission(
-      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       type: "isNotificationsAllowed",
     );
 
@@ -178,7 +202,7 @@ class EditProfileController extends GetxController {
 
     // Call API
     final response = await ContactPermissionApi.updateUserPermission(
-      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       type: "isContactInfoVisible",
     );
 

@@ -14,7 +14,7 @@ class ProductDetailApi {
     Utils.showLog("Product Detail Api Calling...");
 
     final uri = Uri.parse(
-      "${Api.productDetailApi}?adId=$adId&userId=$userId",
+      "${Api.productDetailApi}?listing_id=$adId&userId=$userId",
     );
 
     final headers = {

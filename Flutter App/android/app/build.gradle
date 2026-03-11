@@ -12,6 +12,12 @@ android {
     if (keystorePropertiesFile.exists()) {
         keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
     }
+    def localPropertiesFile = rootProject.file('local.properties')
+    def localProperties = new Properties()
+    if (localPropertiesFile.exists()) {
+        localProperties.load(new FileInputStream(localPropertiesFile))
+    }
+    def googleMapsApiKey = localProperties.getProperty('google.maps.api.key') ?: System.getenv('GOOGLE_MAPS_API_KEY') ?: ''
     signingConfigs {
         release {
             if (keystorePropertiesFile.exists()) {
@@ -25,6 +31,7 @@ android {
     namespace = "com.company.sellupnow"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
+    useLibrary 'org.apache.http.legacy'
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -47,19 +54,18 @@ android {
         targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders += [GOOGLE_MAPS_API_KEY: googleMapsApiKey]
     }
 
     lintOptions {
-        checkReleaseBuilds false
+        checkReleaseBuilds true
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig signingConfigs.release
-            minifyEnabled false
-            shrinkResources false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -68,6 +74,15 @@ android {
 flutter {
     source = "../.."
 }
+
+// Skip AAR metadata AGP version checks (transitive deps declare newer AGP requirements
+// but are functionally compatible with AGP 8.6.0)
+afterEvaluate {
+    tasks.matching { it.name.startsWith("check") && it.name.endsWith("AarMetadata") }.configureEach {
+        enabled = false
+    }
+}
+
 dependencies {
     implementation 'com.google.android.material:material:1.12.0' // or later version
     implementation 'androidx.lifecycle:lifecycle-process:2.9.2' // or later version

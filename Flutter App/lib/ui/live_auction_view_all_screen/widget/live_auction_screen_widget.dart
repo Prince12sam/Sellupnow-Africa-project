@@ -34,7 +34,7 @@ class LiveAuctionScreenView extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetBuilder<LiveAuctionScreenController>(builder: (controller) {
       const cross = 2;
-      const tileHeight = 222.0;
+      const tileHeight = 240.0;
 
       return controller.isLoading
           ? LiveAuctionViewAllShimmer()

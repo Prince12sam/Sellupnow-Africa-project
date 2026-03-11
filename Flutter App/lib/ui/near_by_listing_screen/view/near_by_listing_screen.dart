@@ -20,7 +20,7 @@ class NearByListingScreen extends StatelessWidget {
       bottomNavigationBar: BottomBarWidget(),
       body: Column(
         children: [
-          MapView(),
+          Expanded(child: MapView()),
           // Expanded(
           //   child: SingleChildScrollView(
           //     child: BottomDetailsView(),

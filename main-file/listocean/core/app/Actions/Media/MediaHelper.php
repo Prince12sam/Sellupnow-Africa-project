@@ -10,6 +10,31 @@ use Intervention\Image\Facades\Image;
 
 class MediaHelper
 {
+    private static function normalizeAbsoluteLocalUrl(?string $url): string
+    {
+        $url = trim((string) $url);
+        if ($url === '' || !preg_match('~^https?://~i', $url)) {
+            return $url;
+        }
+
+        $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+        if (!in_array($host, ['127.0.0.1', 'localhost'], true)) {
+            return $url;
+        }
+
+        $path = (string) parse_url($url, PHP_URL_PATH);
+        if ($path === '') {
+            return $url;
+        }
+
+        $base = request()->getSchemeAndHttpHost();
+        if (empty($base)) {
+            $base = rtrim((string) config('app.url'), '/');
+        }
+
+        return rtrim($base, '/') . '/' . ltrim($path, '/');
+    }
+
     private static function publicMediaPath($relativePath = '')
     {
         $base = public_path('assets/uploads/media-uploader');
@@ -35,7 +60,7 @@ class MediaHelper
 
         foreach ($candidates as $candidate) {
             if (file_exists(public_path($candidate))) {
-                return asset($candidate);
+                return self::normalizeAbsoluteLocalUrl(asset($candidate));
             }
         }
 
@@ -62,7 +87,7 @@ class MediaHelper
                 'alt' => $selected_image->alt,
                 'size' => $selected_image->size,
                 'path' => $selected_image->path,
-                'img_url' => $image_url ?: asset('assets/uploads/no-image.png'),
+                'img_url' => $image_url ?: self::normalizeAbsoluteLocalUrl(asset('assets/uploads/no-image.png')),
                 'upload_at' => date_format($selected_image->created_at, 'd M y')
             ];
 
@@ -76,7 +101,7 @@ class MediaHelper
                 'alt' => $image->alt,
                 'size' => $image->size,
                 'path' => $image->path,
-                'img_url' => $image_url ?: asset('assets/uploads/no-image.png'),
+                'img_url' => $image_url ?: self::normalizeAbsoluteLocalUrl(asset('assets/uploads/no-image.png')),
                 'upload_at' => date_format($image->created_at, 'd M y')
             ];
         }
@@ -244,7 +269,7 @@ class MediaHelper
                 'alt' => $image->alt,
                 'size' => $image->size,
                 'path' => $image->path,
-                'img_url' => $image_url ?: asset('assets/uploads/no-image.png'),
+                'img_url' => $image_url ?: self::normalizeAbsoluteLocalUrl(asset('assets/uploads/no-image.png')),
                 'upload_at' => date_format($image->created_at, 'd M y')
             ];
         }

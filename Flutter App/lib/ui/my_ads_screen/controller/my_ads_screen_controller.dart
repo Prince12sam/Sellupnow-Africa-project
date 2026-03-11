@@ -93,6 +93,7 @@ import 'package:get/get.dart';
 import 'package:listify/ui/my_ads_screen/api/all_ads_api.dart';
 import 'package:listify/ui/my_ads_screen/model/all_ads_response_model.dart';
 import 'package:listify/utils/constant.dart';
+import 'package:listify/utils/database.dart';
 import 'package:listify/utils/utils.dart';
 
 class MyAdsScreenController extends GetxController {
@@ -101,10 +102,33 @@ class MyAdsScreenController extends GetxController {
   List<AllAds> allAdsList = [];
   ScrollController scrollController = ScrollController();
   bool isPaginationLoading = false;
+  bool _listenerAttached = false;
 
   // Add current tab index and type
   int currentTabIndex = 0;
   String currentAdType = "";
+
+  bool _hasUsableResponse(AllAdsResponseModel? response) {
+    if (response == null) return false;
+    if (response.status == true) return true;
+    return response.data.isNotEmpty;
+  }
+
+  Future<void> _handleAuthError(AllAdsResponseModel? response) async {
+    final message = response?.message ?? '';
+    final lowerMessage = message.toLowerCase();
+
+    if (lowerMessage.contains('unauthenticated') ||
+        lowerMessage.contains('invalid or expired firebase token') ||
+        lowerMessage.contains('session expired')) {
+      await Database.onLogOut();
+      return;
+    }
+
+    if (message.isNotEmpty && Get.context != null) {
+      Utils.showToast(Get.context!, message);
+    }
+  }
 
   @override
   void onInit() {
@@ -115,37 +139,30 @@ class MyAdsScreenController extends GetxController {
 
   init() async {
     Utils.showLog("Enter all ads Controller");
-    scrollController.addListener(onAllAdsPagination);
+    if (!_listenerAttached) {
+      scrollController.addListener(onAllAdsPagination);
+      _listenerAttached = true;
+    }
 
     AllAdsApi.startPagination = 0;
     await getAllAds(adType: currentAdType);
   }
 
-  ///tabs
+  ///tabs — only the 5 states that exist in the database schema
   final List<String> tabs = [
     'All Ads',
-    'Featured',
     'Live',
-    'Deactivate',
+    'Featured',
+    'Deactivated',
     'Under Review',
-    'Sold Out',
-    'Permanent Rejected',
-    'Soft Rejected',
-    'Resubmitted',
-    'Expired',
   ];
 
   final List<String> type = [
-    'ALL',
-    'FEATURED',
+    '',
     'LIVE',
+    'FEATURED',
     'DEACTIVATED',
     'UNDER_REVIEW',
-    'SOLD_OUT',
-    'PERMANENT_REJECTED',
-    'SOFT_REJECTED',
-    'RESUBMITTED',
-    'EXPIRED',
   ];
 
   /// Method to handle tab change from UI
@@ -172,7 +189,12 @@ class MyAdsScreenController extends GetxController {
 
     allAdsResponseModel = await AllAdsApi.callApi(adType);
     allAdsList.clear();
-    allAdsList.addAll(allAdsResponseModel?.data ?? []);
+
+    if (_hasUsableResponse(allAdsResponseModel)) {
+      allAdsList.addAll(allAdsResponseModel?.data ?? []);
+    } else {
+      await _handleAuthError(allAdsResponseModel);
+    }
 
     Utils.showLog("Get all Ads list data $allAdsList");
     Utils.showLog("Ads fetched for type: $adType -> ${allAdsList.length} items");
@@ -193,8 +215,10 @@ class MyAdsScreenController extends GetxController {
       allAdsResponseModel = await AllAdsApi.callApi(currentAdType);
 
       // Add new data to existing list (don't clear for pagination)
-      if (allAdsResponseModel?.data != null) {
+      if (_hasUsableResponse(allAdsResponseModel)) {
         allAdsList.addAll(allAdsResponseModel!.data);
+      } else {
+        await _handleAuthError(allAdsResponseModel);
       }
 
       Utils.showLog("Ads pagination ::::: ${allAdsList.length} total items");
@@ -219,7 +243,10 @@ class MyAdsScreenController extends GetxController {
       update();
 
       // Your API call or data refresh logic here
-      await getAllAds(adType: tabIndex.toString());
+      currentTabIndex = tabIndex;
+      currentAdType = type[tabIndex];
+      AllAdsApi.startPagination = 0;
+      await getAllAds(adType: currentAdType);
 
       isLoading = false;
       update();

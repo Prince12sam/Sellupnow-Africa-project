@@ -177,14 +177,16 @@
     position: relative;
     aspect-ratio: 16/9;
 }
-.video-card img {
+.video-card img,
+.video-card video {
     width: 100%;
     height: 100%;
     object-fit: cover;
     transition: transform .3s;
     opacity: .9;
 }
-.video-card:hover img { transform: scale(1.04); opacity: 1; }
+.video-card:hover img,
+.video-card:hover video { transform: scale(1.04); opacity: 1; }
 .video-card-overlay {
     position: absolute;
     inset: 0;
@@ -412,13 +414,11 @@
                         <div class="profile-videos-grid">
                             @foreach($userVideos as $video)
                                 @php
-                                    $ytId = $video->video_url;
-                                    $thumb = "https://img.youtube.com/vi/{$ytId}/hqdefault.jpg";
                                     $watchUrl = route('frontend.reel.watch', $video->id);
                                 @endphp
                                 <a href="{{ $watchUrl }}" class="video-card">
-                                    <img src="{{ $thumb }}" alt="{{ $video->title }}" loading="lazy"
-                                         onerror="this.src='https://img.youtube.com/vi/{{ $ytId }}/0.jpg'">
+                                    <video src="{{ $video->video_url }}" muted autoplay loop playsinline preload="metadata"
+                                           style="width:100%;height:100%;object-fit:cover;"></video>
                                     <div class="video-card-overlay">
                                         <div class="video-play-btn">
                                             <svg width="22" height="22" viewBox="0 0 24 24" fill="#fe2c55"><path d="M8 5v14l11-7z"/></svg>
@@ -451,23 +451,40 @@
     <script>
     (function () {
         const tabs = document.querySelectorAll('#profileTabs .profile-tab-btn');
+
+        function handleTabSwitch(activeTab) {
+            tabs.forEach(function (t) { t.classList.remove('active'); });
+            document.querySelectorAll('.profile-tab-pane').forEach(function (p) { p.classList.remove('active'); });
+            activeTab.classList.add('active');
+            var pane = document.getElementById('tab-' + activeTab.dataset.tab);
+            pane.classList.add('active');
+
+            // Auto-play/pause videos based on active tab
+            var allVids = document.querySelectorAll('#tab-videos video');
+            if (activeTab.dataset.tab === 'videos') {
+                allVids.forEach(function(v) { v.play().catch(function(){}); });
+            } else {
+                allVids.forEach(function(v) { v.pause(); });
+            }
+        }
+
         tabs.forEach(function (btn) {
             btn.addEventListener('click', function () {
-                tabs.forEach(function (t) { t.classList.remove('active'); });
-                document.querySelectorAll('.profile-tab-pane').forEach(function (p) { p.classList.remove('active'); });
-                btn.classList.add('active');
-                document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+                handleTabSwitch(btn);
             });
         });
 
         // If URL hash matches a tab, activate it
         var hash = window.location.hash.replace('#', '');
         if (hash && document.getElementById('tab-' + hash)) {
-            tabs.forEach(function (t) { t.classList.remove('active'); });
-            document.querySelectorAll('.profile-tab-pane').forEach(function (p) { p.classList.remove('active'); });
             var activeBtn = document.querySelector('[data-tab="' + hash + '"]');
-            if (activeBtn) activeBtn.classList.add('active');
-            document.getElementById('tab-' + hash).classList.add('active');
+            if (activeBtn) handleTabSwitch(activeBtn);
+        }
+
+        // Pause videos on initial load if Videos tab is not active
+        var videosTab = document.querySelector('[data-tab="videos"]');
+        if (videosTab && !videosTab.classList.contains('active')) {
+            document.querySelectorAll('#tab-videos video').forEach(function(v) { v.pause(); });
         }
     })();
     </script>

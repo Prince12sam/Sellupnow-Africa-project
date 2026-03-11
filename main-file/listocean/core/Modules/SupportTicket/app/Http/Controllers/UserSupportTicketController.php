@@ -104,13 +104,13 @@ class UserSupportTicketController extends Controller
 
             if(!empty($request->attachment) || empty($request->message)){
                 $request->validate([
-                    'attachment'=> 'nullable|mimes:jpg,jpeg,png,webp,gif,pdf,svg,xlsx,xls,txt',
+                    'attachment'=> 'nullable|file|max:5120|mimes:jpg,jpeg,png,webp,gif,pdf,xlsx,xls,txt',
                 ]);
             }
 
             if($attachment = $request->file('attachment')){
                 $imageName = time().'-'.uniqid().'.'.$attachment->getClientOriginalExtension();
-                $attachment->move('assets/uploads/ticket/chat-messages',$imageName);
+                $attachment->move(public_path('assets/uploads/ticket/chat-messages'),$imageName);
             }
             ChatMessage::create([
                 'ticket_id'=>$id,

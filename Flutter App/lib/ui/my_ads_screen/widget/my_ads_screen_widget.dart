@@ -32,8 +32,6 @@ class AdsTabBarState extends State<AdsTabBar> with TickerProviderStateMixin {
     super.initState();
     _tabController = TabController(length: Get.find<MyAdsScreenController>().tabs.length, vsync: this);
     _pageController = PreloadPageController(initialPage: _tabController.index);
-
-    Get.find<MyAdsScreenController>().init();
     Get.find<MyAdsScreenController>().update([Constant.idAllAds]);
 
     _tabController.addListener(() {
@@ -55,17 +53,13 @@ class AdsTabBarState extends State<AdsTabBar> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    // Must stay in sync with MyAdsScreenController.tabs (5 entries)
     var tabs = [
       Tab(text: "All Ads"),
-      Tab(text: "Featured"),
       Tab(text: "Live"),
-      Tab(text: "Deactivate"),
+      Tab(text: "Featured"),
+      Tab(text: "Deactivated"),
       Tab(text: "Under Review"),
-      Tab(text: "Sold Out"),
-      Tab(text: "Permanent Rejected"),
-      Tab(text: "Soft Rejected"),
-      Tab(text: "Resubmitted"),
-      Tab(text: "Expired"),
     ];
     return Expanded(
       child: Column(
@@ -153,7 +147,7 @@ class ProductView extends StatelessWidget {
           // Data available state
           return RefreshIndicator(
               color: AppColors.appRedColor,
-              onRefresh: () => controller.init(),
+              onRefresh: () => controller.refreshCurrentTab(controller.currentTabIndex),
               child: controller.allAdsList.isEmpty
                   ? Center(
                       child: Column(

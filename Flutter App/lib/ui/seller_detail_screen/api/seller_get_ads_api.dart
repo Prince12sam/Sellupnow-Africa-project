@@ -24,8 +24,9 @@ class SellerGetAdsApi {
         ApiParams.contentType: 'application/json',
       };
 
+      // Backend expects snake_case: seller_id or user_id.
       var url = Uri.parse(
-        '${Api.getSellerProduct}?start=$start&limit=$limit&sellerId=$sellerId&loginUserId=$loginUserId',
+        '${Api.getSellerProduct}?start=$start&limit=$limit&seller_id=$sellerId&user_id=$sellerId&loginUserId=$loginUserId',
       );
 
       var request = http.Request('GET', url);

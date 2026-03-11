@@ -93,7 +93,7 @@ class MyVideo {
         uploader: json["uploader"] == null
             ? null
             : Uploader.fromJson(json["uploader"]),
-        ad: json["ad"],
+      ad: json["ad"]?.toString(),
         videoUrl: json["videoUrl"],
         thumbnailUrl: json["thumbnailUrl"],
         adImageUrl: json["adImageUrl"],

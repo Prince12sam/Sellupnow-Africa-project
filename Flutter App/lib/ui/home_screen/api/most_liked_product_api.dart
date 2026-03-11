@@ -112,40 +112,39 @@ class MostLikedProductApi {
       'Content-Type': 'application/json',
     };
 
-    final uri = Uri.parse(Api.fetchMostLikedAdsApi);
-
-    final body = {
-      "userId": userId,
-      "categoryId": categoryId,
-      "country": country,
-      "state": state,
-      "city": city,
-      "minPrice": minPrice,
-      "maxPrice": maxPrice,
-      "postedSince": postedSince,
-      "search": search,
-      "latitude": latitude,
-      "longitude": longitude,
-      "rangeInKm": rangeInKm,
-      "sort": sort,
-      "attributes": attributes,
+    final queryParams = <String, String>{
+      "userId": userId ?? "",
+      "categoryId": categoryId ?? "",
+      "country": country ?? "",
+      "state": state ?? "",
+      "city": city ?? "",
+      "minPrice": minPrice ?? "",
+      "maxPrice": maxPrice ?? "",
+      "postedSince": postedSince ?? "",
+      "search": search ?? "",
+      "latitude": latitude ?? "",
+      "longitude": longitude ?? "",
+      "rangeInKm": rangeInKm ?? "",
+      "sort": sort ?? "",
       ApiParams.start: startPagination.toString(),
       ApiParams.limit: limitPagination.toString(),
     };
 
+    if (attributes.isNotEmpty) {
+      queryParams["attributes"] = json.encode(attributes);
+    }
+
+    final uri = Uri.parse(Api.fetchMostLikedAdsApi).replace(queryParameters: queryParams);
+
     Utils.showLog("Most Liked Ads API URL => $uri");
     Utils.showLog("🔍 Search: $search | Start: $startPagination  | limitPagination : $limitPagination  | Refresh: $isRefresh");
-    Utils.showLog("Most Liked Ads API Body => $body");
+    Utils.showLog("Most Liked Ads API Query => $queryParams");
 
     try {
-      final request = http.Request('GET', uri);
-      request.body = json.encode(body);
-      request.headers.addAll(headers);
-
-      final response = await request.send();
+      final response = await http.get(uri, headers: headers);
 
       if (response.statusCode == 200) {
-        final responseBody = await response.stream.bytesToString();
+        final responseBody = response.body;
         Utils.showLog("Most Liked Ads API Response => $responseBody");
         return MostLikeResponseModel.fromJson(json.decode(responseBody));
       } else {

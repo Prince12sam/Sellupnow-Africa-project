@@ -75,7 +75,7 @@ class CustomProfileImage extends StatelessWidget {
       final cacheWidth = (box.maxWidth * 2).toInt();
 
       return (image != null && image != "")
-          ? image!.startsWith("https")
+           ? image!.trim().startsWith("http")
           ? Stack(
         fit: StackFit.expand,
         children: [
@@ -313,7 +313,7 @@ class SendMessageImage extends StatelessWidget {
       final cacheWidth = (box.maxWidth * 2).toInt();
 
       return (image != null && image != "")
-          ? image!.startsWith("https")
+           ? image!.trim().startsWith("http")
           ? Stack(
         fit: StackFit.expand,
         children: [

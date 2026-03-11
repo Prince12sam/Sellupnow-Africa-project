@@ -2,8 +2,10 @@ import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
+import 'package:intl_phone_field/countries.dart' as intl_countries;
 import 'package:listify/custom/progress_indicator/progress_dialog.dart';
 import 'package:listify/routes/app_routes.dart';
+import 'package:listify/ui/mobile_number_screen/api/fetch_phone_countries_api.dart';
 import 'package:listify/utils/utils.dart';
 
 class MobileNumberController extends GetxController {
@@ -15,10 +17,47 @@ class MobileNumberController extends GetxController {
   String verificationId = '';
   String? dialCode;
 
+  /// Countries fetched from backend — only admin-created countries are shown.
+  List<intl_countries.Country> phoneCountries = [];
+  String initialCountryCode = 'GH';
+
   @override
-  void onInit() async {
+  void onInit() {
     numberController.clear();
     super.onInit();
+    _fetchPhoneCountries(); // async — calls update() when done
+  }
+
+  /// Converts a 2-letter ISO country code to its emoji flag.
+  String _flagEmoji(String code) {
+    return code.toUpperCase().codeUnits
+        .map((c) => String.fromCharCode(0x1F1E6 + c - 65))
+        .join();
+  }
+
+  Future<void> _fetchPhoneCountries() async {
+    final result = await FetchPhoneCountriesApi.call();
+    if (result != null && result.isNotEmpty) {
+      phoneCountries = result.map((c) {
+        // Use the package's own entry to get correct validation lengths.
+        try {
+          return intl_countries.countries
+              .firstWhere((p) => p.code == c.countryCode);
+        } catch (_) {
+          return intl_countries.Country(
+            name: c.name,
+            flag: _flagEmoji(c.countryCode),
+            code: c.countryCode,
+            dialCode: c.dialCode,
+            nameTranslations: const {},
+            minLength: 5,
+            maxLength: 15,
+          );
+        }
+      }).toList();
+      initialCountryCode = result.first.countryCode;
+      update();
+    }
   }
 
   void sendOtp(BuildContext context) async {

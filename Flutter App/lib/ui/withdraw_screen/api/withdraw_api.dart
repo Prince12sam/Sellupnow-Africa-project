@@ -26,7 +26,7 @@ class WithdrawApi {
       ApiParams.key: Api.secretKey,
       ApiParams.authToken: "Bearer $token",
       ApiParams.authUid:
-          '${Database.getUserProfileResponseModel?.user?.firebaseUid}',
+          Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       ApiParams.contentType: "application/json",
     };
 
@@ -42,7 +42,7 @@ class WithdrawApi {
     return null;
   }
 
-  static Future<bool> submitRequest({
+  static Future<Map<String, dynamic>> submitRequest({
     required double amount,
     required String contactNumber,
     required String name,
@@ -56,7 +56,7 @@ class WithdrawApi {
       ApiParams.key: Api.secretKey,
       ApiParams.authToken: "Bearer $token",
       ApiParams.authUid:
-          '${Database.getUserProfileResponseModel?.user?.firebaseUid}',
+          Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       ApiParams.contentType: "application/json",
     };
 
@@ -71,13 +71,14 @@ class WithdrawApi {
     try {
       final response = await http.post(uri, headers: headers, body: body);
       Utils.showLog("Submit Withdraw => ${response.statusCode} ${response.body}");
-      if (response.statusCode == 200) {
-        final decoded = json.decode(response.body);
-        return decoded['status'] == true;
-      }
+      final decoded = json.decode(response.body);
+      return {
+        'status': decoded['status'] == true,
+        'message': decoded['message'] ?? '',
+      };
     } catch (e) {
       Utils.showLog("Submit Withdraw Error => $e");
     }
-    return false;
+    return {'status': false, 'message': 'Network error. Please try again.'};
   }
 }

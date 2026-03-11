@@ -59,12 +59,13 @@ class EditProductDetailController extends GetxController {
     productSubTitle.text = adsData?.subTitle ?? "";
 
     productPrice.text = "${adsData?.price ?? ""}";
-    productDescription.text = adsData?.description ?? "";
+    productDescription.text = Utils.stripHtml(adsData?.description ?? "");
     isEdit = arguments['editApi'] ?? false;
 
     Utils.showLog("editApi  :::::::::::::::: $isEdit");
 
-    categoryId = "${adsData?.category ?? ""}";
+    // Keep a stable category id for downstream attribute fetching.
+    categoryId = (arguments['categoryId'] ?? adsData?.category?.id)?.toString();
 
     settingApiResponseModel = await SettingApi.callApi();
     Database.settingApiResponseModel = settingApiResponseModel;

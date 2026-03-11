@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:listify/ui/my_ads_screen/model/all_ads_response_model.dart';
 import 'package:listify/ui/near_by_listing_screen/controller/map_controller.dart';
 import 'package:listify/utils/utils.dart';
 
@@ -30,7 +29,7 @@ class NearByListingScreenController extends GetxController {
   bool popular = false;
   bool mostLike = false;
   bool subcategory = false;
-  AllAds? adsData;
+  dynamic adsData;
   MapController controller = Get.find();
 
   @override

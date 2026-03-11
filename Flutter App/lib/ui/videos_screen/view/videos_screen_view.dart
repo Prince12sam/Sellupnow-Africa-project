@@ -56,7 +56,6 @@ class VideosScreenView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<VideosScreenController>(
-      init: VideosScreenController(),
       builder: (controller) {
         return PopScope(
           canPop: false,
@@ -73,6 +72,7 @@ class VideosScreenView extends StatelessWidget {
                   ? NoDataFound(image: AppAsset.noProductFound, imageHeight: 180, text: "No Data Found")
                   : PreloadPageView.builder(
                 controller: controller.preloadPageController,
+                preloadPagesCount: 1,
                 scrollDirection: Axis.vertical,
                 onPageChanged: (value) async {
                   controller.onPagination(value);

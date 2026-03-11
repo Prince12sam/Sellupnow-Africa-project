@@ -761,7 +761,7 @@ class ProductPricingScreenController extends GetxController {
     update([Constant.switchUpdate]);
 
     createAdListingResponseModel = await AddListingApi.callApi(
-      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? '',
+      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       primaryImagePath: arguments['mainImage'],
       // galleryImagePaths: arguments['selectedImages'],
       galleryImagePaths: (arguments['selectedImages'] as List?)?.map((e) => e.toString()).toList() ?? [],
@@ -804,7 +804,11 @@ class ProductPricingScreenController extends GetxController {
         ),
       );
     } else if (createAdListingResponseModel?.status == false) {
-      Get.offAllNamed(AppRoutes.bottomBar);
+      if (Get.isDialogOpen ?? false) {
+        Get.back(); // Stop loading
+      }
+      adListing = false;
+      update([Constant.switchUpdate]);
       Utils.showToast(Get.context!, createAdListingResponseModel?.message ?? "");
     } else {
       adListing = false;
@@ -849,7 +853,7 @@ class ProductPricingScreenController extends GetxController {
   //   update([Constant.switchUpdate]);
   //
   //   updateProductDetailResponseModel = await UpdateListingApi.callApi(
-  //     uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? '',
+  //     uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
   //     primaryImagePath: arguments['mainImage'] ?? "",
   //     // galleryImagePaths: arguments['selectedImages'] ?? [],
   //     galleryImagePaths: (arguments['selectedImages'] as List?)?.map((e) => e.toString()).toList() ?? [],
@@ -904,7 +908,7 @@ class ProductPricingScreenController extends GetxController {
   //   update([Constant.switchUpdate]);
   //
   //   updateProductDetailResponseModel = await UpdateListingApi.callApi(
-  //     uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? '',
+  //     uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
   //     adId: adId.toString(),
   //     changedFields: changedFields,
   //     removedGalleryIndexes: removedGalleryIndexes ?? [],
@@ -939,7 +943,7 @@ class ProductPricingScreenController extends GetxController {
     Utils.showLog("changedFields.........................${changedFields}");
 
     final res = await UpdateListingApi.callApi(
-      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? '',
+      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       adId: adId.toString(),
       changedFields: changedFields,
       removedGalleryIndexes: removedGalleryIndexes ?? [],

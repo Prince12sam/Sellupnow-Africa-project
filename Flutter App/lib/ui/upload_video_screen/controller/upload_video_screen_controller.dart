@@ -242,7 +242,7 @@ class UploadVideoScreenController extends GetxController {
     final String adId = selectedProduct!.id!.toString();
 
     videoUploadModel = await UploadAdVideoApi.callApi(
-      uId: Database.getUserProfileResponseModel?.user?.firebaseUid ?? '',
+      uId: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       ad: adId,
       caption: productDetails.text,
       videoPath: videoFile!.path,

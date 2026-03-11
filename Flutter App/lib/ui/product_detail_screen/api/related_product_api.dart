@@ -11,7 +11,11 @@ class RelatedProductApi {
   static int startPagination = 0;
   static int limitPagination = 20;
 
-  static Future<AllAdsResponseModel?> callApi({required String categoryId, required String userId}) async {
+  static Future<AllAdsResponseModel?> callApi({
+    required String categoryId,
+    required String userId,
+    String? listingId,
+  }) async {
     Utils.showLog("Related product List Api Calling...");
     startPagination += 1;
 
@@ -21,7 +25,9 @@ class RelatedProductApi {
       ApiParams.start: startPagination.toString(),
       ApiParams.limit: limitPagination.toString(),
       ApiParams.categoryId: categoryId,
+      'category_id': categoryId,
       ApiParams.userId: userId,
+      if (listingId != null && listingId.isNotEmpty) 'listing_id': listingId,
     };
 
     String query = Uri(queryParameters: queryParameters).query;

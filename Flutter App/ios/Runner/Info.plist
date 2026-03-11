@@ -22,12 +22,28 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>GoogleMapsApiKey</key>
+	<string>$(GOOGLE_MAPS_API_KEY)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>SellUpNow uses the camera so you can take photos for listings, profile updates, chats, and verification.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>SellUpNow uses your location to show nearby listings and let you set listing locations accurately.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>SellUpNow uses the microphone so you can record voice messages and listing audio.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>SellUpNow saves media you choose to upload for listings, chats, and verification.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>SellUpNow accesses your photo library so you can select listing images, profile photos, and verification documents.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

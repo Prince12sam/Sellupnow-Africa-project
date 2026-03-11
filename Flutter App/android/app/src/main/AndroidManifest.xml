@@ -7,14 +7,11 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" android:maxSdkVersion="34"/>
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" android:maxSdkVersion="34"/>
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" android:maxSdkVersion="34"/>
-    <uses-permission android:name="android.permission.CAPTURE_AUDIO_OUTPUT"
-        tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
 
 
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
@@ -24,7 +21,7 @@
 
     <application
         android:requestLegacyExternalStorage="true"
-        android:usesCleartextTraffic="true"
+        android:usesCleartextTraffic="false"
         android:label="Sellupnow"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
@@ -60,7 +57,7 @@
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="" />
+            android:value="${GOOGLE_MAPS_API_KEY}" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

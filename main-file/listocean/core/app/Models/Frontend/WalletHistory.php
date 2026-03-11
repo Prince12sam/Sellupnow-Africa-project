@@ -10,6 +10,8 @@ class WalletHistory extends Model
 {
     use HasFactory;
 
+    const UPDATED_AT = null; // wallet_histories is append-only, no updated_at column
+
     protected $fillable = [
         'user_id', 'type', 'amount', 'balance_after',
         'reference_type', 'reference_id', 'note',

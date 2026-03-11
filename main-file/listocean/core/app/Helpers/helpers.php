@@ -274,6 +274,59 @@ function render_favicon_by_id($id)
 }
 function get_attachment_image_by_id($id, $size = null, $default = false)
 {
+    $normalizeImageUrl = function (?string $url): string {
+        $url = trim((string) $url);
+        if ($url === '') {
+            return '';
+        }
+
+        if (!preg_match('~^https?://~i', $url)) {
+            return $url;
+        }
+
+        $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+        if (!in_array($host, ['127.0.0.1', 'localhost'], true)) {
+            return $url;
+        }
+
+        $path = (string) parse_url($url, PHP_URL_PATH);
+        if ($path === '') {
+            return $url;
+        }
+
+        $base = request()->getSchemeAndHttpHost();
+        if (empty($base)) {
+            $base = rtrim((string) config('app.url'), '/');
+        }
+
+        return rtrim($base, '/') . '/' . ltrim($path, '/');
+    };
+
+    if (!empty($id) && !is_numeric($id)) {
+        $raw = trim((string) $id);
+        $imgUrl = '';
+
+        if (preg_match('~^https?://~i', $raw)) {
+            $imgUrl = $raw;
+        } elseif (str_starts_with($raw, 'storage/')) {
+            $imgUrl = asset($raw);
+        } elseif (str_starts_with($raw, 'listings/')) {
+            $imgUrl = asset('storage/' . ltrim($raw, '/'));
+        } elseif (str_starts_with($raw, 'assets/uploads/')) {
+            $imgUrl = asset($raw);
+        }
+
+        if ($imgUrl !== '') {
+            $imgUrl = $normalizeImageUrl($imgUrl);
+            return [
+                'image_id' => null,
+                'path' => $raw,
+                'img_url' => $imgUrl,
+                'img_alt' => '',
+            ];
+        }
+    }
+
     $image_details = MediaUpload::find($id);
     $return_val = [];
     $image_url = '';
@@ -340,7 +393,7 @@ function get_attachment_image_by_id($id, $size = null, $default = false)
     if (!empty($image_details)) {
         $return_val['image_id'] = $image_details->id;
         $return_val['path'] = $image_details->path;
-        $return_val['img_url'] = $image_url;
+        $return_val['img_url'] = $normalizeImageUrl($image_url);
         $return_val['img_alt'] = $image_details->alt;
     }elseif (empty($image_details) && $default) {
         $return_val['img_url'] = asset('assets/uploads/no-image.png');
@@ -417,42 +470,49 @@ function get_language_by_slug($slug)
     $lang_details = Language::where('slug', $slug)->first();
     return !empty($lang_details) ? $lang_details->name : '';
 }
+/**
+ * Fetch the default currency record from the admin panel database.
+ * Returns an object with: code, symbol, position (prefix/suffix).
+ * Cached for 60 seconds so admin changes propagate quickly.
+ */
+function get_admin_default_currency()
+{
+    return \Illuminate\Support\Facades\Cache::remember('admin_default_currency', 60, function () {
+        try {
+            $row = \Illuminate\Support\Facades\DB::connection('admin_db')
+                ->table('currencies')
+                ->where('is_default', 1)
+                ->first();
+            $setting = \Illuminate\Support\Facades\DB::connection('admin_db')
+                ->table('generate_settings')
+                ->first();
+            if ($row) {
+                return (object) [
+                    'code'     => strtoupper($row->code ?? 'USD'),
+                    'symbol'   => $row->symbol ?? '\$',
+                    'position' => $setting->currency_position ?? 'prefix',
+                ];
+            }
+        } catch (\Exception $e) {
+            // fall through to default
+        }
+        return (object) ['code' => 'USD', 'symbol' => '\$', 'position' => 'prefix'];
+    });
+}
+
 function site_currency_symbol($text = false)
 {
-    $global_currency = get_static_option('site_global_currency');
+    // Always read currency from the admin panel (cached 60 s).
+    $adminCurrency = get_admin_default_currency();
 
     if ($text) {
-        // Return the currency code/label for payment gateway text mode.
-        // Falls back to the XgPaymentGateway map key for backward compat.
-        if (!empty($global_currency)) {
-            return $global_currency;
-        }
-        $all_currency = XgPaymentGateway::script_currency_list();
-        foreach ($all_currency as $currency => $sym) {
-            // just return first key as default
-            return $currency;
-        }
-        return 'USD';
+        // Return the currency code for payment gateway text mode.
+        return $adminCurrency->code;
     }
 
-    // For display: prefer the direct symbol synced from the admin panel.
-    $directSymbol = get_static_option('site_currency_symbol');
-    if (!empty($directSymbol)) {
-        $sapce = get_static_option('add_remove_sapce_between_amount_and_symbol') === 'yes';
-        return $sapce ? ' ' . $directSymbol . ' ' : $directSymbol;
-    }
-
-    // Fallback: look up symbol by code from the XgPaymentGateway map.
-    $all_currency = XgPaymentGateway::script_currency_list();
-    $symbol = '$';
-    foreach ($all_currency as $currency => $sym) {
-        if ($global_currency == $currency) {
-            $symbol = $sym;
-            break;
-        }
-    }
+    // Return the symbol, with optional space padding.
     $sapce = get_static_option('add_remove_sapce_between_amount_and_symbol') === 'yes';
-    return $sapce ? ' ' . $symbol . ' ' : $symbol;
+    return $sapce ? ' ' . $adminCurrency->symbol . ' ' : $adminCurrency->symbol;
 }
 function amount_with_currency_symbol($amount, $text = false)
 {
@@ -463,7 +523,7 @@ function amount_with_currency_symbol($amount, $text = false)
     }else{
         $amount = number_format((int) $amount);
     }
-    $position = get_static_option('site_currency_symbol_position');
+    $position = get_admin_default_currency()->position;
     $symbol = site_currency_symbol($text);
     $return_val = $symbol . $amount;
 
@@ -501,6 +561,33 @@ function google_captcha_check($token)
     curl_close($curl);
     $result = json_decode($response, true);
     return $result;
+}
+
+function cloudflare_turnstile_check($token)
+{
+    if (empty($token)) {
+        return ['success' => false];
+    }
+    $secret = get_static_option('cloudflare_turnstile_secret_key');
+    if (empty($secret)) {
+        return ['success' => false];
+    }
+
+    $curl = curl_init();
+    curl_setopt($curl, CURLOPT_URL, 'https://challenges.cloudflare.com/turnstile/v0/siteverify');
+    curl_setopt($curl, CURLOPT_POST, 1);
+    curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query([
+        'secret' => $secret,
+        'response' => $token,
+    ]));
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 1);
+    curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2);
+    curl_setopt($curl, CURLOPT_TIMEOUT, 10);
+
+    $response = curl_exec($curl);
+    curl_close($curl);
+    return json_decode($response, true) ?: ['success' => false];
 }
 
 function render_payment_gateway_for_form()
@@ -1926,7 +2013,7 @@ function get_events_category_by_id($id,$lang = null, $type = '')
 function custom_amount_with_currency_symbol($amount, $text = false)
 {
     $amount = number_format((float) $amount, 0, '.', ',');
-    $position = get_static_option('site_currency_symbol_position');
+    $position = get_admin_default_currency()->position;
     $symbol = site_currency_symbol($text);
     $return_val = '<span class="sign">'.$symbol.'</span>'.$amount;
     if ($position == 'right') {
@@ -1938,7 +2025,7 @@ function custom_amount_with_currency_symbol($amount, $text = false)
 function float_amount_with_currency_symbol($amount, $text = false)
 {
     $symbol = site_currency_symbol($text);
-    $position = get_static_option('site_currency_symbol_position');
+    $position = get_admin_default_currency()->position;
 
     if (empty($amount)) {
         $return_val = $symbol . $amount;

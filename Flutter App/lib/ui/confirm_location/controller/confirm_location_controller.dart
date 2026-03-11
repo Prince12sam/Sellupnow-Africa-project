@@ -42,7 +42,7 @@ class ConfirmLocationScreenController extends GetxController {
   bool isLoading = false;
   Set<Marker> markers = {};
   final destinationAddressFocusNode = FocusNode();
-  late GoogleMapController mapController;
+  GoogleMapController? mapController;
   Product? adsData;
   bool isEdit = false;
   String? city;
@@ -172,7 +172,7 @@ class ConfirmLocationScreenController extends GetxController {
       );
 
       // Animate camera
-      mapController.animateCamera(
+      await _animateIfReady(
         CameraUpdate.newCameraPosition(
           CameraPosition(target: point, zoom: 18.0),
         ),
@@ -193,6 +193,18 @@ class ConfirmLocationScreenController extends GetxController {
       update([Constant.location]);
     } catch (e) {
       Utils.showLog("Error in onHandleTapPoint: $e");
+    }
+  }
+
+  Future<void> _animateIfReady(CameraUpdate update) async {
+    if (mapController == null) {
+      return;
+    }
+
+    try {
+      await mapController!.animateCamera(update);
+    } catch (e) {
+      Utils.showLog('Map camera update skipped: $e');
     }
   }
 
@@ -301,7 +313,7 @@ class ConfirmLocationScreenController extends GetxController {
 
       // await setAddress();
 
-      mapController.animateCamera(
+      await _animateIfReady(
         CameraUpdate.newCameraPosition(
           CameraPosition(
             target: LatLng(latitude!, longitude!),

@@ -2,7 +2,7 @@ abstract class Api {
   /// server url
   static const baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-        defaultValue: "http://127.0.0.1:8098/",
+        defaultValue: "https://www.sellupnow.com/",
   );
   static const secretKey = String.fromEnvironment(
     'API_SECRET_KEY',
@@ -15,6 +15,7 @@ abstract class Api {
   static const getLoginUserProfile =
       "${baseUrl}api/client/user/fetchUserProfile";
   static const editProfile = "${baseUrl}api/client/user/updateProfileInfo";
+  static const changePassword = "${baseUrl}api/client/user/changePassword";
 
   // >>>>>>>>>>>>>>> >>>>>>>>>> Blog Api >>>>>>>>>>>> >>>>>>>>>>>>>>  //
   static const blog = "${baseUrl}api/client/blog/retrieveBlogList";
@@ -65,8 +66,9 @@ abstract class Api {
 
   // >>>>>>>> >>>>>>>>>>>>>> listing Api / my ads api >>>>>>>>>>> >>>>>>>>>>>> //
   static const addListingApi = "${baseUrl}api/client/adListing/createAdListing";
+  // My Ads — fetches the authenticated user's own listings (all statuses)
   static const allAddList =
-      "${baseUrl}api/client/adListing/fetchAdListingRecords?";
+      "${baseUrl}api/client/adListing/fetchMyListings?";
 
   // >>>>>>>> >>>>>>>>>>>>>> AI Listing Assistant >>>>>>>>>>> >>>>>>>>>>>> //
   static const aiListingAssistApi =
@@ -109,7 +111,7 @@ abstract class Api {
   static const chatList = "${baseUrl}api/client/chatTopic/getChatList?";
   static const chatHistory = "${baseUrl}api/client/chat/getChatHistory?";
 
-  static const ipApi = "http://ip-api.com/json";
+    static const ipApi = "https://ipwho.is/";
 
   // >>>>>>>> >>>>>>>>>>>>>> upload video >>>>>>>>>>> >>>>>>>>>>>> //
   static const uploadAdVideoApi = "${baseUrl}api/client/adVideo/uploadAdVideo";
@@ -234,6 +236,10 @@ abstract class Api {
       "${baseUrl}api/client/wallet/getBalance";
   static const walletTransactions =
       "${baseUrl}api/client/wallet/getTransactions?";
+  static const walletTopupInit =
+      "${baseUrl}api/client/wallet/topup/init";
+  static const walletTopupVerify =
+      "${baseUrl}api/client/wallet/topup/verify";
 
   // >>>>>>>> >>>>>>>>>>>>>> Withdraw Requests Api  >>>>>>>>>>> >>>>>>>>>>>> //
   static const withdrawList =
@@ -250,4 +256,20 @@ abstract class Api {
       "${baseUrl}api/client/support/getTicket/";
   static const replyTicket =
       "${baseUrl}api/client/support/replyTicket/";
+
+  // >>>>>>>> >>>>>>>>>>>>>> Escrow Orders Api  >>>>>>>>>>> >>>>>>>>>>>> //
+  static const escrowOrders =
+      "${baseUrl}api/client/escrow/getOrders";
+  static const escrowOrderDetail =
+      "${baseUrl}api/client/escrow/getOrderDetail";
+  static const escrowBreakdown =
+      "${baseUrl}api/client/escrow/getBreakdown";
+  static const escrowInitiate =
+      "${baseUrl}api/client/escrow/initiateEscrow";
+
+  // >>>>>>>> >>>>>>>>>>>>>> Banner Ads Api  >>>>>>>>>>> >>>>>>>>>>>> //
+  static const bannerAdList =
+      "${baseUrl}api/client/bannerAd/getMyBannerAds";
+  static const bannerAdSubmit =
+      "${baseUrl}api/client/bannerAd/submitBannerAd";
 }

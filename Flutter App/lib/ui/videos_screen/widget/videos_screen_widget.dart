@@ -272,7 +272,7 @@ class VideoScreenWidgetState extends State<VideoScreenWidget>
                                       'sellerDetail': true,
                                       'relatedProduct': true,
                                       'viewLikeCount': true,
-                                      'adId': reel.ad
+                                      'adId': reel.ad ?? reel.id
                                     })?.then((value) {
                                   controller
                                       .videoControllers[widget.index]
@@ -830,7 +830,7 @@ class VideoScreenWidgetState extends State<VideoScreenWidget>
                                       'sellerDetail': true,
                                       'relatedProduct': true,
                                       'viewLikeCount': true,
-                                      'adId': reel.ad
+                                      'adId': reel.ad ?? reel.id
                                     })?.then((value) {
                                   controller
                                       .videoControllers[widget.index]
@@ -1437,7 +1437,7 @@ class VideoScreenWidgetState extends State<VideoScreenWidget>
                                     'sellerDetail': true,
                                     'relatedProduct': true,
                                     'viewLikeCount': true,
-                                    'adId': reel.ad
+                                    'adId': reel.ad ?? reel.id
                                   },
                                 );
                               },
@@ -1979,7 +1979,7 @@ class VideoScreenWidgetState extends State<VideoScreenWidget>
                                     'sellerDetail': true,
                                     'relatedProduct': true,
                                     'viewLikeCount': true,
-                                    'adId': reel.ad
+                                    'adId': reel.ad ?? reel.id
                                   },
                                 );
                               },
@@ -2409,7 +2409,7 @@ class VideoScreenWidgetState extends State<VideoScreenWidget>
                           'sellerDetail': true,
                           'relatedProduct': true,
                           'viewLikeCount': true,
-                          'adId': reel.ad
+                          'adId': reel.ad ?? reel.id
                         },
                       );
                     },
@@ -2859,6 +2859,19 @@ class ProductCardView extends StatelessWidget {
   const ProductCardView(
       {super.key, this.image, this.productName, this.description, this.price});
 
+  /// Strip HTML tags and decode common entities
+  static String _stripHtml(String html) {
+    return html
+        .replaceAll(RegExp(r'<[^>]*>'), '')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&#39;', "'")
+        .replaceAll('&nbsp;', ' ')
+        .trim();
+  }
+
   @override
   Widget build(BuildContext context) {
     return GetBuilder<VideosScreenController>(
@@ -2902,7 +2915,7 @@ class ProductCardView extends StatelessWidget {
                     SizedBox(
                       width: Get.width * 0.37,
                       child: Text(
-                        description!,
+                        _stripHtml(description ?? ''),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: AppFontStyle.fontStyleW500(
@@ -3086,7 +3099,6 @@ class ReportBottomSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetBuilder<VideosScreenController>(
       // id: Constant.idReportReason,
-      init: VideosScreenController(),
       builder: (controller) {
         return Container(
           decoration: BoxDecoration(

@@ -72,7 +72,7 @@ class PopularProductScreenController extends GetxController {
 
       likeResponseModel = await PopularProductApi.fetchPopularAds(
         categoryId: '',
-        userId: Database.getUserProfileResponseModel?.user?.id ?? "",
+        userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
         start: startPagination,
         limit: limitPagination,
       );
@@ -120,7 +120,7 @@ class PopularProductScreenController extends GetxController {
 
     try {
       final response = await PopularProductApi.fetchPopularAds(
-        userId: Database.getUserProfileResponseModel?.user?.id ?? "",
+        userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
         start: nextPage,
         limit: limitPagination,
       );
@@ -179,7 +179,7 @@ class PopularProductScreenController extends GetxController {
     try {
       final resp = await AddLikeApi.callApi(
         adId: adId,
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       );
 
       if (resp != null && resp.status == true) {
@@ -231,9 +231,9 @@ class PopularProductScreenController extends GetxController {
     PopularProductApi.startPagination = 0;
 
     final result = await PopularProductApi.fetchPopularAds(
-      userId: Database.getUserProfileResponseModel?.user?.id ?? "",
+      userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
       // categoryId: "id" ?? "",
-      // uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+      // uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       sort: sortKey,
     );
 
@@ -266,9 +266,9 @@ class PopularProductScreenController extends GetxController {
     update([Constant.idAllAds]);
 
     likeResponseModel = await PopularProductApi.fetchPopularAds(
-      userId: Database.getUserProfileResponseModel?.user?.id ?? "",
+      userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
       // categoryId: categoryId ?? "",
-      // uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+      // uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       search: search,
     );
 
@@ -289,7 +289,7 @@ class PopularProductScreenController extends GetxController {
   //   startPagination = 0;
   //
   //   likeResponseModel = await PopularProductApi.fetchPopularAds(
-  //     userId: Database.getUserProfileResponseModel?.user?.id ?? "",
+  //     userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
   //     search: search,
   //     start: 0,
   //     limit: 10,
@@ -313,7 +313,7 @@ class PopularProductScreenController extends GetxController {
     update([Constant.idAllAds]);
 
     final response = await PopularProductApi.fetchPopularAds(
-      userId: Database.getUserProfileResponseModel?.user?.id ?? "",
+      userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
       start: startPagination,
       limit: limitPagination,
       search: search,
@@ -359,7 +359,7 @@ class PopularProductScreenController extends GetxController {
     final resp = await PopularProductApi.fetchPopularAds(
       start: startPagination,
       limit: limitPagination,
-      userId: Database.getUserProfileResponseModel?.user?.id ?? '',
+      userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
       categoryId: map['categoryId'] ?? "",
       country: map['country'],
       state: map['state'],

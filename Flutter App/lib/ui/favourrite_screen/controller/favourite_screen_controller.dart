@@ -94,7 +94,7 @@ class FavoriteScreenController extends GetxController {
     try {
       final resp = await AddLikeApi.callApi(
         adId: adId,
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       );
 
       if (resp != null && resp.status == true) {
@@ -136,7 +136,7 @@ class FavoriteScreenController extends GetxController {
 
     try {
       allAdsResponseModel = await FavouriteProductApi.callApi(
-        userId: Database.getUserProfileResponseModel?.user?.id ?? "",
+        userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
         search: (searchQuery.isEmpty) ? "All" : searchQuery,
         isRefresh: isRefresh,
       );
@@ -179,7 +179,7 @@ class FavoriteScreenController extends GetxController {
 
       try {
         allAdsResponseModel = await FavouriteProductApi.callApi(
-          userId: Database.getUserProfileResponseModel?.user?.id ?? "",
+          userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
           search: (searchQuery.isEmpty) ? "All" : searchQuery,
           isRefresh: false,
         );

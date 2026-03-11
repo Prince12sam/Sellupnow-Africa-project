@@ -63,8 +63,9 @@ class GlobalVariableMiddleware
             'site_'.$lang.'_tag_line',
         ];
 
-            $shared = Cache::remember('global_variable_payload:' . $lang . ':' . $path_variant, now()->addSeconds(5), function () use ($static_option_arr, $path_variant) {
-                $all_language = Language::query()->where('status', 'publish')->get();
+            $cacheKey = 'global_variable_payload:' . $lang . ':' . $path_variant;
+            $buildPayload = function () use ($static_option_arr, $path_variant) {
+                $all_language = Language::query()->get();
                 $primary_menu = Menu::query()->where('status', 'default')->first();
                 $all_social_icons = SocialIcon::query()->get();
 
@@ -87,7 +88,19 @@ class GlobalVariableMiddleware
                     'static_field_data' => $static_field_data,
                     'navbar_number' => $navbar_number,
                 ];
-            });
+            };
+
+            try {
+                $shared = Cache::remember($cacheKey, now()->addSeconds(5), $buildPayload);
+                // Guard against a poisoned null value in cache
+                if (! is_array($shared)) {
+                    Cache::forget($cacheKey);
+                    $shared = $buildPayload();
+                }
+            } catch (\Exception $cacheEx) {
+                // Cache unavailable — compute fresh without caching
+                $shared = $buildPayload();
+            }
 
             $all_language = $shared['all_language'];
             $primary_menu_id = $shared['primary_menu_id'];

@@ -18,7 +18,7 @@ class CreateAdListingResponseModel {
   });
 
   factory CreateAdListingResponseModel.fromJson(Map<String, dynamic> json) => CreateAdListingResponseModel(
-        status: json["status"],
+      status: json["status"] ?? (json["data"] != null),
         message: json["message"],
       );
 

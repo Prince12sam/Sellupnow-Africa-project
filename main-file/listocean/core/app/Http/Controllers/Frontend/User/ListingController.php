@@ -64,6 +64,17 @@ class ListingController extends Controller
         return DB::table($table);
     }
 
+    private function nullableIntIfExists($value, callable $existsCheck): ?int
+    {
+        if ($value === null || $value === '' || $value === '0' || $value === 0) {
+            return null;
+        }
+
+        $intValue = (int) $value;
+
+        return $existsCheck($intValue) ? $intValue : null;
+    }
+
 
     public function allListing(Request $request)
     {
@@ -207,12 +218,30 @@ class ListingController extends Controller
             $listing = new Listing();
             $listing->user_id = $user->id;
             $listing->category_id = $request->category_id;
-            $listing->sub_category_id = $request->sub_category_id;
-            $listing->child_category_id = $request->child_category_id;
-            $listing->country_id = $request->country_id;
-            $listing->state_id = $request->state_id;
-            $listing->city_id = $request->city_id;
-            $listing->brand_id = $request->brand_id;
+            $listing->sub_category_id = $this->nullableIntIfExists(
+                $request->sub_category_id,
+                fn (int $id) => Category::where('id', $id)->exists()
+            );
+            $listing->child_category_id = $this->nullableIntIfExists(
+                $request->child_category_id,
+                fn (int $id) => ChildCategory::where('id', $id)->exists()
+            );
+            $listing->country_id = $this->nullableIntIfExists(
+                $request->country_id,
+                fn (int $id) => Country::where('id', $id)->exists()
+            );
+            $listing->state_id = $this->nullableIntIfExists(
+                $request->state_id,
+                fn (int $id) => State::where('id', $id)->exists()
+            );
+            $listing->city_id = $this->nullableIntIfExists(
+                $request->city_id,
+                fn (int $id) => City::where('id', $id)->exists()
+            );
+            $listing->brand_id = $this->nullableIntIfExists(
+                $request->brand_id,
+                fn (int $id) => Brand::where('id', $id)->exists()
+            );
             $listing->title = $request->title;
             $listing->slug = Str::slug(purify_html($slug),'-',null);
             $listing->description = $request->description;
@@ -483,12 +512,30 @@ class ListingController extends Controller
             $was_featured = (int) $listing->is_featured; // capture before any changes
             $listing->user_id = $user->id;
             $listing->category_id = $request->category_id;
-            $listing->sub_category_id = $request->sub_category_id;
-            $listing->child_category_id = $request->child_category_id;
-            $listing->country_id = $request->country_id;
-            $listing->state_id = $request->state_id;
-            $listing->city_id = $request->city_id;
-            $listing->brand_id = $request->brand_id;
+            $listing->sub_category_id = $this->nullableIntIfExists(
+                $request->sub_category_id,
+                fn (int $id) => Category::where('id', $id)->exists()
+            );
+            $listing->child_category_id = $this->nullableIntIfExists(
+                $request->child_category_id,
+                fn (int $id) => ChildCategory::where('id', $id)->exists()
+            );
+            $listing->country_id = $this->nullableIntIfExists(
+                $request->country_id,
+                fn (int $id) => Country::where('id', $id)->exists()
+            );
+            $listing->state_id = $this->nullableIntIfExists(
+                $request->state_id,
+                fn (int $id) => State::where('id', $id)->exists()
+            );
+            $listing->city_id = $this->nullableIntIfExists(
+                $request->city_id,
+                fn (int $id) => City::where('id', $id)->exists()
+            );
+            $listing->brand_id = $this->nullableIntIfExists(
+                $request->brand_id,
+                fn (int $id) => Brand::where('id', $id)->exists()
+            );
             $listing->title = $request->title;
             $listing->slug = Str::slug(purify_html($slug),'-',null);
             $listing->description = $request->description;

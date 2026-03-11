@@ -213,6 +213,7 @@ import 'dart:developer';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:listify/routes/app_routes.dart';
@@ -428,6 +429,20 @@ class Database {
   static String get loginUserId => localStorage.read("loginUserId") ?? "";
   static String get loginUserPhoneNumber => localStorage.read("loginUserPhoneNumber") ?? "";
   static String get loginUserNickName => localStorage.read("loginUserNickName") ?? "";
+  static bool get loginUserVerified => localStorage.read("loginUserVerified") ?? false;
+  static String get authUid {
+    final profileUid = getUserProfileResponseModel?.user?.firebaseUid?.trim() ?? "";
+    if (profileUid.isNotEmpty && profileUid.toLowerCase() != "null") {
+      return profileUid;
+    }
+
+    final storedUid = loginUserFirebaseId.trim();
+    if (storedUid.isNotEmpty && storedUid.toLowerCase() != "null") {
+      return storedUid;
+    }
+
+    return "";
+  }
 
   static bool get userExist => localStorage.read("userExist") ?? false;
   static bool get isSeenOnBoarding => localStorage.read("isSeenOnBoarding") ?? false;
@@ -442,6 +457,7 @@ class Database {
   static String get verifyTime => localStorage.read("verifyTime") ?? "";
 
   static bool get demoUser => localStorage.read("demoUser") ?? false;
+  static bool get hasPendingVerification => isVerify == true && uniqueId.trim().isNotEmpty;
 
   static int get languageIndex => localStorage.read("languageIndex") ?? 3;
 
@@ -472,6 +488,38 @@ class Database {
   static onSetLoginUserId(String loginUserId) async => localStorage.write("loginUserId", loginUserId);
   static onSetLoginUserPhoneNumber(String loginUserPhoneNumber) async => localStorage.write("loginUserPhoneNumber", loginUserPhoneNumber);
   static onSetLoginUserNickName(String loginUserNickName) async => localStorage.write("loginUserNickName", loginUserNickName);
+  static onSetLoginUserVerified(bool loginUserVerified) async => localStorage.write("loginUserVerified", loginUserVerified);
+
+  static void syncIdentityVerificationState({
+    required bool isVerified,
+    int? verificationStatus,
+    String? verificationId,
+    String? verificationSubmittedAt,
+  }) {
+    final normalizedVerificationId = verificationId?.trim() ?? "";
+    final normalizedVerificationTime = verificationSubmittedAt?.trim() ?? "";
+    final hasPendingVerification = verificationStatus == 0 && normalizedVerificationId.isNotEmpty;
+
+    onSetLoginUserVerified(isVerified);
+
+    if (isVerified) {
+      onSetUserVerify(false);
+      onSetUniqueId('');
+      onSetVerifyTime('');
+      return;
+    }
+
+    if (hasPendingVerification) {
+      onSetUserVerify(true);
+      onSetUniqueId(normalizedVerificationId);
+      onSetVerifyTime(normalizedVerificationTime);
+      return;
+    }
+
+    onSetUserVerify(false);
+    onSetUniqueId('');
+    onSetVerifyTime('');
+  }
 
   static onSetUserExist(bool userExist) async => localStorage.write("userExist", userExist);
   static onSetUserVerify(bool isVerify) async => localStorage.write("isVerify", isVerify);
@@ -557,10 +605,20 @@ class Database {
     final fcmTokenFirebase = fcmToken;
 
     try {
-      // (1) Google logout
-      if (loginType == 1) {
-        Utils.showLog("Google Logout Success");
-        await GoogleSignIn().signOut();
+      // (1) Sign out of Firebase Auth (all login types)
+      try {
+        await FirebaseAuth.instance.signOut();
+        Utils.showLog("Firebase Auth signOut success");
+      } catch (e) {
+        Utils.showLog("Firebase Auth signOut error: $e");
+      }
+
+      // (1b) Google logout
+      if (loginType == 2) {
+        try {
+          await GoogleSignIn().signOut();
+          Utils.showLog("Google Logout Success");
+        } catch (_) {}
       }
 
       // (2) 🔒 Location (storage + memory) સંપૂર્ણ રીતે clear કરો

@@ -12,6 +12,7 @@ class CategoryAttributesApi {
     Utils.showLog("category Attributes Calling...");
 
     final Map<String, dynamic> queryParameters = {
+      'category_id': categoryId,
       ApiParams.categoryId: categoryId,
     };
 

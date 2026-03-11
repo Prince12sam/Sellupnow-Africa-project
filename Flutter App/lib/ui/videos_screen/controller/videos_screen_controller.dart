@@ -121,7 +121,7 @@ class VideosScreenController extends GetxController {
       isLoading = true;
       controllersReady = false;
       MyVideosApi.startPagination = 0; // reset for first load
-      update([Constant.idAllAds]);
+      update(); // no ID — triggers parent GetBuilder (no id) to show shimmer
 
       myVideosList.clear();
       _organicCounter = 0;
@@ -140,13 +140,23 @@ class VideosScreenController extends GetxController {
       myVideosList = prepared;
     }
 
-    await _recreatePlayersFromApi(isPagination: isPagination);
+    // Only create controller entries (no await initialize for all)
+    _preparePlayerSlots(isPagination: isPagination);
+
+    // Initialize the first video BEFORE showing the UI
+    if (myVideosList.isNotEmpty) {
+      await _initializePlayer(currentIndex);
+    }
 
     controllersReady = true;
     isLoading = false;
-    update([Constant.idAllAds]);
+    update(); // no ID — triggers parent GetBuilder (no id) to show videos
 
-    WidgetsBinding.instance.addPostFrameCallback((_) => resumeCurrent());
+    // Initialize neighbors in background (don't block UI)
+    if (myVideosList.isNotEmpty) {
+      _ensureInitialized(currentIndex);
+    }
+    resumeCurrent();
   }
 
   bool _isAdActive(MyVideo video) {
@@ -222,10 +232,17 @@ class VideosScreenController extends GetxController {
   }
 
   Future<void> _recreatePlayersFromApi({bool isPagination = false}) async {
+    _preparePlayerSlots(isPagination: isPagination);
+    // Initialize first few videos eagerly
+    await _ensureInitialized(0);
+  }
+
+  /// Create VideoPlayerController instances without initializing (fast)
+  void _preparePlayerSlots({bool isPagination = false}) {
     if (!isPagination) {
       for (final c in videoControllers.values) {
         try {
-          await c.dispose();
+          c.dispose();
         } catch (_) {}
       }
       videoControllers.clear();
@@ -242,7 +259,10 @@ class VideosScreenController extends GetxController {
 
     for (int i = startIndex; i < myVideosList.length; i++) {
       final item = myVideosList[i];
-      final String videoUrl = '${Api.baseUrl}${item.videoUrl ?? ' '}';
+      final String rawUrl = item.videoUrl ?? '';
+      final String videoUrl = rawUrl.startsWith('http')
+          ? rawUrl
+          : '${Api.baseUrl}$rawUrl';
       final controller = VideoPlayerController.networkUrl(Uri.parse(videoUrl));
       videoControllers[i] = controller;
 
@@ -252,38 +272,81 @@ class VideosScreenController extends GetxController {
       isMutedMap[i] = false;
       isPlayingMap[i] = false;
       firedThisLoop[i] = false;
+    }
+  }
 
-      try {
-        await controller.initialize();
-        controller.setLooping(true);
-        controller.setVolume(1.0);
+  /// Track which indices are already initialized or in-flight
+  final Set<int> _initializedIndices = {};
+  final Set<int> _initializingIndices = {};
 
-        controller.addListener(() {
-          final value = controller.value;
-          if (!value.isInitialized) return;
-
-          final dur = value.duration;
-          final pos = value.position;
-          if (dur == Duration.zero) return;
-
-          final bool nearEnd = pos >= dur - const Duration(milliseconds: 300);
-
-          if (value.isPlaying && nearEnd && firedThisLoop[i] != true) {
-            firedThisLoop[i] = true;
-            recordVideoView(item.id?.toString());
-          }
-
-          if (firedThisLoop[i] == true &&
-              pos <= const Duration(milliseconds: 150)) {
-            firedThisLoop[i] = false;
-          }
-        });
-      } catch (e) {
-        Utils.showLog("Error initializing video $i: $e");
+  /// Initialize the video at [center] plus ±1 neighbors (lazy)
+  Future<void> _ensureInitialized(int center) async {
+    final targets = <int>[];
+    // Current first, then next, then previous
+    for (final i in [center, center + 1, center - 1]) {
+      if (i >= 0 &&
+          i < myVideosList.length &&
+          !_initializedIndices.contains(i) &&
+          !_initializingIndices.contains(i) &&
+          videoControllers.containsKey(i)) {
+        targets.add(i);
       }
     }
+    if (targets.isEmpty) return;
 
-    update();
+    // Initialize current immediately, neighbors in parallel
+    if (targets.isNotEmpty) {
+      await _initializePlayer(targets[0]);
+      update([Constant.idAllAds]);
+    }
+    // Initialize neighbors in parallel (don't block)
+    for (int j = 1; j < targets.length; j++) {
+      _initializePlayer(targets[j]);
+    }
+  }
+
+  /// Initialize a single video player at index
+  Future<void> _initializePlayer(int i) async {
+    if (_initializedIndices.contains(i) || _initializingIndices.contains(i)) return;
+    _initializingIndices.add(i);
+
+    final controller = videoControllers[i];
+    if (controller == null) {
+      _initializingIndices.remove(i);
+      return;
+    }
+
+    try {
+      await controller.initialize();
+      controller.setLooping(true);
+      controller.setVolume(1.0);
+      controller.addListener(() {
+        final value = controller.value;
+        if (!value.isInitialized) return;
+
+        final dur = value.duration;
+        final pos = value.position;
+        if (dur == Duration.zero) return;
+
+        final bool nearEnd = pos >= dur - const Duration(milliseconds: 300);
+
+        if (value.isPlaying && nearEnd && firedThisLoop[i] != true) {
+          firedThisLoop[i] = true;
+          recordVideoView(myVideosList[i].id?.toString());
+        }
+
+        if (firedThisLoop[i] == true &&
+            pos <= const Duration(milliseconds: 150)) {
+          firedThisLoop[i] = false;
+        }
+      });
+
+      _initializedIndices.add(i);
+    } catch (e) {
+      Utils.showLog("Error initializing video $i: $e");
+    } finally {
+      _initializingIndices.remove(i);
+    }
   }
 
   void togglePlayPause(int index) {
@@ -310,12 +373,19 @@ class VideosScreenController extends GetxController {
       return;
     }
 
-    final cur = videoControllers[currentIndex];
+    // Lazily initialize current + neighbors
+    _ensureInitialized(index).then((_) {
+      final cur = videoControllers[currentIndex];
+      pauseExcept(currentIndex);
+      if (cur != null && cur.value.isInitialized) {
+        cur.play();
+        isPlayingMap[currentIndex] = true;
+      }
+      update([Constant.idAllAds]);
+    });
+
+    // Pause immediately (don't wait for init)
     pauseExcept(currentIndex);
-    if (cur != null && cur.value.isInitialized) {
-      cur.play();
-      isPlayingMap[currentIndex] = true;
-    }
     update();
   }
 
@@ -436,7 +506,7 @@ class VideosScreenController extends GetxController {
     final result = await ReelReportApi.reportReel(
       reelId: reelId ?? "",
       reason: reasonController.text.toString(),
-      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? '',
+      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
     );
 
     if (result != null && result.status == true) {
@@ -475,7 +545,7 @@ class VideosScreenController extends GetxController {
     final result = await ReelReportApi.reportReel(
       reelId: reelId ?? "",
       reason: finalReason,
-      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? '',
+      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
     );
 
     if (result != null && result.status == true) {
@@ -551,6 +621,8 @@ class VideosScreenController extends GetxController {
   @override
   void onClose() {
     setImmersive(false);
+    _initializedIndices.clear();
+    _initializingIndices.clear();
     for (var controller in videoControllers.values) {
       try {
         controller.dispose();

@@ -8,6 +8,7 @@ import 'package:listify/ui/profile_screen_view/api/setting_api.dart';
 import 'package:listify/ui/profile_screen_view/model/delete_user_account_model.dart';
 import 'package:listify/ui/profile_screen_view/model/setting_api_response_model.dart';
 import 'package:listify/ui/user_verification_screen/model/user_verification_response_model.dart';
+import 'package:intl/intl.dart';
 import 'package:listify/utils/constant.dart';
 import 'package:listify/utils/database.dart';
 import 'package:listify/utils/utils.dart';
@@ -34,9 +35,35 @@ class ProfileScreenController extends GetxController {
   }
 
   profileApi() async {
-    getUserProfileResponseModel = await GetUserProfileApi.callApi(loginUserId: Database.loginUserFirebaseId);
-    Database.getUserProfileResponseModel = getUserProfileResponseModel;
+    if (Database.authUid.isEmpty) {
+      Utils.showLog("profileApi: authUid is empty, skipping profile fetch");
+      return;
+    }
+    try {
+      getUserProfileResponseModel = await GetUserProfileApi.callApi(loginUserId: Database.authUid);
+      if (getUserProfileResponseModel?.user != null) {
+        Database.getUserProfileResponseModel = getUserProfileResponseModel;
+        Database.syncIdentityVerificationState(
+          isVerified: getUserProfileResponseModel?.user?.isVerified == true,
+          verificationStatus: getUserProfileResponseModel?.user?.verificationStatus,
+          verificationId: getUserProfileResponseModel?.user?.verificationId,
+          verificationSubmittedAt: _formatVerifyTime(getUserProfileResponseModel?.user?.verificationSubmittedAt),
+        );
+      }
+    } catch (e) {
+      Utils.showLog("profileApi fetch failed: $e");
+    }
     update([Constant.idProfile]);
+  }
+
+  String _formatVerifyTime(String? dateString) {
+    try {
+      if (dateString == null || dateString.isEmpty) return "";
+      final parsedDate = DateTime.parse(dateString).toLocal();
+      return DateFormat("dd MMM yyyy, hh:mm a").format(parsedDate);
+    } catch (e) {
+      return dateString ?? "";
+    }
   }
 
   /// setting Api

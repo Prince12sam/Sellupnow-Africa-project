@@ -33,7 +33,7 @@ class SpecificProductViewShowController extends GetxController {
 
       final viewResponse = await SpecificProductViewApi.getViewsForAd(
         adId: adId,
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       );
 
       if (viewResponse != null) {

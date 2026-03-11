@@ -67,6 +67,7 @@ class Product {
   bool? isViewed;
   bool? isOfferPlaced;
   int? lastBidAmount;
+  bool? escrowEnabled;
   List<Category>? categoryHierarchy;
 
   Product({
@@ -104,6 +105,7 @@ class Product {
     this.isViewed,
     this.isOfferPlaced,
     this.lastBidAmount,
+    this.escrowEnabled,
     this.categoryHierarchy,
   });
 
@@ -116,8 +118,8 @@ class Product {
     title: json["title"],
     subTitle: json["subTitle"],
     description: json["description"],
-    contactNumber: json["contactNumber"],
-    availableUnits: json["availableUnits"],
+    contactNumber: json["contactNumber"] != null ? int.tryParse(json["contactNumber"].toString()) : null,
+    availableUnits: json["availableUnits"] != null ? int.tryParse(json["availableUnits"].toString()) : null,
     primaryImage: json["primaryImage"],
     galleryImages: json["galleryImages"] == null ? [] : List<String>.from(json["galleryImages"]!.map((x) => x)),
     location: json["location"] == null ? null : Location.fromJson(json["location"]),
@@ -126,22 +128,23 @@ class Product {
     minimumOffer: json["minimumOffer"]?.toDouble(),
     price: json["price"]?.toDouble(),
     isAuctionEnabled: json["isAuctionEnabled"],
-    auctionStartingPrice: json["auctionStartingPrice"],
-    auctionDurationDays: json["auctionDurationDays"],
+    auctionStartingPrice: json["auctionStartingPrice"] != null ? int.tryParse(json["auctionStartingPrice"].toString()) : null,
+    auctionDurationDays: json["auctionDurationDays"] != null ? int.tryParse(json["auctionDurationDays"].toString()) : null,
     auctionStartDate: json["auctionStartDate"],
     auctionEndDate: json["auctionEndDate"],
     scheduledPublishDate: json["scheduledPublishDate"] == null ? null : DateTime.parse(json["scheduledPublishDate"]),
     isReservePriceEnabled: json["isReservePriceEnabled"],
-    reservePriceAmount: json["reservePriceAmount"],
+    reservePriceAmount: json["reservePriceAmount"] != null ? int.tryParse(json["reservePriceAmount"].toString()) : null,
     isActive: json["isActive"],
     createdAt: json["createdAt"] == null ? null : DateTime.parse(json["createdAt"]),
-    likesCount: json["likesCount"],
-    viewsCount: json["viewsCount"],
+    likesCount: json["likesCount"] != null ? int.tryParse(json["likesCount"].toString()) : null,
+    viewsCount: json["viewsCount"] != null ? int.tryParse(json["viewsCount"].toString()) : null,
     isLike: json["isLike"],
     isPlacedBid: json["isPlacedBid"],
     isViewed: json["isViewed"],
     isOfferPlaced: json["isOfferPlaced"],
-    lastBidAmount: json["lastBidAmount"],
+    lastBidAmount: json["lastBidAmount"] != null ? int.tryParse(json["lastBidAmount"].toString()) : null,
+    escrowEnabled: json["escrowEnabled"],
     categoryHierarchy: json["categoryHierarchy"] == null ? [] : List<Category>.from(json["categoryHierarchy"]!.map((x) => Category.fromJson(x))),
   );
 
@@ -180,6 +183,7 @@ class Product {
     "isViewed": isViewed,
     "isOfferPlaced": isOfferPlaced,
     "lastBidAmount": lastBidAmount,
+    "escrowEnabled": escrowEnabled,
     "categoryHierarchy": categoryHierarchy == null ? [] : List<dynamic>.from(categoryHierarchy!.map((x) => x.toJson())),
   };
 }

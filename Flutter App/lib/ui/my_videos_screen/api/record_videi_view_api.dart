@@ -25,7 +25,7 @@ class RecordVideoViewApi {
       ApiParams.key: Api.secretKey,
       ApiParams.contentType: "application/json",
       ApiParams.authToken: "Bearer $token",
-      ApiParams.authUid: "${Database.getUserProfileResponseModel?.user?.firebaseUid}",
+      ApiParams.authUid: Database.authUid,
     };
 
     log("Record Video View Api headers => $headers");

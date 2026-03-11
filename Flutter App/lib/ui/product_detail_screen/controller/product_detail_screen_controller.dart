@@ -52,6 +52,8 @@ class ProductDetailScreenController extends GetxController {
   // AllAds? adsData;
   AllAdsResponseModel? allAdsResponseModel;
   bool isDetailLoading = false;
+  bool detailLoadFailed = false;
+  String detailErrorMessage = '';
   ProductDetailResponseModel? productDetail;
   List<AllAds> relatedProductList = [];
   final TextEditingController bidController = TextEditingController();
@@ -107,7 +109,7 @@ class ProductDetailScreenController extends GetxController {
     try {
       final res = await AddLikeApi.callApi(
         adId: productDetail!.data!.id!,
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       );
 
       if (res != null && res.status == true) {
@@ -151,7 +153,7 @@ class ProductDetailScreenController extends GetxController {
     try {
       final res = await AddLikeApi.callApi(
         adId: adId,
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       );
 
       if (res != null && res.status == true) {
@@ -174,16 +176,46 @@ class ProductDetailScreenController extends GetxController {
 
   init() {
     final args = Get.arguments;
-    if (args is Map<String, dynamic>) {
-      isEdit = args['edit'] ?? false;
-      sellerDetail = args['sellerDetail'] ?? false;
-      relatedProduct = args['relatedProduct'] ?? false;
-      viewLikeCount = args['viewLikeCount'] ?? false;
-      liveAuctionTime = args['liveAuctionTime'] ?? false;
-      adId = args['adId'] ?? '';
+    if (args is Map) {
+      isEdit = (args['edit'] as bool?) ?? false;
+      sellerDetail = (args['sellerDetail'] as bool?) ?? false;
+      relatedProduct = (args['relatedProduct'] as bool?) ?? false;
+      viewLikeCount = (args['viewLikeCount'] as bool?) ?? false;
+      liveAuctionTime = (args['liveAuctionTime'] as bool?) ?? false;
+
+      String? _readId(dynamic value) {
+        if (value == null) return null;
+        final v = value.toString().trim();
+        if (v.isEmpty || v == 'null') return null;
+        return v;
+      }
+
+      adId = _readId(args['adId']) ??
+          _readId(args['listing_id']) ??
+          _readId(args['product_id']) ??
+          _readId(args['adListingId']) ??
+          _readId(args['id']);
+
+      final dynamic adArg = args['ad'];
+      if (adId == null && adArg is Map) {
+        adId = _readId(adArg['_id']) ??
+            _readId(adArg['id']) ??
+            _readId(adArg['adId']) ??
+            _readId(adArg['listing_id']) ??
+            _readId(adArg['adListingId']);
+      }
     } else {
       Utils.showLog("⚠️ Get.arguments is not Map: $args");
     }
+
+    if (adId == null || adId!.isEmpty || adId == 'null') {
+      detailLoadFailed = true;
+      detailErrorMessage = 'Invalid listing id.';
+      update([Constant.idProductDetail]);
+      Utils.showLog('❌ Product detail open failed: missing adId. args=$args');
+      return;
+    }
+
     fetchProductDetail();
 
     Utils.showLog('hasAuctionEnded ::::: $hasAuctionEnded');
@@ -288,7 +320,11 @@ class ProductDetailScreenController extends GetxController {
   getPopularProduct(String id) async {
     isLoading = true;
     update([Constant.idAllAds]);
-    allAdsResponseModel = await RelatedProductApi.callApi(categoryId: id, userId: Database.getUserProfileResponseModel?.user?.id ?? "");
+    allAdsResponseModel = await RelatedProductApi.callApi(
+      categoryId: id,
+      userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
+      listingId: productDetail?.data?.id,
+    );
     relatedProductList.clear();
     relatedProductList.addAll(allAdsResponseModel?.data ?? []);
 
@@ -303,7 +339,7 @@ class ProductDetailScreenController extends GetxController {
   removeAdListing() async {
     removeAdListingResponseModel = await RemoveAdListingApi.callApi(
       adId: "${productDetail?.data?.id}",
-      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? '',
+      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
     );
 
     if (removeAdListingResponseModel != null) {
@@ -341,7 +377,7 @@ class ProductDetailScreenController extends GetxController {
       // 2) Call API
       final resp = await AddLikeApi.callApi(
         adId: adId,
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       );
 
       if (resp != null && resp.status == true) {
@@ -391,7 +427,7 @@ class ProductDetailScreenController extends GetxController {
     final result = await AdReportApi.reportAd(
       adId: productDetail?.data?.id.toString() ?? "",
       reason: finalReason,
-      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? '',
+      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
     );
 
     if (result != null && result.status == true) {
@@ -413,10 +449,10 @@ class ProductDetailScreenController extends GetxController {
   ///get  review api
   getReview() async {
     var reviewRes = await ReviewApi.getReviews(
-      userId: Database.getUserProfileResponseModel?.user?.id ?? "",
+      userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
       start: 1,
       limit: 20,
-      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? '',
+      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
     );
 
     if (reviewRes != null && reviewRes.status == true) {
@@ -477,11 +513,20 @@ class ProductDetailScreenController extends GetxController {
   ///product detail api
 
   Future<void> fetchProductDetail() async {
+    if (adId == null || adId!.isEmpty || adId == 'null') {
+      detailLoadFailed = true;
+      detailErrorMessage = 'Invalid listing id.';
+      update([Constant.idProductDetail]);
+      return;
+    }
+
     isDetailLoading = true;
+    detailLoadFailed = false;
+    detailErrorMessage = '';
     update([Constant.idProductDetail]);
 
-    final response = await ProductDetailApi.callApi(adId: adId.toString(),userId: Database.getUserProfileResponseModel?.user?.id ?? "");
-    if (response != null) {
+    final response = await ProductDetailApi.callApi(adId: adId.toString(), userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId);
+    if (response != null && response.data != null) {
       productDetail = response;
 
       Utils.showLog("detail:::::::::::::::${jsonEncode(productDetail)}");
@@ -503,6 +548,10 @@ class ProductDetailScreenController extends GetxController {
 
 
       }
+    } else {
+      detailLoadFailed = true;
+      detailErrorMessage = 'Unable to load listing details.';
+      Utils.showLog('❌ Product detail API returned empty for adId=$adId');
     }
 
     isDetailLoading = false;
@@ -519,7 +568,7 @@ class ProductDetailScreenController extends GetxController {
 
       final viewResponse = await SpecificProductViewApi.getViewsForAd(
         adId: adId,
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       );
 
       if (viewResponse != null) {
@@ -550,7 +599,7 @@ bool isLikeLoading = false;
 
       final likesResponse = await SpecificProductLikeApi.getLikesForAd(
         adId: adId,
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       );
 
       if (likesResponse != null) {
@@ -612,7 +661,7 @@ bool isLikeLoading = false;
     try {
       final resp = await AddLikeApi.callApi(
         adId: adId,
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       );
 
       if (resp != null && resp.status == true) {
@@ -654,7 +703,7 @@ bool isLikeLoading = false;
     try {
       final resp = await AddLikeApi.callApi(
         adId: adId,
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       );
 
       if (resp != null && resp.status == true) {

@@ -17,6 +17,9 @@ class AddLikeApi {
     Utils.showLog("Add Like Api Calling...");
 
     final Map<String, dynamic> queryParameters = {
+      // Backend accepts listing_id/product_id; keep adId for backward compatibility.
+      'listing_id': adId,
+      'product_id': adId,
       ApiParams.adId: adId,
     };
 

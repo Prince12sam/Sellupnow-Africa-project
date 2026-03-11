@@ -1,6 +1,7 @@
 import 'package:cupertino_rounded_corners/cupertino_rounded_corners.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:listify/custom/app_button/primary_app_button.dart';
 import 'package:listify/utils/app_asset.dart';
 import 'package:listify/utils/app_color.dart';
@@ -11,6 +12,19 @@ import 'package:listify/utils/font_style.dart';
 class UserVerificationDialog extends StatelessWidget {
   final String id;
   const UserVerificationDialog({super.key, required this.id});
+
+  String _displayVerifyTime(String value) {
+    if (value.trim().isEmpty) {
+      return value;
+    }
+
+    try {
+      final parsedDate = DateTime.parse(value).toLocal();
+      return DateFormat("dd MMM yyyy, hh:mm a").format(parsedDate);
+    } catch (_) {
+      return value;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +60,7 @@ class UserVerificationDialog extends StatelessWidget {
                         style: AppFontStyle.fontStyleW500(fontSize: 12, fontColor: AppColors.greyTxt),
                       ),
                       Text(
-                        Database.getUserProfileResponseModel?.user?.name ?? "",
+                        Database.getUserProfileResponseModel?.user?.name ?? Database.loginUserName,
                         style: AppFontStyle.fontStyleW700(fontSize: 12, fontColor: AppColors.txtPending),
                       ),
                     ],
@@ -72,7 +86,7 @@ class UserVerificationDialog extends StatelessWidget {
                         style: AppFontStyle.fontStyleW500(fontSize: 12, fontColor: AppColors.greyTxt),
                       ),
                       Text(
-                        Database.verifyTime,
+                        _displayVerifyTime(Database.verifyTime),
                         style: AppFontStyle.fontStyleW700(fontSize: 12, fontColor: AppColors.txtPending),
                       ),
                     ],

@@ -148,7 +148,7 @@ class PopularProduct {
     title = json['title'];
     subTitle = json['subTitle'];
     description = json['description'];
-    contactNumber = json['contactNumber'];
+    contactNumber = json['contactNumber'] != null ? int.tryParse(json['contactNumber'].toString()) : null;
     availableUnits = json['availableUnits'];
     primaryImage = json['primaryImage'];
     galleryImages = json['galleryImages'] != null ? List<String>.from(json['galleryImages']) : [];

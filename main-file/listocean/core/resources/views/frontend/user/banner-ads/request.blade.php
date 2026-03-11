@@ -106,9 +106,11 @@
                                                             @switch($key)
                                                                 @case('homepage_hero_banner')       1920 × 280 px @break
                                                                 @case('homepage_footer_banner')     1200 × 120 px @break
+                                                                @case('listing_details_left')       300 × 250 px @break
                                                                 @case('listing_details_under_gallery') 770 × 120 px @break
                                                                 @case('listing_details_right')      300 × 250 px @break
                                                                 @case('user_profile_under_header')  770 × 100 px @break
+                                                                @case('listings_under_image')       300 × 250 px @break
                                                                 @default                            Flexible @break
                                                             @endswitch
                                                         </li>

@@ -67,4 +67,9 @@ class AppRoutes {
   static const String withdrawScreen = '/withdrawScreen';
   static const String supportTicketScreen = '/supportTicketScreen';
   static const String supportTicketDetailScreen = '/supportTicketDetailScreen';
+  static const String escrowOrdersScreen = '/escrowOrdersScreen';
+  static const String escrowDetailScreen = '/escrowDetailScreen';
+  static const String bannerAdScreen = '/bannerAdScreen';
+  static const String bannerAdSubmitScreen = '/bannerAdSubmitScreen';
+  static const String changePasswordScreen = '/changePasswordScreen';
 }

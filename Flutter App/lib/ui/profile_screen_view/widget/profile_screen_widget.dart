@@ -39,6 +39,10 @@ class ProfileTopView extends StatelessWidget {
     return GetBuilder<ProfileScreenController>(
         id: Constant.idProfile,
         builder: (controller) {
+          final isApprovedUser =
+              Database.getUserProfileResponseModel?.user?.isVerified == true ||
+              Database.loginUserVerified == true;
+
           return Row(
             children: [
               DottedBorder(
@@ -59,7 +63,8 @@ class ProfileTopView extends StatelessWidget {
                   //   fit: BoxFit.cover,
                   // ),
                   child: CustomProfileImage(
-                    image: Database.getUserProfileResponseModel?.user?.profileImage ?? '',
+                    image: Database.getUserProfileResponseModel?.user?.profileImage
+                        ?? Database.loginUserProfilePic,
                   ),
                 ),
               ).paddingOnly(right: 14),
@@ -70,20 +75,22 @@ class ProfileTopView extends StatelessWidget {
                     children: [
                       Text(
                         maxLines: 1,
-                        Database.getUserProfileResponseModel?.user?.name ?? "User Name",
+                        Database.getUserProfileResponseModel?.user?.name
+                            ?? (Database.loginUserName.isNotEmpty ? Database.loginUserName : "User Name"),
                         overflow: TextOverflow.ellipsis,
                         style: AppFontStyle.fontStyleW700(fontSize: 20, fontColor: AppColors.black),
                       ).paddingOnly(right: 5, bottom: 1),
-                      Database.getUserProfileResponseModel?.user?.isVerified == true?Image.asset(AppAsset.verificationRightIcon,height: 22,width: 22,):SizedBox(),
+                      isApprovedUser ? Image.asset(AppAsset.verificationRightIcon,height: 22,width: 22,) : SizedBox(),
                     ],
                   ),
                   Text(
-                    Database.getUserProfileResponseModel?.user?.email ?? 'username@gmail.com',
+                    Database.getUserProfileResponseModel?.user?.email
+                        ?? (Database.loginUserEmail.isNotEmpty ? Database.loginUserEmail : 'username@gmail.com'),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppFontStyle.fontStyleW500(fontSize: 13, fontColor: AppColors.searchText),
                   ).paddingOnly(bottom: 9),
-                  Database.getUserProfileResponseModel?.user?.isVerified == true
+                    isApprovedUser
                       ? Container(
                           decoration: BoxDecoration(
                             color: AppColors.green,
@@ -103,7 +110,7 @@ class ProfileTopView extends StatelessWidget {
                             ],
                           ).paddingSymmetric(vertical: 5, horizontal: 6),
                         )
-                      : Database.isVerify == true
+                        : Database.hasPendingVerification
                           ? GetBuilder<ProfileScreenController>(builder: (controller) {
                               return GestureDetector(
                                 onTap: () {
@@ -202,6 +209,21 @@ class ProfileGeneralView extends StatelessWidget {
                   imageIcon: AppAsset.myProfileIcon,
                 );
               }),
+              if (Database.loginType == 4)
+                Divider(
+                  color: AppColors.white,
+                  height: 0,
+                  indent: 7,
+                  endIndent: 7,
+                ),
+              if (Database.loginType == 4)
+                ProfileItemView(
+                  onTap: () {
+                    Get.toNamed(AppRoutes.changePasswordScreen);
+                  },
+                  title: 'Change Password',
+                  imageIcon: AppAsset.privacyPolicyIcon,
+                ),
               Divider(
                 color: AppColors.white,
                 height: 0,
@@ -252,6 +274,32 @@ class ProfileGeneralView extends StatelessWidget {
                   Get.toNamed(AppRoutes.supportTicketScreen);
                 },
                 title: 'Support Tickets',
+                imageIcon: AppAsset.transactionHistory,
+              ),
+              Divider(
+                color: AppColors.white,
+                height: 0,
+                indent: 7,
+                endIndent: 7,
+              ),
+              ProfileItemView(
+                onTap: () {
+                  Get.toNamed(AppRoutes.escrowOrdersScreen);
+                },
+                title: 'Escrow Orders',
+                imageIcon: AppAsset.transactionHistory,
+              ),
+              Divider(
+                color: AppColors.white,
+                height: 0,
+                indent: 7,
+                endIndent: 7,
+              ),
+              ProfileItemView(
+                onTap: () {
+                  Get.toNamed(AppRoutes.bannerAdScreen);
+                },
+                title: 'Banner Ads',
                 imageIcon: AppAsset.transactionHistory,
               ),
               Divider(

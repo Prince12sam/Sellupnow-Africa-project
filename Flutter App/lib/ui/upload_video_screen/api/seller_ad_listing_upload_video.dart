@@ -23,7 +23,7 @@ class SellerAdListingUploadVideo {
       ApiParams.key: Api.secretKey,
       ApiParams.contentType: "application/json",
       ApiParams.authToken: "Bearer $token",
-      ApiParams.authUid: "${Database.getUserProfileResponseModel?.user?.firebaseUid}",
+      ApiParams.authUid: Database.authUid,
     };
 
     log("Seller product info Api headers  $headers");

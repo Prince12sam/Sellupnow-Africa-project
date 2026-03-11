@@ -31,6 +31,7 @@ class HomeScreenController extends GetxController {
     AppAsset.offerImage,
   ];
   bool isLoading = true;
+  bool isPopularLoading = true;
   bool subcategory = true;
   bool isPaginationLoading = false;
   BannerResponseModel? bannerResponseModel;
@@ -80,8 +81,18 @@ class HomeScreenController extends GetxController {
     MostLikedProductApi.startPagination = 1;
 
     //
-    getUserProfileResponseModel = await GetUserProfileApi.callApi(loginUserId: Database.loginUserFirebaseId);
-    Database.getUserProfileResponseModel = getUserProfileResponseModel;
+    try {
+      final profileResult = await GetUserProfileApi.callApi(loginUserId: Database.loginUserFirebaseId);
+      if (profileResult != null) {
+        getUserProfileResponseModel = profileResult;
+        Database.getUserProfileResponseModel = profileResult;
+      } else {
+        getUserProfileResponseModel = Database.getUserProfileResponseModel;
+      }
+    } catch (e) {
+      Utils.showLog("Home init profile fetch failed (non-critical): $e");
+      getUserProfileResponseModel = Database.getUserProfileResponseModel;
+    }
     update([Constant.idProfile]);
 
     //
@@ -105,7 +116,9 @@ class HomeScreenController extends GetxController {
   getBanner() async {
     isBanner = true;
     update([Constant.idBanner]);
-    bannerResponseModel = await BannerApi.callApi();
+    bannerResponseModel = await BannerApi.callApi(
+      placement: 'mobile_after_live_auction',
+    );
     bannerList.clear();
     bannerList.addAll(bannerResponseModel?.data ?? []);
 
@@ -132,10 +145,10 @@ class HomeScreenController extends GetxController {
 
   /// popular product api
   getPopularProduct() async {
-    isLoading = true;
-    update();
+    isPopularLoading = true;
+    update([Constant.idAllAds]);
     likeResponseModel = await PopularProductApi.fetchPopularAds(
-      userId: Database.getUserProfileResponseModel?.user?.id ?? "",
+      userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
       // uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? '',
     );
     popularProductList.clear();
@@ -143,8 +156,8 @@ class HomeScreenController extends GetxController {
 
     Utils.showLog("popular product list data $popularProductList");
 
-    isLoading = false;
-    update();
+    isPopularLoading = false;
+    update([Constant.idAllAds]);
   }
 
   /// refresh
@@ -152,10 +165,17 @@ class HomeScreenController extends GetxController {
     PopularProductApi.startPagination = 0;
     LiveAuctionListApi.startPagination = 1;
     MostLikedProductApi.startPagination = 1;
-    getUserProfileResponseModel = await GetUserProfileApi.callApi(
-      loginUserId: Database.getUserProfileResponseModel?.user?.firebaseUid ?? '',
-    );
-    Database.getUserProfileResponseModel = getUserProfileResponseModel;
+    try {
+      final profileResult = await GetUserProfileApi.callApi(
+        loginUserId: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
+      );
+      if (profileResult != null) {
+        getUserProfileResponseModel = profileResult;
+        Database.getUserProfileResponseModel = profileResult;
+      }
+    } catch (e) {
+      Utils.showLog("Home refresh profile fetch failed (non-critical): $e");
+    }
     update([Constant.idProfile]);
 
     getBanner();
@@ -187,7 +207,7 @@ class HomeScreenController extends GetxController {
       update([Constant.idPagination]);
 
       likeResponseModel = await PopularProductApi.fetchPopularAds(
-        userId: Database.getUserProfileResponseModel?.user?.id ?? "",
+        userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
         // uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? '',
       );
       popularProductList.clear();
@@ -195,6 +215,7 @@ class HomeScreenController extends GetxController {
 
       isPaginationLoading = false;
       update([
+        Constant.idAllAds,
         Constant.idGetCountry,
         Constant.idPagination,
         Constant.idAllAds,
@@ -237,7 +258,7 @@ class HomeScreenController extends GetxController {
     try {
       final resp = await AddLikeApi.callApi(
         adId: adId,
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       );
 
       if (resp != null && resp.status == true) {
@@ -277,7 +298,7 @@ class HomeScreenController extends GetxController {
     try {
       final resp = await AddLikeApi.callApi(
         adId: adId,
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       );
 
       if (resp != null && resp.status == true) {
@@ -315,7 +336,7 @@ class HomeScreenController extends GetxController {
 
     likeResponseModel = await MostLikedProductApi.fetchMostLikedAds(
       isRefresh: true,
-      userId: Database.getUserProfileResponseModel?.user?.id ?? "",
+      userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
       // search: search,
       // start: startPagination,
       // limit: limitPagination,

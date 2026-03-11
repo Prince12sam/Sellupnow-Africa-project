@@ -84,8 +84,7 @@ class TopHomeView extends StatelessWidget {
                 children: [
                   Text(
                     maxLines: 1,
-                    "Hello,${Database.getUserProfileResponseModel?.user?.name}" ??
-                        "User Name",
+                    "Hello, ${Database.getUserProfileResponseModel?.user?.name ?? (Database.loginUserName.isNotEmpty ? Database.loginUserName : 'User')}",
                     overflow: TextOverflow.ellipsis,
                     style: AppFontStyle.fontStyleW700(
                         fontSize: 16, fontColor: AppColors.black),
@@ -501,7 +500,8 @@ class OfferImageView extends StatelessWidget {
             CarouselSlider(
               options: CarouselOptions(
                 height: 160,
-                autoPlay: true,
+                autoPlay: controller.bannerList.length > 1,
+                enableInfiniteScroll: controller.bannerList.length > 1,
                 enlargeCenterPage: false,
                 onPageChanged: controller.onPageChanged,
               ),
@@ -576,9 +576,14 @@ class PopularItemsView extends StatelessWidget {
               const cross = 2;
               const tileHeight = 255.0;
 
-              return controller.isLoading ?
+              return controller.isPopularLoading ?
 
               ProductGridViewShimmer()
+                  : controller.popularProductList.isEmpty
+                  ? NoDataFound(
+                      image: AppAsset.noProductFound,
+                      imageHeight: 180,
+                      text: EnumLocale.txtNoDataFound.name.tr)
                   :GridView.builder(
                       padding: EdgeInsets.zero,
                       shrinkWrap: true,
@@ -780,7 +785,7 @@ class LiveAuctionView extends StatelessWidget {
             id: Constant.idAuction,
             builder: (controller) {
           return SizedBox(
-            height: 183,
+            height: 220,
             child: controller.isAuction
                 ? AuctionShimmer()
                 :ListView.builder(

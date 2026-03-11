@@ -10,6 +10,8 @@ class Wallet extends Model
 {
     use HasFactory;
 
+    const CREATED_AT = null; // wallets table has no created_at column
+
     protected $fillable = ['user_id', 'balance', 'currency', 'status'];
 
 

@@ -45,6 +45,7 @@ class ReviewDialog extends StatelessWidget {
                     }
                     Get.back();
                     controllerType?.reviewController.clear();
+                    controllerType?.rating.value = 0;
                   },
                   child: Container(
                     height: 42,
@@ -115,6 +116,7 @@ class ReviewDialog extends StatelessWidget {
                     }
                     Get.back();
                     controllerType?.reviewController.clear();
+                    controllerType?.rating.value = 0;
                   },
                   child: Center(
                     child: Text(
@@ -135,6 +137,10 @@ class ReviewDialog extends StatelessWidget {
                     if(Database.demoUser==true){
                       Utils.showLog("This is demo app");
                     }else{
+                    if ((controllerType?.rating.value ?? 0) < 1) {
+                      Utils.showToast(context, "Please select a star rating");
+                      return;
+                    }
                     if (controllerType!.reviewController.text.trim().isEmpty) {
                       Utils.showToast(context, "Please enter a review");
                       return;

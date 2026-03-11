@@ -20,13 +20,14 @@ class FrontendFormController extends Controller
         $success_message = !empty($succ_msg) ? $succ_msg : __('Thanks for your contact !!');
 
         try{
-            Mail::to(get_static_option('site_global_email'))->send(new ContactMessage($all_field_serialize_data, $all_attachment,
-                __('You Have Contact Message from') . ' ' . get_static_option('site_' . get_default_language() . '_title')));
+            $adminEmail = get_static_option('site_global_email');
+            if (!empty($adminEmail)) {
+                Mail::to($adminEmail)->send(new ContactMessage($all_field_serialize_data, $all_attachment,
+                    __('You Have Contact Message from') . ' ' . get_static_option('site_' . get_default_language() . '_title')));
+            }
         }catch(\Exception $e){
-            return response()->json([
-                'msg' => $e->getMessage(),
-                'type' => 'danger'
-            ]);
+            // Mail not configured — log but don't block the contact form
+            \Illuminate\Support\Facades\Log::warning('Contact form email skipped: ' . $e->getMessage());
         }
 
         return response()->json([

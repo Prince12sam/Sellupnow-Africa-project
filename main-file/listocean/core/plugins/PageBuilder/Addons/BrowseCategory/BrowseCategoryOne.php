@@ -114,19 +114,19 @@ class BrowseCategoryOne extends PageBuilderBase
         //static text helpers
         $static_text = static_text();
         if (!empty($empty_category)){
-            $all_category = Category::with('listings')
+            $query = Category::with('listings')
                 ->where('status',1)
-                ->take($items)
-                ->OrderBy($order_by,$IDorDate)
-                ->get();
+                ->OrderBy($order_by ?: 'id', $IDorDate ?: 'asc');
         }else{
-            $all_category = Category::with('listings')
+            $query = Category::with('listings')
                 ->where('status',1)
                 ->whereHas('listings')
-                ->take($items)
-                ->OrderBy($order_by,$IDorDate)
-                ->get();
+                ->OrderBy($order_by ?: 'id', $IDorDate ?: 'asc');
         }
+        if (!empty($items) && (int)$items > 0) {
+            $query->take((int)$items);
+        }
+        $all_category = $query->get();
 
         return $this->renderBlade('category.browse-category-one',[
             'padding_top' => $padding_top,

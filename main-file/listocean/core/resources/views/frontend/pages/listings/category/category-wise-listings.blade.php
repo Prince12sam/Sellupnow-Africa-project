@@ -51,7 +51,7 @@
                                 @if($subcategory_under_category->count() != 0)
                                     @foreach($subcategory_under_category as $sub_cat)
                                         <!-- Single -->
-                                        <div class="singleCategories categories1 wow fadeInUp" data-wow-delay="0.1s">
+                                        <div class="singleCategories categories{{ ($loop->index % 9) + 1 }} wow fadeInUp" data-wow-delay="0.1s">
                                                 <div class="categoriIcon text-center">
                                                     <a href="{{ route('frontend.show.listing.by.subcategory', $sub_cat->slug ?? 'x') }}">
                                                         {!! render_image_markup_by_attachment_id($sub_cat->image) !!}

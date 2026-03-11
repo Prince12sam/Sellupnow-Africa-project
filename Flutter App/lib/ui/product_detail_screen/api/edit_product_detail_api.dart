@@ -523,7 +523,7 @@ class UpdateListingApi {
     final token = await FirebaseAccessToken.onGet();
 
     try {
-      final request = http.MultipartRequest('PATCH', Uri.parse(Api.updateListingApi));
+      final request = http.MultipartRequest('POST', Uri.parse(Api.updateListingApi));
 
       // headers
       request.headers.addAll({
@@ -534,12 +534,20 @@ class UpdateListingApi {
 
       // required id
       request.fields[ApiParams.adId] = adId;
+      request.fields['listing_id'] = adId;
+      request.fields['product_id'] = adId;
 
       // helper
       void putField(String apiKey, dynamic value) {
         if (value == null) return;
         if (value is String && value.trim().isEmpty) return;
         request.fields[apiKey] = value.toString();
+      }
+
+      bool isLocalFilePath(String value) {
+        final p = value.trim();
+        if (p.isEmpty) return false;
+        return p.startsWith('/') || p.startsWith('file://') || p.contains(':\\') || p.contains('data/user') || p.contains('/storage/');
       }
 
       // ------------ SIMPLE FIELDS ------------
@@ -586,7 +594,7 @@ class UpdateListingApi {
       if (changedFields.containsKey('primaryImage')) {
         final String path = (changedFields['primaryImage'] ?? '').toString();
         if (path.isNotEmpty) {
-          final isLocal = path.contains('/storage') || path.contains('data/user');
+          final isLocal = isLocalFilePath(path);
           if (isLocal) {
             request.files.add(await http.MultipartFile.fromPath('primaryImage', path));
           } else {
@@ -600,9 +608,9 @@ class UpdateListingApi {
         final List<String> all = (changedFields['galleryImages'] as List?)?.map((e) => e.toString()).toList() ?? [];
         final List<String> urls = [];
         for (final p in all) {
-          final isLocal = p.contains('/storage') || p.contains('data/user');
+          final isLocal = isLocalFilePath(p);
           if (isLocal) {
-            request.files.add(await http.MultipartFile.fromPath('galleryImages', p));
+            request.files.add(await http.MultipartFile.fromPath('galleryImages[]', p));
           } else {
             urls.add(p);
           }
@@ -634,6 +642,7 @@ class UpdateListingApi {
 
         if (decoded is Map<String, dynamic>) {
           final map = Map<String, dynamic>.from(decoded);
+          map['status'] = map['status'] ?? true;
           final rawData = map['data'];
           if (rawData is String) {
             map['message'] = (map['message'] ?? rawData).toString();

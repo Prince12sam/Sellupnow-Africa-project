@@ -30,7 +30,11 @@
                 <div class="col-xl-7 col-lg-7 order-lg-1 order-0 login-Wrapper">
 
                     @if(!empty(get_static_option('site_google_captcha_enable')))
-                        <script src='https://www.google.com/recaptcha/api.js'></script>
+                        @if(get_static_option('captcha_provider') == 'cloudflare')
+                            <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+                        @else
+                            <script src='https://www.google.com/recaptcha/api.js'></script>
+                        @endif
                     @endif
 
                     <x-validation.frontend-error/>
@@ -75,9 +79,16 @@
 
                         @if(!empty(get_static_option('site_google_captcha_enable')))
                             <div class="col-md-12 my-3">
-                                <div class="g-recaptcha" data-sitekey="{{ get_static_option('recaptcha_2_site_key')}}"></div>
-                                @if ($errors->has('g-recaptcha-response'))
-                                    <span class="text-danger">{{ $errors->first('g-recaptcha-response') }}</span>
+                                @if(get_static_option('captcha_provider') == 'cloudflare')
+                                    <div class="cf-turnstile" data-sitekey="{{ get_static_option('cloudflare_turnstile_site_key') }}" data-appearance="always" data-theme="light" data-size="normal"></div>
+                                    @if ($errors->has('cf-turnstile-response'))
+                                        <span class="text-danger">{{ $errors->first('cf-turnstile-response') }}</span>
+                                    @endif
+                                @else
+                                    <div class="g-recaptcha" data-sitekey="{{ get_static_option('recaptcha_2_site_key')}}"></div>
+                                    @if ($errors->has('g-recaptcha-response'))
+                                        <span class="text-danger">{{ $errors->first('g-recaptcha-response') }}</span>
+                                    @endif
                                 @endif
                             </div>
                         @endif
@@ -183,6 +194,17 @@
                         toastr_warning_js("{{ __('Please agree with terms and conditions') }}")
                         return false;
                     }
+
+                    @if(!empty(get_static_option('site_google_captcha_enable')))
+                    @if(get_static_option('captcha_provider') == 'cloudflare')
+                    // Turnstile captcha check
+                    var turnstileResponse = $('[name="cf-turnstile-response"]').val();
+                    if (!turnstileResponse) {
+                        toastr_warning_js("{{ __('Please complete the CAPTCHA verification') }}")
+                        return false;
+                    }
+                    @endif
+                    @endif
 
                     $(this).attr("disabled", "disabled");
                     $(this).html('<i class="fas fa-spinner fa-spin mr-1"></i> {{__("Registering")}}');

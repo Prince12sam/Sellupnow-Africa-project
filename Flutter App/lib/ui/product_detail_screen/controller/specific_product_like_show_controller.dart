@@ -34,7 +34,7 @@ class SpecificProductLikeShowController extends GetxController {
 
       final likesResponse = await SpecificProductLikeApi.getLikesForAd(
         adId: adId,
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       );
 
       if (likesResponse != null) {

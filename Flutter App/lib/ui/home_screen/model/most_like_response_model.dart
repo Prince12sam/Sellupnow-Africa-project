@@ -46,7 +46,7 @@ class MostLikeData {
   int? saleType;
   double? price;
   bool? isAuctionEnabled;
-  int? auctionStartingPrice;
+  num? auctionStartingPrice;
   DateTime? auctionEndDate;
   DateTime? createdAt;
   int? likesCount;

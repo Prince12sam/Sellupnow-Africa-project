@@ -216,114 +216,53 @@ class LoginScreenView extends StatelessWidget {
               ),
               
 
-              Row(
-                children: [
-                  Expanded(
-                      child: GestureDetector(
-                    onTap: () async {
-                      // if (controller.selectedValue != 1) {
-                      //   Utils.showToast(Get.context!, "Please agree to the Privacy Policy to proceed.");
-                      //   return;
-                      // }
-                      await controller.onGoogleLogin();
-                    },
-                    child: Container(
-                      height: 54,
-                      decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: BorderRadius.circular(60),
-                          border: Border.all(
-                            color: AppColors.txtFieldBorder,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.black.withValues(alpha: 0.08),
-                              offset: Offset(0, 0),
-                              blurRadius: 16,
-                              spreadRadius: 0,
-                            ),
-                          ]),
-                      child: Row(
-                        children: [
-                          Container(
-                            height: 47,
-                            width: 47,
-                            padding: EdgeInsets.all(7),
-                            decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: AppColors.loginIconBgColor),
-                            child: Center(
-                              child: Image.asset(
-                                AppAsset.googleLoginIcon,
-                                height: 28,
-                              ),
-                            ),
-                          ).paddingAll(3),
-                          Text(
-                            EnumLocale.txtGoogleLogin.name.tr,
-                            style: AppFontStyle.fontStyleW500(
-                                decorationColor: AppColors.black,
-                                fontSize: 15,
-                                fontColor: AppColors.black),
-                          ).paddingOnly(left: 2)
-                        ],
+              GestureDetector(
+                onTap: () async {
+                  await controller.onGoogleLogin();
+                },
+                child: Container(
+                  height: 54,
+                  decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(60),
+                      border: Border.all(
+                        color: AppColors.txtFieldBorder,
                       ),
-                    ),
-                  )),
-                  SizedBox(width: 15),
-                  Expanded(
-                      child: GestureDetector(
-                    onTap: () {
-                      // if (controller.selectedValue != 1) {
-                      //   Utils.showToast(Get.context!, "Please agree to the Privacy Policy to proceed.");
-                      //   return;
-                      // }
-                      // Get.toNamed(AppRoutes.mobileLogIn);
-                    },
-                    child: Container(
-                      height: 54,
-                      decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: BorderRadius.circular(60),
-                          border: Border.all(
-                            color: AppColors.txtFieldBorder,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.black.withValues(alpha: 0.08),
+                          offset: Offset(0, 0),
+                          blurRadius: 16,
+                          spreadRadius: 0,
+                        ),
+                      ]),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        height: 47,
+                        width: 47,
+                        padding: EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.loginIconBgColor),
+                        child: Center(
+                          child: Image.asset(
+                            AppAsset.googleLoginIcon,
+                            height: 28,
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.black.withValues(alpha: 0.08),
-                              offset: Offset(0, 0),
-                              blurRadius: 16,
-                              spreadRadius: 0,
-                            ),
-                          ]),
-                      child: Row(
-                        children: [
-                          Container(
-                            height: 47,
-                            width: 47,
-                            padding: EdgeInsets.all(7),
-                            decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: AppColors.loginIconBgColor),
-                            child: Center(
-                              child: Image.asset(
-                                AppAsset.appleLoginIcon,
-                                height: 27,
-                              ),
-                            ),
-                          ).paddingAll(3),
-                          Text(
-                            EnumLocale.txtAppleLogIn.name.tr,
-                            style: AppFontStyle.fontStyleW500(
-                                decorationColor: AppColors.black,
-                                fontSize: 15,
-                                fontColor: AppColors.black),
-                          ).paddingOnly(left: 2)
-                        ],
-                      ),
-                    ),
-                  )),
-                ],
+                        ),
+                      ).paddingAll(3),
+                      Text(
+                        EnumLocale.txtGoogleLogin.name.tr,
+                        style: AppFontStyle.fontStyleW500(
+                            decorationColor: AppColors.black,
+                            fontSize: 15,
+                            fontColor: AppColors.black),
+                      ).paddingOnly(left: 2)
+                    ],
+                  ),
+                ),
               ).paddingOnly(top: 25, bottom: 19),
 
               GestureDetector(

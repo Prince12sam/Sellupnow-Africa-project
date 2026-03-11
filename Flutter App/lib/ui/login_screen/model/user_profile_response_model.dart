@@ -61,6 +61,12 @@ class User {
   bool? isFeaturePackageExpired;
   String? lastLoginAt;
   String? registeredAt;
+  String? country;
+  String? phoneCode;
+  int? verificationStatus;
+  String? verificationId;
+  String? verificationSubmittedAt;
+  String? verificationDeclineReason;
   DateTime? createdAt;
   DateTime? updatedAt;
 
@@ -93,6 +99,12 @@ class User {
     this.isFeaturePackageExpired,
     this.lastLoginAt,
     this.registeredAt,
+    this.country,
+    this.phoneCode,
+    this.verificationStatus,
+    this.verificationId,
+    this.verificationSubmittedAt,
+    this.verificationDeclineReason,
     this.createdAt,
     this.updatedAt,
   });
@@ -126,6 +138,12 @@ class User {
         isFeaturePackageExpired: json["isFeaturePackageExpired"],
         lastLoginAt: json["lastLoginAt"],
         registeredAt: json["registeredAt"],
+        country: json["country"],
+        phoneCode: json["phone_code"],
+        verificationStatus: json["verificationStatus"],
+        verificationId: json["verificationId"],
+        verificationSubmittedAt: json["verificationSubmittedAt"],
+        verificationDeclineReason: json["verificationDeclineReason"],
         createdAt: json["createdAt"] == null ? null : DateTime.parse(json["createdAt"]),
         updatedAt: json["updatedAt"] == null ? null : DateTime.parse(json["updatedAt"]),
       );
@@ -159,6 +177,12 @@ class User {
         "isFeaturePackageExpired": isFeaturePackageExpired,
         "lastLoginAt": lastLoginAt,
         "registeredAt": registeredAt,
+        "country": country,
+        "phone_code": phoneCode,
+        "verificationStatus": verificationStatus,
+        "verificationId": verificationId,
+        "verificationSubmittedAt": verificationSubmittedAt,
+        "verificationDeclineReason": verificationDeclineReason,
         "createdAt": createdAt?.toIso8601String(),
         "updatedAt": updatedAt?.toIso8601String(),
       };

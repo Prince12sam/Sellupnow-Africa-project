@@ -9,6 +9,7 @@ use App\Models\Backend\IdentityVerification;
 use App\Models\Frontend\AccountDeactivate;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -181,14 +182,18 @@ class AccountSettingController extends Controller
             }
 
             try {
-                $subject = get_static_option('user_identity_verification_subject') ?? __('User Verification Request');
-                $message = get_static_option('admin_user_identity_verification_message');
-                Mail::to(get_static_option('site_global_email'))->send(new BasicMail([
-                    'subject' => $subject,
-                    'message' => $message
-                ]));
+                $adminEmail = get_static_option('site_global_email');
+                if (!empty($adminEmail)) {
+                    $subject = get_static_option('user_identity_verification_subject') ?? __('User Verification Request');
+                    $message = get_static_option('admin_user_identity_verification_message');
+                    Mail::to($adminEmail)->send(new BasicMail([
+                        'subject' => $subject,
+                        'message' => $message
+                    ]));
+                }
             } catch (\Exception $e) {
-                return redirect()->back()->with(FlashMsg::item_new($e->getMessage()));
+                // Mail not configured — silently skip, do not block the user
+                \Illuminate\Support\Facades\Log::warning('Identity verification email skipped: ' . $e->getMessage());
             }
 
             toastr_success(__('Verify Info Update Success---'));

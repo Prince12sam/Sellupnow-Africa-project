@@ -137,7 +137,7 @@ class CustomImageView extends StatelessWidget {
       final cacheWidth = (box.maxWidth * 2).toInt();
 
       return (image != null && image != "")
-          ? image!.startsWith("https")
+          ? image!.trim().startsWith("http")
           ? CachedNetworkImage(
         color: color,
             imageUrl: image ?? "",

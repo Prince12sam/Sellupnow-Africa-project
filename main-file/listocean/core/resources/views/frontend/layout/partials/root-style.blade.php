@@ -14,20 +14,6 @@
         --footer-bg-color: {{ get_static_option('footer_bg_color', '#F9FAFB') }};
     }
 
-    .new-style .exploreCategories .singleCategories,
-    .new-style .exploreCategories .categories1,
-    .new-style .exploreCategories .categories2,
-    .new-style .exploreCategories .categories3,
-    .new-style .exploreCategories .categories4,
-    .new-style .exploreCategories .categories5,
-    .new-style .exploreCategories .categories6,
-    .new-style .exploreCategories .categories7,
-    .new-style .exploreCategories .categories8,
-    .new-style .exploreCategories .categories9 {
-        background: linear-gradient(var(--category-card-bg-from), rgba(255, 255, 255, 0)) !important;
-        border-color: var(--category-card-border) !important;
-    }
-
     .headerBg3,
     .new-style .headerBg4 {
         background: var(--header-bg-color) !important;
@@ -37,5 +23,69 @@
     .footerStyleThree,
     .footerStyleTwo {
         background: var(--footer-bg-color) !important;
+    }
+
+    /* Keep category grids breathable instead of packing too many cards per row. */
+    .new-style .catagory-wise-listing .services_sub_category_load_wraper {
+        gap: 24px;
+    }
+
+    .new-style .exploreCategories .global-slick-init.slider-inner-margin .slick-list {
+        margin-left: -10px;
+        margin-right: -10px;
+    }
+
+    .new-style .exploreCategories .global-slick-init.slider-inner-margin .slick-slide {
+        padding-left: 10px;
+        padding-right: 10px;
+        box-sizing: border-box;
+    }
+
+    .new-style .catagory-wise-listing .services_sub_category_load_wraper .singleCategories {
+        width: calc(20% - 19.2px);
+    }
+
+    @media (max-width: 1399.98px) {
+        .new-style .catagory-wise-listing .services_sub_category_load_wraper .singleCategories {
+            width: calc(25% - 18px);
+        }
+    }
+
+    @media (max-width: 1199.98px) {
+        .new-style .catagory-wise-listing .services_sub_category_load_wraper .singleCategories {
+            width: calc(33.333333% - 16px);
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        .new-style .catagory-wise-listing .services_sub_category_load_wraper .singleCategories {
+            width: calc(50% - 12px);
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .new-style .catagory-wise-listing .services_sub_category_load_wraper .singleCategories {
+            width: 100%;
+        }
+    }
+
+    /* Keep footer text consistently white across all states. */
+    footer .footerWrapper,
+    footer .footerWrapper p,
+    footer .footerWrapper span,
+    footer .footerWrapper li,
+    footer .footerWrapper small,
+    footer .footerWrapper strong,
+    footer .footerWrapper em,
+    footer .footerWrapper .pera,
+    footer .footerWrapper .footerTittle,
+    footer .footerWrapper .singleLinks,
+    footer .footerWrapper a,
+    footer .footerWrapper a:link,
+    footer .footerWrapper a:visited,
+    footer .footerWrapper a:hover,
+    footer .footerWrapper a:active,
+    footer .footerWrapper a:focus {
+        color: #ffffff !important;
     }
 </style>

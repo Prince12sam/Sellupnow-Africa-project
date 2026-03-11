@@ -74,7 +74,12 @@ class NotificationServices {
     log('FCM permission: $settings');
 
     // (Optional) Get FCM token for debugging
-    final token = await messaging.getToken();
+    String? token;
+    try {
+      token = await messaging.getToken().timeout(const Duration(seconds: 5));
+    } catch (e) {
+      log('FCM token fetch failed (non-blocking): $e');
+    }
     log('FCM token: $token');
 
     // Ensure Android channel exists (safe to call multiple times)

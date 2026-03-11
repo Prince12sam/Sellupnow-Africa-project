@@ -64,7 +64,7 @@ class WithdrawScreenController extends GetxController {
     isSubmitting = true;
     update();
 
-    final success = await WithdrawApi.submitRequest(
+    final result = await WithdrawApi.submitRequest(
       amount: double.tryParse(amountController.text.trim()) ?? 0,
       contactNumber: contactController.text.trim(),
       name: nameController.text.trim(),
@@ -74,6 +74,8 @@ class WithdrawScreenController extends GetxController {
 
     isSubmitting = false;
     update();
+
+    final success = result['status'] == true;
 
     if (success) {
       amountController.clear();
@@ -92,9 +94,10 @@ class WithdrawScreenController extends GetxController {
     } else {
       Get.snackbar(
         'Error',
-        'Failed to submit request. Please try again.',
+        result['message']?.toString() ?? 'Failed to submit request. Please try again.',
         backgroundColor: Colors.red,
         colorText: Colors.white,
+        duration: const Duration(seconds: 4),
       );
     }
   }

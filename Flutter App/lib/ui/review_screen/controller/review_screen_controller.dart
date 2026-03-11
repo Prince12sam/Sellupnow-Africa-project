@@ -239,10 +239,10 @@ class ReviewScreenController extends GetxController {
     isReview = true;
     update([Constant.review]);
     var reviewRes = await ReviewApi.getReviews(
-      userId: Database.getUserProfileResponseModel?.user?.id ?? "",
+      userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
       start: 1,
       limit: 20,
-      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? '',
+      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
     );
 
     if (reviewRes != null && reviewRes.status == true) {
@@ -289,10 +289,10 @@ class ReviewScreenController extends GetxController {
       update([Constant.idUserAds, Constant.idAllAds]);
 
       final response = await UserProductApi.getAllAdsOfUser(
-        loginUserId: Database.getUserProfileResponseModel?.user?.id ?? "",
+        loginUserId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
         start: start,
         limit: limit,
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       );
 
       if (response != null && response.status == true) {
@@ -325,7 +325,7 @@ class ReviewScreenController extends GetxController {
       // 2) API call
       final resp = await AddLikeApi.callApi(
         adId: adId,
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       );
 
       if (resp != null && resp.status == true) {
@@ -422,10 +422,10 @@ class ReviewScreenController extends GetxController {
     isReview = true;
     update([Constant.review]);
     var reviewRes = await ReviewApi.getReviews(
-      userId: Database.getUserProfileResponseModel?.user?.id ?? "",
+      userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
       start: 1,
       limit: 20,
-      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? '',
+      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
     );
 
     if (reviewRes != null && reviewRes.status == true) {
@@ -463,10 +463,10 @@ class ReviewScreenController extends GetxController {
       update([Constant.idUserAds, Constant.idAllAds]);
 
       final response = await UserProductApi.callApi(
-        loginUserId: Database.getUserProfileResponseModel?.user?.id ?? "",
+        loginUserId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
         start: start,
         limit: limit,
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       );
 
       userAllAds.clear();
@@ -507,7 +507,7 @@ class ReviewScreenController extends GetxController {
     try {
       final resp = await AddLikeApi.callApi(
         adId: adId,
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       );
 
       if (resp != null && resp.status == true) {

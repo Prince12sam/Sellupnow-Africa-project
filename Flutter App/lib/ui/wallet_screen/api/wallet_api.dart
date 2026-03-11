@@ -13,21 +13,22 @@ class WalletApi {
   static int startPagination = 0;
   static const int limitPagination = 20;
 
-  static Future<WalletResponseModel?> callBalanceApi() async {
+  static Future<Map<String, String>> _headers() async {
     final token = await FirebaseAccessToken.onGet();
-    Utils.showLog("Wallet Balance Api Calling...");
-
-    final uri = Uri.parse(Api.walletBalance);
-    final headers = {
+    return {
       ApiParams.key: Api.secretKey,
       ApiParams.authToken: "Bearer $token",
       ApiParams.authUid:
-          '${Database.getUserProfileResponseModel?.user?.firebaseUid}',
+          Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       ApiParams.contentType: "application/json",
     };
+  }
 
+  static Future<WalletResponseModel?> callBalanceApi() async {
+    Utils.showLog("Wallet Balance Api Calling...");
     try {
-      final response = await http.get(uri, headers: headers);
+      final response =
+          await http.get(Uri.parse(Api.walletBalance), headers: await _headers());
       Utils.showLog("Wallet Balance Api Response Code => ${response.statusCode}");
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
@@ -41,33 +42,61 @@ class WalletApi {
   }
 
   static Future<WalletResponseModel?> callTransactionsApi() async {
-    final token = await FirebaseAccessToken.onGet();
     Utils.showLog("Wallet Transactions Api Calling...");
-
     startPagination += 1;
-    final queryParameters = {
+    final query = Uri(queryParameters: {
       ApiParams.start: startPagination.toString(),
       ApiParams.limit: limitPagination.toString(),
-    };
-    final query = Uri(queryParameters: queryParameters).query;
+    }).query;
     final uri = Uri.parse(Api.walletTransactions + (query.isNotEmpty ? query : ''));
 
-    final headers = {
-      ApiParams.key: Api.secretKey,
-      ApiParams.authToken: "Bearer $token",
-      ApiParams.authUid:
-          '${Database.getUserProfileResponseModel?.user?.firebaseUid}',
-      ApiParams.contentType: "application/json",
-    };
-
     try {
-      final response = await http.get(uri, headers: headers);
+      final response = await http.get(uri, headers: await _headers());
       Utils.showLog("Wallet Transactions Api => ${response.statusCode}");
       if (response.statusCode == 200) {
         return WalletResponseModel.fromJson(json.decode(response.body));
       }
     } catch (error) {
       Utils.showLog("Wallet Transactions Api Error => $error");
+    }
+    return null;
+  }
+
+  /// Initialize a Paystack wallet top-up. Returns {authorization_url, reference}.
+  static Future<Map<String, dynamic>?> topupInit(double amount) async {
+    Utils.showLog("Wallet Topup Init Calling... amount=$amount");
+    try {
+      final response = await http.post(
+        Uri.parse(Api.walletTopupInit),
+        headers: await _headers(),
+        body: json.encode({'amount': amount}),
+      );
+      Utils.showLog("Wallet Topup Init => ${response.statusCode} ${response.body}");
+      if (response.statusCode == 200) {
+        final decoded = json.decode(response.body);
+        if (decoded['status'] == true) return decoded;
+      }
+    } catch (e) {
+      Utils.showLog("Wallet Topup Init Error => $e");
+    }
+    return null;
+  }
+
+  /// Verify a completed Paystack top-up. Returns {status, balance}.
+  static Future<Map<String, dynamic>?> topupVerify(String reference) async {
+    Utils.showLog("Wallet Topup Verify Calling... ref=$reference");
+    try {
+      final response = await http.post(
+        Uri.parse(Api.walletTopupVerify),
+        headers: await _headers(),
+        body: json.encode({'reference': reference}),
+      );
+      Utils.showLog("Wallet Topup Verify => ${response.statusCode} ${response.body}");
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+    } catch (e) {
+      Utils.showLog("Wallet Topup Verify Error => $e");
     }
     return null;
   }

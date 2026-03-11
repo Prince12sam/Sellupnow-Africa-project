@@ -113,7 +113,7 @@ class FillProfileScreenController extends GetxController {
     log('Database.countryCode  ::::  ${Database.selectedCountryCode}');
     editProfileModel = await EditProfileApi.callApi(
       address: addressController.text,
-      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       image: pickImage == "" ? photo : pickImage,
       phoneNumber: numberController.text,
       name: nameController.text,
@@ -123,22 +123,36 @@ class FillProfileScreenController extends GetxController {
     );
 
     if (editProfileModel?.status == true) {
-      Database.getUserProfileResponseModel = await GetUserProfileApi.callApi(loginUserId: Database.loginUserFirebaseId);
-      Database.onSetLoginUserProfilePic(Database.getUserProfileResponseModel?.user?.profileImage ?? "");
-      Database.onSetLoginUserName(Database.getUserProfileResponseModel!.user!.name!);
-      Database.onSetLoginUserEmail(Database.getUserProfileResponseModel!.user!.email!);
-      Database.onSetLoginUserPhoneNumber(Database.getUserProfileResponseModel?.user?.phoneNumber ?? "");
-      Database.getUserProfileResponseModel = getUserProfileResponseModel;
+      // Update local Database values immediately
+      Database.onSetLoginUserName(nameController.text);
+      Database.onSetLoginUserEmail(emailController.text);
+      Database.onSetLoginUserPhoneNumber(numberController.text);
+      if (pickImage != null && pickImage!.isNotEmpty) {
+        Database.onSetLoginUserProfilePic(pickImage!);
+      }
+
+      // Try to refresh full profile from API (non-critical)
+      try {
+        final profileResult = await GetUserProfileApi.callApi(loginUserId: Database.loginUserFirebaseId);
+        if (profileResult != null) {
+          getUserProfileResponseModel = profileResult;
+          Database.getUserProfileResponseModel = profileResult;
+          Database.onSetLoginUserProfilePic(profileResult.user?.profileImage ?? "");
+          Database.onSetLoginUserName(profileResult.user?.name ?? nameController.text);
+          Database.onSetLoginUserEmail(profileResult.user?.email ?? emailController.text);
+          Database.onSetLoginUserPhoneNumber(profileResult.user?.phoneNumber ?? numberController.text);
+        }
+      } catch (e) {
+        Utils.showLog("Fill profile refresh failed (non-critical): $e");
+      }
 
       log(" loginUserProfilePic ::: ${Database.loginUserProfilePic}");
-      log(" loginUserProfilePic ::: ${Database.loginUserName}");
-      log(" loginUserProfilePic ::: ${Database.getUserProfileResponseModel?.user?.name}");
+      log(" loginUserName ::: ${Database.loginUserName}");
+      log(" profile name ::: ${Database.getUserProfileResponseModel?.user?.name}");
 
       update([Constant.idProfile]);
 
       log("${Database.getUserProfileResponseModel?.user}");
-      getUserProfileResponseModel = await GetUserProfileApi.callApi(loginUserId: Database.loginUserFirebaseId);
-      Database.getUserProfileResponseModel = getUserProfileResponseModel;
 
       update();
       Get.toNamed(AppRoutes.bottomBar);
@@ -195,7 +209,7 @@ class FillProfileScreenController extends GetxController {
 
     // Call API
     final response = await NotificationPermissionApi.updateUserPermission(
-      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       type: "isNotificationsAllowed",
     );
 
@@ -216,7 +230,7 @@ class FillProfileScreenController extends GetxController {
 
     // Call API
     final response = await ContactPermissionApi.updateUserPermission(
-      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       type: "isContactInfoVisible",
     );
 

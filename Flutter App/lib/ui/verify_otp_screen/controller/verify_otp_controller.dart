@@ -37,6 +37,31 @@ class VerifyOtpController extends GetxController {
   LoginApiResponseModel? loginModel;
   UserExistResponseModel? checkUserExistModel;
 
+  /// Store essential user data directly from the login API response.
+  void _storeUserFromLoginResponse(LoginApiResponseModel loginModel, {String? firebaseUID}) {
+    final user = loginModel.user;
+    if (user == null) return;
+
+    Database.onSetLoginUserId(user.id ?? '');
+    Database.onSetLoginUserFirebaseId(firebaseUID ?? user.firebaseUid ?? '');
+    Database.onSetLoginUserName(user.name ?? '');
+    Database.onSetLoginUserNickName(user.name ?? '');
+    Database.onSetLoginUserEmail(user.email ?? '');
+    Database.onSetLoginUserProfilePic(user.profileImage ?? '');
+    Database.onSetLoginUserPhoneNumber(user.phoneNumber ?? '');
+    Database.syncIdentityVerificationState(
+      isVerified: user.isVerified == true,
+      verificationStatus: user.verificationStatus,
+      verificationId: user.verificationId,
+      verificationSubmittedAt: user.verificationSubmittedAt,
+    );
+    if (user.country != null && user.country!.isNotEmpty) {
+      Database.onSetSelectedCountryCode(user.country!);
+      Database.getDialCode();
+    }
+    Database.onSetIsNewUser(false);
+  }
+
   @override
   void onInit() async {
     await getDataFromArgs();
@@ -67,7 +92,8 @@ class VerifyOtpController extends GetxController {
   Future<void> verifyOtp() async {
     Database.onSetDemoUser(false);
     final identity = (await MobileDeviceIdentifier().getDeviceId())!;
-    final fcmToken = await FirebaseMessaging.instance.getToken();
+    String? fcmToken;
+    try { fcmToken = await FirebaseMessaging.instance.getToken().timeout(const Duration(seconds: 5)); } catch (_) {}
     Database.onSetFcmToken(fcmToken ?? "");
     Database.onSetIdentity(identity);
 
@@ -123,14 +149,20 @@ class VerifyOtpController extends GetxController {
         if (loginModel?.status == true) {
           Database.onSetIsLogin(true);
           Database.onSetSeenOnboarding(true);
-          Database.onSetFillProfile(true);
 
           Database.onSetLoginType(loginModel?.user?.loginType ?? 0);
 
-          await mainScreenController.onGetProfile(
-            loginUserId: userCredential.user!.uid,
-            loginType: 1,
-          );
+          // Store user data from login response immediately
+          _storeUserFromLoginResponse(loginModel!, firebaseUID: userCredential.user?.uid);
+
+          try {
+            await mainScreenController.onGetProfile(
+              loginUserId: userCredential.user!.uid,
+              loginType: 1,
+            );
+          } catch (e) {
+            Utils.showLog("Profile enrichment failed (non-critical): $e");
+          }
 
           if (loginModel?.signUp == true) {
             Database.onSetFillProfile(false);
@@ -145,13 +177,7 @@ class VerifyOtpController extends GetxController {
               Database.loginUserEmail,
             ]);
           } else {
-            // get profile api
-
             Database.onSetFillProfile(true);
-            await mainScreenController.onGetProfile(
-              loginUserId: userCredential.user!.uid,
-              loginType: 1,
-            );
 
             Get.toNamed(AppRoutes.bottomBar);
           }
@@ -172,6 +198,9 @@ class VerifyOtpController extends GetxController {
     } catch (e) {
       Utils.showToast(Get.context!, "Something went wrong");
     } finally {
+      if (Get.isDialogOpen == true) {
+        Get.back();
+      }
       isLoading = false;
       update();
     }

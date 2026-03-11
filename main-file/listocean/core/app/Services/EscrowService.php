@@ -75,7 +75,7 @@ class EscrowService
             'listing_price'           => $price,
             'admin_fee_amount'        => $commission,
             'total_amount'            => $total,
-            'currency'                => get_static_option('site_currency_symbol') ?? 'GHS',
+            'currency'                => get_admin_default_currency()->code,
             'status'                  => 'funded',
             'payment_gateway'         => 'wallet',
             'payment_transaction_id'  => null,

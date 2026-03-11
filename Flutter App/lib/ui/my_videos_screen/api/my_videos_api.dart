@@ -21,7 +21,7 @@ class MyVideosApi {
     final Map<String, String> queryParameters = {
       ApiParams.start: startPagination.toString(),
       ApiParams.limit: limitPagination.toString(),
-      ApiParams.userId: Database.getUserProfileResponseModel?.user?.id ?? '',
+      ApiParams.userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
     };
 
     String query = Uri(queryParameters: queryParameters).query;

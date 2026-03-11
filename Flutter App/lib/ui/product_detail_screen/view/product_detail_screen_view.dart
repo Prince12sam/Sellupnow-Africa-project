@@ -17,16 +17,48 @@ class ProductDetailScreenView extends StatelessWidget {
         id: Constant.idProductDetail,
         builder: (controller) {
           Utils.showLog('enter .....................');
+          final bool hasDetailError = !controller.isDetailLoading && (controller.detailLoadFailed || controller.productDetail?.data == null);
 
           return Scaffold(
-            bottomNavigationBar: controller.isDetailLoading ? ProductDetailBottomShimmer() : DetailBottomView(),
+            bottomNavigationBar: hasDetailError
+                ? null
+                : (controller.isDetailLoading ? ProductDetailBottomShimmer() : DetailBottomView()),
             backgroundColor: AppColors.white,
             body: Stack(
               clipBehavior: Clip.none,
               children: [
                 controller.isDetailLoading
                     ? ProductDetailShimmer()
-                    : SingleChildScrollView(
+                    : hasDetailError
+                        ? Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.error_outline, size: 44, color: AppColors.redColor),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    controller.detailErrorMessage.isNotEmpty
+                                        ? controller.detailErrorMessage
+                                        : 'Unable to load listing details.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: AppColors.black,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  ElevatedButton(
+                                    onPressed: controller.fetchProductDetail,
+                                    child: const Text('Retry'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        : SingleChildScrollView(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [

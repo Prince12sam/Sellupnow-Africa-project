@@ -86,6 +86,7 @@ class MobileNumberOTPView extends StatelessWidget {
                 ),
               ]),
               child: IntlPhoneField(
+                  key: ValueKey(logic.phoneCountries.length),
                   flagsButtonPadding: const EdgeInsets.all(8),
                   flagsButtonMargin: const EdgeInsets.only(right: 13),
                   dropdownIconPosition: IconPosition.trailing,
@@ -170,7 +171,10 @@ class MobileNumberOTPView extends StatelessWidget {
                       fontColor: AppColors.grey,
                     ),
                   ),
-                  // initialCountryCode: Database.selectedCountryCode,
+                  countries: logic.phoneCountries.isEmpty
+                      ? null
+                      : logic.phoneCountries,
+                  initialCountryCode: logic.initialCountryCode,
                   onCountryChanged: (value) {
                     log("message================= ${value.code}");
                     // Database.onSetSelectedCountryCode(value.code);

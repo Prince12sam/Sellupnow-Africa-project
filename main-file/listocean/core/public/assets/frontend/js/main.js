@@ -189,6 +189,22 @@
                     var rtl = typeof allData.rtl == 'undefined' ? false : allData.rtl;
                     var responsive = typeof $(this).data('responsive') == 'undefined' ? false : $(this).data('responsive');
 
+                    // Prevent category cards from becoming overly narrow due to stale high slide counts.
+                    if ($(this).closest('.exploreCategories').length > 0) {
+                        var parsedSlides = parseInt(slidesToShow, 10);
+                        slidesToShow = Number.isFinite(parsedSlides) && parsedSlides > 0 ? Math.min(parsedSlides, 5) : 5;
+
+                        // Normalize responsive breakpoints for category strip readability.
+                        responsive = [
+                            { breakpoint: 1600, settings: { slidesToShow: Math.min(slidesToShow, 5) } },
+                            { breakpoint: 1400, settings: { slidesToShow: 4 } },
+                            { breakpoint: 1200, settings: { slidesToShow: 3 } },
+                            { breakpoint: 991, settings: { slidesToShow: 3 } },
+                            { breakpoint: 768, settings: { slidesToShow: 2 } },
+                            { breakpoint: 576, settings: { slidesToShow: 2 } }
+                        ];
+                    }
+
                     //slider settings object setup
                     sliderSettings.infinite = infinite;
                     sliderSettings.arrows = arrows;

@@ -100,7 +100,7 @@ class SendImageAudioApi {
       final headers = {
         ApiParams.key: Api.secretKey,
         ApiParams.authToken: 'Bearer $token',
-        ApiParams.authUid: Database.getUserProfileResponseModel?.user?.firebaseUid.toString() ?? '',
+        ApiParams.authUid: Database.authUid,
       };
 
       request.headers.addAll(headers);

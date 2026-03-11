@@ -120,6 +120,14 @@ import 'package:listify/ui/withdraw_screen/view/withdraw_screen_view.dart';
 import 'package:listify/ui/support_ticket_screen/binding/support_ticket_binding.dart';
 import 'package:listify/ui/support_ticket_screen/view/support_ticket_screen_view.dart';
 import 'package:listify/ui/support_ticket_screen/view/support_ticket_detail_view.dart';
+import 'package:listify/ui/escrow_screen/binding/escrow_screen_binding.dart';
+import 'package:listify/ui/escrow_screen/view/escrow_screen_view.dart';
+import 'package:listify/ui/escrow_screen/view/escrow_detail_screen_view.dart';
+import 'package:listify/ui/banner_ad_screen/binding/banner_ad_screen_binding.dart';
+import 'package:listify/ui/banner_ad_screen/view/banner_ad_screen_view.dart';
+import 'package:listify/ui/banner_ad_screen/view/banner_ad_submit_view.dart';
+import 'package:listify/ui/change_password_screen/binding/change_password_binding.dart';
+import 'package:listify/ui/change_password_screen/view/change_password_view.dart';
 
 class AppPages {
   static List<GetPage> list = [
@@ -447,6 +455,31 @@ class AppPages {
       name: AppRoutes.supportTicketDetailScreen,
       page: () => SupportTicketDetailView(),
       binding: SupportTicketBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.escrowOrdersScreen,
+      page: () => EscrowScreenView(),
+      binding: EscrowScreenBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.escrowDetailScreen,
+      page: () => EscrowDetailScreenView(),
+      binding: EscrowScreenBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.bannerAdScreen,
+      page: () => BannerAdScreenView(),
+      binding: BannerAdScreenBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.bannerAdSubmitScreen,
+      page: () => BannerAdSubmitView(),
+      binding: BannerAdScreenBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.changePasswordScreen,
+      page: () => const ChangePasswordView(),
+      binding: ChangePasswordBinding(),
     ),
   ];
 }

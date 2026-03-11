@@ -50,7 +50,7 @@
                     <div class="services_sub_category_load_wraper mt-4">
                         @if($child_category_under_category->count() != 0)
                             @foreach($child_category_under_category as $child_cat)
-                              <div class="singleCategories categories1 wow fadeInUp" data-wow-delay="0.1s">
+                              <div class="singleCategories categories{{ ($loop->index % 9) + 1 }} wow fadeInUp" data-wow-delay="0.1s">
                                             <div class="categoriIcon text-center">
                                                 <a href="{{ route('frontend.show.listing.by.child.category', $child_cat->slug ?? 'x') }}">
                                                        {!! render_image_markup_by_attachment_id($child_cat->image) !!}

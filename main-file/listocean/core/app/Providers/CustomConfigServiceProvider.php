@@ -19,16 +19,22 @@ class CustomConfigServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // ── OAuth ────────────────────────────────────────────────────────────
-        config([
-            'services.google.client_id'     => get_static_option('google_client_id'),
-            'services.google.client_secret' => get_static_option('google_client_secret'),
-            'services.google.redirect'      => get_static_option('google_callback_url'),
+        // ── OAuth (only override when the DB value is non-empty) ────────────
+        $oauthKeys = [
+            'services.google.client_id'       => 'google_client_id',
+            'services.google.client_secret'   => 'google_client_secret',
+            'services.google.redirect'        => 'google_callback_url',
+            'services.facebook.client_id'     => 'facebook_client_id',
+            'services.facebook.client_secret' => 'facebook_client_secret',
+            'services.facebook.redirect'      => 'facebook_callback_url',
+        ];
 
-            'services.facebook.client_id'     => get_static_option('facebook_client_id'),
-            'services.facebook.client_secret' => get_static_option('facebook_client_secret'),
-            'services.facebook.redirect'      => get_static_option('facebook_callback_url'),
-        ]);
+        foreach ($oauthKeys as $configKey => $dbKey) {
+            $val = get_static_option($dbKey);
+            if (!empty($val)) {
+                config([$configKey => $val]);
+            }
+        }
 
         // ── Mail (admin configures via Email Settings panel) ─────────────────
         $host       = get_static_option('site_smtp_mail_host');

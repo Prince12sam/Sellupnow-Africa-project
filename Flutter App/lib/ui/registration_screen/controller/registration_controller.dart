@@ -50,6 +50,65 @@ class RegistrationController extends GetxController {
   // MainScreenController mainScreenController = Get.put(MainScreenController());
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
+  /// Store essential user data directly from the login API response.
+  void _storeUserFromLoginResponse(LoginApiResponseModel loginModel, {String? firebaseUID}) {
+    final user = loginModel.user;
+    if (user == null) return;
+
+    Database.onSetLoginUserId(user.id ?? '');
+    Database.onSetLoginUserFirebaseId(firebaseUID ?? user.firebaseUid ?? '');
+    Database.onSetLoginUserName(user.name ?? '');
+    Database.onSetLoginUserNickName(user.name ?? '');
+    Database.onSetLoginUserEmail(user.email ?? '');
+    Database.onSetLoginUserProfilePic(user.profileImage ?? '');
+    Database.onSetLoginUserPhoneNumber(user.phoneNumber ?? '');
+    Database.syncIdentityVerificationState(
+      isVerified: user.isVerified == true,
+      verificationStatus: user.verificationStatus,
+      verificationId: user.verificationId,
+      verificationSubmittedAt: user.verificationSubmittedAt,
+    );
+    if (user.country != null && user.country!.isNotEmpty) {
+      Database.onSetSelectedCountryCode(user.country!);
+      Database.getDialCode();
+    }
+    Database.onSetIsNewUser(false);
+  }
+
+  void _applyProfileUser(GetUserProfileResponseModel? profileModel) {
+    final user = profileModel?.user;
+    if (user == null) {
+      return;
+    }
+
+    final backendId = user.id?.trim() ?? '';
+    final firebaseUid = user.firebaseUid?.trim() ?? '';
+    final profileImage = user.profileImage?.trim() ?? '';
+    final name = user.name?.trim() ?? '';
+    final email = user.email?.trim() ?? '';
+    final phoneNumber = user.phoneNumber?.trim() ?? '';
+    final isVerified = user.isVerified == true;
+
+    Database.onSetIsNewUser(false);
+    if (backendId.isNotEmpty) Database.onSetLoginUserId(backendId);
+    if (firebaseUid.isNotEmpty) Database.onSetLoginUserFirebaseId(firebaseUid);
+    Database.syncIdentityVerificationState(
+      isVerified: isVerified,
+      verificationStatus: user.verificationStatus,
+      verificationId: user.verificationId,
+      verificationSubmittedAt: user.verificationSubmittedAt,
+    );
+    if (profileImage.isNotEmpty) Database.onSetLoginUserProfilePic(profileImage);
+    if (name.isNotEmpty) {
+      Database.onSetLoginUserName(name);
+      Database.onSetLoginUserNickName(name);
+    }
+    if (email.isNotEmpty) Database.onSetLoginUserEmail(email);
+    if (phoneNumber.isNotEmpty) Database.onSetLoginUserPhoneNumber(phoneNumber);
+
+    Database.getUserProfileResponseModel = profileModel;
+  }
+
   bool isEmailValid(String email) {
     final emailRegex = RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$');
     return emailRegex.hasMatch(email);
@@ -128,7 +187,8 @@ class RegistrationController extends GetxController {
     try {
       // Get identity and FCM token first
       final identity = (await MobileDeviceIdentifier().getDeviceId())!;
-      final fcmToken = await FirebaseMessaging.instance.getToken();
+      String? fcmToken;
+      try { fcmToken = await FirebaseMessaging.instance.getToken().timeout(const Duration(seconds: 5)); } catch (_) {}
       Database.onSetIdentity(identity);
       Database.onSetFcmToken(fcmToken ?? "");
 
@@ -190,13 +250,19 @@ class RegistrationController extends GetxController {
       if (loginModel?.status == true) {
         Database.onSetIsLogin(true);
         Database.onSetSeenOnboarding(true);
-        Database.onSetFillProfile(true);
         Database.onSetLoginType(loginModel?.user?.loginType ?? 0);
 
-        await onGetProfile(
-          loginUserId: userCredential.user!.uid,
-          loginType: 4,
-        );
+        // Store user data from login response immediately
+        _storeUserFromLoginResponse(loginModel!, firebaseUID: userCredential.user?.uid);
+
+        try {
+          await onGetProfile(
+            loginUserId: userCredential.user?.uid ?? loginModel?.user?.firebaseUid ?? '',
+            loginType: 4,
+          );
+        } catch (e) {
+          Utils.showLog("Profile enrichment failed (non-critical): $e");
+        }
 
         Get.back(); // Dismiss loading
 
@@ -232,32 +298,15 @@ class RegistrationController extends GetxController {
 
     log("fetchLoginUserProfileModel?.user?.id  :: ${fetchLoginUserProfileModel?.user?.id}");
 
-    if (fetchLoginUserProfileModel?.user?.loginType != null) {
-      Database.onSetIsNewUser(false);
+    if (fetchLoginUserProfileModel?.user != null) {
       log("fetchLoginUserProfileModel?.user?.Email  :: ${fetchLoginUserProfileModel?.user?.email}");
 
-      Database.onSetLoginUserId(fetchLoginUserProfileModel!.user!.id!);
-      Database.onSetLoginUserFirebaseId(
-          fetchLoginUserProfileModel!.user!.firebaseUid!);
-      Database.onSetLoginUserProfilePic(
-          fetchLoginUserProfileModel?.user?.profileImage ?? "");
-      Database.onSetLoginUserName(fetchLoginUserProfileModel!.user!.name!);
-      // Database.onSetLoginUserNickName(fetchLoginUserProfileModel?.user?.name ?? "");
-      Database.onSetLoginUserEmail(fetchLoginUserProfileModel!.user!.email!);
-      // Database.onSetLoginUserCountry(fetchLoginUserProfileModel!.user!.country!);
-      // Database.onSetLoginUserCountryFlag(fetchLoginUserProfileModel!.user!.countryFlag!);
-
-      // Database.onSetLoginUserBirthDate(fetchLoginUserProfileModel?.user?.birthDate ?? "");
-      // Database.onSetLoginUserGender(fetchLoginUserProfileModel?.user?.gender ?? "Male");
-      Database.onSetLoginUserPhoneNumber(
-          fetchLoginUserProfileModel?.user?.phoneNumber ?? "");
-      Database.getUserProfileResponseModel = fetchLoginUserProfileModel;
+      _applyProfileUser(fetchLoginUserProfileModel);
       log("Database.loginUserEmail  ${Database.loginUserEmail}");
       log("Database.loginUserName  ${Database.loginUserName}");
       log("Database.loginUserFirebaseId  ${Database.loginUserFirebaseId}");
       log("Database.image  ${Database.loginUserProfilePic}");
     } else {
-      Utils.showToast(Get.context!, EnumLocale.txtSomeThingWentWrong.name.tr);
       Utils.showLog("Get Profile Api Calling Failed !!");
     }
   }

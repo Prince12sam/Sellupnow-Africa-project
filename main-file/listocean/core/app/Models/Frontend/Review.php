@@ -11,7 +11,7 @@ class Review extends Model
     use HasFactory;
 
     protected $table = 'reviews';
-    protected $fillable = ['user_id','reviewer_id','rating','message','status'];
+    protected $fillable = ['user_id','reviewer_id','customer_id','rating','message','status'];
 
     public function ratingMax($max)
     {

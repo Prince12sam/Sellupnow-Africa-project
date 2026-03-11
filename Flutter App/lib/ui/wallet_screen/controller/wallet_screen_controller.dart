@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:listify/ui/wallet_screen/api/wallet_api.dart';
@@ -6,14 +7,23 @@ import 'package:listify/utils/utils.dart';
 
 class WalletScreenController extends GetxController {
   bool isLoading = false;
+  bool isTopupLoading = false;
   double balance = 0.0;
   List<WalletTransaction> transactions = [];
+
+  final amountController = TextEditingController();
 
   @override
   void onInit() {
     super.onInit();
     WalletApi.startPagination = 0;
     fetchWallet();
+  }
+
+  @override
+  void onClose() {
+    amountController.dispose();
+    super.onClose();
   }
 
   Future<void> fetchWallet() async {
@@ -36,6 +46,40 @@ class WalletScreenController extends GetxController {
     WalletApi.startPagination = 0;
     transactions.clear();
     await fetchWallet();
+  }
+
+  /// Start Paystack top-up flow
+  Future<Map<String, dynamic>?> initTopup(double amount) async {
+    isTopupLoading = true;
+    update();
+
+    final result = await WalletApi.topupInit(amount);
+
+    isTopupLoading = false;
+    update();
+    return result;
+  }
+
+  /// Verify top-up after Paystack redirect
+  Future<bool> verifyTopup(String reference) async {
+    isTopupLoading = true;
+    update();
+
+    final result = await WalletApi.topupVerify(reference);
+    final success = result != null && result['status'] == true;
+
+    if (success && result!['balance'] != null) {
+      balance = (result['balance'] as num).toDouble();
+    }
+
+    isTopupLoading = false;
+    update();
+
+    // Refresh transactions to show the new entry
+    if (success) {
+      await onRefresh();
+    }
+    return success;
   }
 
   String formatDate(String? iso) {

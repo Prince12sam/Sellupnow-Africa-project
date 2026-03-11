@@ -11,6 +11,23 @@ $spinner_icon =  $type === 'admin' ? 'fas fa-spinner fa-spin' : 'fa-spin las la-
     (function ($) {
         "use strict";
         var mainUploadBtn = '';
+
+        function normalizeMediaUrl(rawUrl) {
+            if (!rawUrl) {
+                return rawUrl;
+            }
+
+            try {
+                var parsedUrl = new URL(rawUrl, window.location.origin);
+                if (['127.0.0.1', 'localhost'].indexOf(parsedUrl.hostname) !== -1) {
+                    return window.location.origin + parsedUrl.pathname + parsedUrl.search + parsedUrl.hash;
+                }
+                return parsedUrl.toString();
+            } catch (error) {
+                return rawUrl;
+            }
+        }
+
         //after select image
         $(document).on('click','.media_upload_modal_submit_btn',function (e) {
             e.preventDefault();
@@ -20,10 +37,11 @@ $spinner_icon =  $type === 'admin' ? 'fas fa-spinner fa-spin' : 'fa-spin las la-
                 var imageId = '';
                 $.each(allData,function(index,value){
                     var el = $(this).data();
+                    var normalizedImgSrc = normalizeMediaUrl(el.imgsrc);
                     var separator = allData.length == index ? '' : '|';
                     imageId += el.imgid + separator;
-                    mainUploadBtn.prev('input').attr('data-imgsrc',el.imgsrc);
-                    mainUploadBtn.parent().find('.img-wrap').append('<div class="img-inner-wrap"><div class="rmv-span" data-imageid='+el.imgid+'><i class="{{$trash_icon}}"></i></div><div class="attachment-preview"><div class="thumbnail"><div class="centered"><img src="'+el.imgsrc+'"></div></div></div></div>');
+                    mainUploadBtn.prev('input').attr('data-imgsrc',normalizedImgSrc);
+                    mainUploadBtn.parent().find('.img-wrap').append('<div class="img-inner-wrap"><div class="rmv-span" data-imageid='+el.imgid+'><i class="{{$trash_icon}}"></i></div><div class="attachment-preview"><div class="thumbnail"><div class="centered"><img src="'+normalizedImgSrc+'"></div></div></div></div>');
                 });
                  mainUploadBtn.prev('input').val(imageId.substring(0,imageId.length -1));
 
@@ -107,6 +125,7 @@ $spinner_icon =  $type === 'admin' ? 'fas fa-spinner fa-spin' : 'fa-spin las la-
             e.preventDefault();
             var el = $(this);
             var allData = el.data();
+            var normalizedImgSrc = normalizeMediaUrl(allData.imgsrc);
 
             if( typeof $('#media_upload_modal').attr('data-mulitple') == 'undefined'){
                 el.toggleClass('selected').siblings().removeClass('selected');
@@ -120,14 +139,14 @@ $spinner_icon =  $type === 'admin' ? 'fas fa-spinner fa-spin' : 'fa-spin las la-
             parent.children('.date').text(allData.date);
             parent.children('.dimension').text(allData.dimension);
             parent.children('.size').text(allData.size);
-            parent.children('.imgsrc').text(allData.imgsrc);
+            parent.children('.imgsrc').text(normalizedImgSrc);
             parent.children('.image_id').text(allData.imgid);
             parent.find('input[name="img_alt_tag"]').val(allData.alt);
             parent.parent().find('input[name="img_id"]').val(allData.imgid);
 
             $('.img_alt_submit_btn').html('<i class="{{$check_icon}}"></i>');
             $('.img-info .img-title').text(allData.title)
-            $('.media-uploader-image-info .img-wrapper img').attr('src',allData.imgsrc);
+            $('.media-uploader-image-info .img-wrapper img').attr('src',normalizedImgSrc);
         });
 
         Dropzone.options.placeholderfForm = {
@@ -245,13 +264,14 @@ $spinner_icon =  $type === 'admin' ? 'fas fa-spinner fa-spin' : 'fa-spin las la-
                 success: function (data) {
                     $('.media-uploader-image-list').html('');
                     $.each(data,function (index,value) {
+                        var normalizedImgUrl = normalizeMediaUrl(value.img_url);
 
                         if($('.media-uploader-image-list li[data-imgid="'+value.image_id+'"]').length < 1){
-                            $('.media-uploader-image-list').append('<li data-date="'+value.upload_at+'" data-imgid="'+value.image_id+'" data-imgsrc="'+value.img_url+'" data-size="'+value.size+'" data-dimension="'+value.dimensions+'" data-title="'+value.title+'" data-alt="'+value.alt+'">\n' +
+                            $('.media-uploader-image-list').append('<li data-date="'+value.upload_at+'" data-imgid="'+value.image_id+'" data-imgsrc="'+normalizedImgUrl+'" data-size="'+value.size+'" data-dimension="'+value.dimensions+'" data-title="'+value.title+'" data-alt="'+value.alt+'">\n' +
                             '<div class="attachment-preview">\n' +
                             '<div class="thumbnail">\n' +
                             '<div class="centered">\n' +
-                            '<img src="'+value.img_url+'" alt="">\n' +
+                            '<img src="'+normalizedImgUrl+'" alt="">\n' +
                             '</div>\n' +
                             '</div>\n' +
                             '</div>\n' +
@@ -316,13 +336,14 @@ $spinner_icon =  $type === 'admin' ? 'fas fa-spinner fa-spin' : 'fa-spin las la-
                 },
                 success: function (data) {
                     $.each(data,function (index,value) {
+                        var normalizedImgUrl = normalizeMediaUrl(value.img_url);
                         if($('.media-uploader-image-list li[data-imgid="'+value.image_id+'"]').length < 1){
 
-                            mediaImageWrapper.find('.media-uploader-image-list').append('<li data-date="'+value.upload_at+'" data-imgid="'+value.image_id+'" data-imgsrc="'+value.img_url+'" data-size="'+value.size+'" data-dimension="'+value.dimensions+'" data-title="'+value.title+'" data-alt="'+value.alt+'">\n' +
+                            mediaImageWrapper.find('.media-uploader-image-list').append('<li data-date="'+value.upload_at+'" data-imgid="'+value.image_id+'" data-imgsrc="'+normalizedImgUrl+'" data-size="'+value.size+'" data-dimension="'+value.dimensions+'" data-title="'+value.title+'" data-alt="'+value.alt+'">\n' +
                                 '<div class="attachment-preview">\n' +
                                 '<div class="thumbnail">\n' +
                                 '<div class="centered">\n' +
-                                '<img src="'+value.img_url+'" alt="">\n' +
+                                '<img src="'+normalizedImgUrl+'" alt="">\n' +
                                 '</div>\n' +
                                 '</div>\n' +
                                 '</div>\n' +

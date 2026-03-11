@@ -41,7 +41,7 @@ class BlockScreenController extends GetxController {
   unBlockApi(String blockerId) async {
     final response = await BlockUserApi.toggleBlockUser(
       blockedId: blockerId,
-      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? '',
+      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
     );
 
     if (response != null) {

@@ -29,7 +29,7 @@ class LoginScreenController extends GetxController {
   TextEditingController emailTxtController = TextEditingController();
   TextEditingController nameController = TextEditingController();
   TextEditingController passwordTxtController = TextEditingController();
-  int? selectedValue;
+  int? selectedValue = 1; // pre-agreed
   GetUserProfileResponseModel? getUserProfileResponseModel;
 
   SettingApiResponseModel? settingApiResponseModel;
@@ -109,11 +109,11 @@ class LoginScreenController extends GetxController {
             password: passwordTxtController.text.trim(),
           );
 
-          final token = await FirebaseAccessToken.onGet();
+          await FirebaseAccessToken.onGet();
           String? firebaseUID = userCredential.user?.uid;
 
           Utils.showLog("Signed In Firebase UID => $firebaseUID");
-          Utils.showLog("Firebase Token => $token");
+          Utils.showLog("Firebase token fetched successfully");
 
           // Optional: Call Login API if needed after sign-in
           loginModel = await LoginApi.callApi(
@@ -202,39 +202,166 @@ class LoginScreenController extends GetxController {
     update([Constant.radioButton]);
   }
 
+  /// Store essential user data directly from the login API response.
+  /// This ensures we have user data even if the profile API call fails
+  /// (e.g. Firebase Auth not available, network issue, etc.)
+  void _storeUserFromLoginResponse(LoginApiResponseModel loginModel, {String? firebaseUID}) {
+    final user = loginModel.user;
+    if (user == null) return;
+
+    Database.onSetLoginUserId(user.id ?? '');
+    Database.onSetLoginUserFirebaseId(
+        firebaseUID ?? user.firebaseUid ?? '');
+    Database.onSetLoginUserName(user.name ?? '');
+    Database.onSetLoginUserNickName(user.name ?? '');
+    Database.onSetLoginUserEmail(user.email ?? '');
+    Database.onSetLoginUserProfilePic(user.profileImage ?? '');
+    Database.onSetLoginUserPhoneNumber(user.phoneNumber ?? '');
+    Database.syncIdentityVerificationState(
+      isVerified: user.isVerified == true,
+      verificationStatus: user.verificationStatus,
+      verificationId: user.verificationId,
+      verificationSubmittedAt: user.verificationSubmittedAt,
+    );
+    if (user.country != null && user.country!.isNotEmpty) {
+      Database.onSetSelectedCountryCode(user.country!);
+      Database.getDialCode();
+    }
+    Database.onSetIsNewUser(false);
+
+    Utils.showLog("Stored user from login response: id=${user.id}, email=${user.email}, firebaseUid=${firebaseUID ?? user.firebaseUid}");
+  }
+
+  void _applyProfileUser(GetUserProfileResponseModel? profileModel) {
+    final user = profileModel?.user;
+    if (user == null) {
+      return;
+    }
+
+    final backendId = user.id?.trim() ?? '';
+    final firebaseUid = user.firebaseUid?.trim() ?? '';
+    final profileImage = user.profileImage?.trim() ?? '';
+    final name = user.name?.trim() ?? '';
+    final email = user.email?.trim() ?? '';
+    final phoneNumber = user.phoneNumber?.trim() ?? '';
+    final backendCountry = user.country?.trim() ?? '';
+    final isVerified = user.isVerified == true;
+
+    Database.onSetIsNewUser(false);
+    if (backendId.isNotEmpty) Database.onSetLoginUserId(backendId);
+    if (firebaseUid.isNotEmpty) Database.onSetLoginUserFirebaseId(firebaseUid);
+    Database.syncIdentityVerificationState(
+      isVerified: isVerified,
+      verificationStatus: user.verificationStatus,
+      verificationId: user.verificationId,
+      verificationSubmittedAt: user.verificationSubmittedAt,
+    );
+    if (profileImage.isNotEmpty) Database.onSetLoginUserProfilePic(profileImage);
+    if (name.isNotEmpty) {
+      Database.onSetLoginUserName(name);
+      Database.onSetLoginUserNickName(name);
+    }
+    if (email.isNotEmpty) Database.onSetLoginUserEmail(email);
+    if (phoneNumber.isNotEmpty) Database.onSetLoginUserPhoneNumber(phoneNumber);
+    if (backendCountry.isNotEmpty) {
+      Database.onSetSelectedCountryCode(backendCountry);
+      Database.getDialCode();
+    }
+
+    Database.getUserProfileResponseModel = profileModel;
+  }
+
+  Future<String> _refreshFcmTokenForLogin() async {
+    try {
+      final fcmToken = await FirebaseMessaging.instance
+          .getToken()
+          .timeout(const Duration(seconds: 5));
+      Database.onSetFcmToken(fcmToken ?? '');
+    } catch (e) {
+      Utils.showLog("FCM token refresh failed during login (non-blocking) => $e");
+    }
+
+    Utils.showLog("fcmToken => ${Database.fcmToken}");
+    return Database.fcmToken;
+  }
+
+  Future<String?> _establishEmailPasswordFirebaseSession({
+    required LoginApiResponseModel loginModel,
+    required String email,
+    required String password,
+  }) async {
+    try {
+      await FirebaseAuth.instance.signOut();
+    } catch (_) {}
+
+    String? firebaseUid;
+
+    final customToken = loginModel.firebaseCustomToken?.trim() ?? '';
+    if (customToken.isNotEmpty) {
+      try {
+        final userCredential =
+            await FirebaseAuth.instance.signInWithCustomToken(customToken);
+        firebaseUid = userCredential.user?.uid;
+        Utils.showLog(
+            "Firebase custom token sign-in successful, UID => $firebaseUid");
+      } on FirebaseAuthException catch (e) {
+        Utils.showLog(
+            "Firebase custom token sign-in failed => code=${e.code}, message=${e.message}");
+      } catch (e) {
+        Utils.showLog("Firebase custom token sign-in failed => $e");
+      }
+    } else {
+      Utils.showLog("Firebase custom token missing from login response");
+    }
+
+    if ((firebaseUid == null || firebaseUid.isEmpty) &&
+        email.trim().isNotEmpty &&
+        password.isNotEmpty) {
+      try {
+        final userCredential =
+            await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email.trim(),
+          password: password,
+        );
+        firebaseUid = userCredential.user?.uid;
+        Utils.showLog(
+            "Firebase email/password fallback sign-in successful, UID => $firebaseUid");
+      } on FirebaseAuthException catch (e) {
+        Utils.showLog(
+            "Firebase email/password fallback failed => code=${e.code}, message=${e.message}");
+      } catch (e) {
+        Utils.showLog("Firebase email/password fallback failed => $e");
+      }
+    }
+
+    if (firebaseUid == null || firebaseUid.isEmpty) {
+      return null;
+    }
+
+    final firebaseToken = await FirebaseAccessToken.onGet();
+    if (firebaseToken == null || firebaseToken.isEmpty) {
+      Utils.showLog(
+          "Firebase session established but ID token could not be retrieved");
+      try {
+        await FirebaseAuth.instance.signOut();
+      } catch (_) {}
+      return null;
+    }
+
+    return firebaseUid;
+  }
+
   /// user get profile
 
   Future<void> onGetProfile(
       {required String loginUserId, required int loginType}) async {
     getUserProfileResponseModel =
         await GetUserProfileApi.callApi(loginUserId: loginUserId);
-    Database.getUserProfileResponseModel = getUserProfileResponseModel;
-
-    Utils.showLog(
-        "fetchLoginUserProfileModel?.user?.id${getUserProfileResponseModel?.user?.id}");
-
-    if (getUserProfileResponseModel?.user?.loginType != null) {
-      Database.onSetIsNewUser(false);
+    if (getUserProfileResponseModel?.user != null) {
       Utils.showLog(
-          "fetchLoginUserProfileModel?.user?.Email${getUserProfileResponseModel?.user?.email}");
+        "fetchLoginUserProfileModel?.user?.Email${getUserProfileResponseModel?.user?.email}");
 
-      Database.onSetLoginUserId(getUserProfileResponseModel!.user!.id!);
-      Database.onSetLoginUserFirebaseId(
-          getUserProfileResponseModel!.user!.firebaseUid!);
-      Database.onSetLoginUserProfilePic(
-          getUserProfileResponseModel?.user?.profileImage ?? "");
-      Database.onSetLoginUserName(
-          getUserProfileResponseModel!.user!.name ?? "");
-      Database.onSetLoginUserNickName(
-          getUserProfileResponseModel?.user?.name ?? "");
-      Database.onSetLoginUserEmail(getUserProfileResponseModel!.user!.email!);
-      // Database.onSetLoginUserCountry(getUserProfileResponseModel!.user!.country!);
-      // Database.onSetLoginUserCountryFlag(getUserProfileResponseModel!.user!.countryFlag!);
-      // Database.onSetLoginUserBirthDate(getUserProfileResponseModel?.user?.birthDate ?? "");
-      // Database.onSetLoginUserGender(getUserProfileResponseModel?.user?.gender ?? "Male");
-      Database.onSetLoginUserPhoneNumber(
-          getUserProfileResponseModel?.user?.phoneNumber ?? "");
-      Database.getUserProfileResponseModel = getUserProfileResponseModel;
+      _applyProfileUser(getUserProfileResponseModel);
       Utils.showLog("Database.loginUserId  ${Database.loginUserId}");
       Utils.showLog("Database.loginUserEmail  ${Database.loginUserEmail}");
       Utils.showLog(
@@ -244,7 +371,6 @@ class LoginScreenController extends GetxController {
       Utils.showLog(
           "Database.name  ${Database.getUserProfileResponseModel?.user?.name}");
     } else {
-      Utils.showToast(Get.context!, EnumLocale.txtSomeThingWentWrong.name.tr);
       Utils.showLog("Get Profile Api Calling Failed !!");
     }
   }
@@ -254,17 +380,10 @@ class LoginScreenController extends GetxController {
   Future<void> onClickSignIn() async {
     Database.onSetDemoUser(false);
     Utils.showLog("demo login>>>>>>>>>>>>>>>>${Database.demoUser}");
-    if (selectedValue != 1) {
-      Utils.showToast(
-          Get.context!, "Please agree to the Privacy Policy to proceed.");
-      return;
-    }
     FocusManager.instance.primaryFocus?.unfocus();
     Utils.showLog("Email => ${emailTxtController.text}");
     Utils.showLog("Password => ${passwordTxtController.text}");
-    final fcmToken = await FirebaseMessaging.instance.getToken();
-    Database.onSetFcmToken(fcmToken ?? "");
-    Utils.showLog("fcmToken => ${Database.fcmToken}");
+    await _refreshFcmTokenForLogin();
 
     final identity = (await MobileDeviceIdentifier().getDeviceId())!;
     Database.onSetIdentity(identity);
@@ -281,104 +400,78 @@ class LoginScreenController extends GetxController {
     try {
       Get.dialog(const LoadingWidget(), barrierDismissible: false);
 
-      // Check if user exists first before trying Firebase login
-      checkUserExistModel = await CheckUserExistApi.callApi(
+      // Step 1: Call backend API to verify credentials (no Firebase Auth needed)
+      loginModel = await LoginApi.callApi(
+        countryCode: Database.selectedCountryCode,
+        loginType: 4,
         email: emailTxtController.text.trim(),
         password: passwordTxtController.text.trim(),
         identity: Database.identity,
-        loginType: 4.toString(),
+        fcmToken: Database.fcmToken,
       );
 
-      Database.onSetUserExist(true);
-      Utils.showLog("Database.userExist :: ${Database.userExist}");
+      if (loginModel?.status == true) {
+        final successfulLoginModel = loginModel!;
+        final firebaseUID = await _establishEmailPasswordFirebaseSession(
+          loginModel: successfulLoginModel,
+          email: emailTxtController.text.trim(),
+          password: passwordTxtController.text.trim(),
+        );
 
-      if (checkUserExistModel?.status == true &&
-          checkUserExistModel?.isLogin == true) {
-        // User exists, proceed to Firebase login
-        try {
-          UserCredential userCredential =
-              await FirebaseAuth.instance.signInWithEmailAndPassword(
-            email: emailTxtController.text.trim(),
-            password: passwordTxtController.text.trim(),
-          );
-
-          final token = await FirebaseAccessToken.onGet();
-          String? firebaseUID = userCredential.user?.uid;
-
-          Utils.showLog("Firebase UID => $firebaseUID");
-          Utils.showLog("Firebase Token => $token");
-
-          // Now call the login API with the Firebase credentials
-          loginModel = await LoginApi.callApi(
-            countryCode: Database.selectedCountryCode,
-            loginType: 4,
-            email: emailTxtController.text.trim(),
-            password: passwordTxtController.text.trim(),
-            identity: Database.identity,
-            fcmToken: Database.fcmToken,
-            authToken: token,
-            authUid: firebaseUID,
-          );
-
-          if (loginModel?.status == true) {
-            Database.onSetIsLogin(true);
-            Database.onSetLoginType(loginModel?.user?.loginType ?? 0);
-            Database.onSetSeenOnboarding(true);
-            Database.onSetFillProfile(true);
-
-            Get.back(); // Stop loading
-
-            if (loginModel?.signUp == true) {
-              Database.onSetFillProfile(false);
-              Get.offAllNamed(AppRoutes.fillProfileScreen, arguments: [
-                Database.loginUserName,
-                Database.loginUserProfilePic,
-                Database.loginUserEmail,
-              ]);
-            } else {
-              Database.onSetFillProfile(true);
-              await onGetProfile(
-                loginUserId: userCredential.user!.uid,
-                loginType: 4,
-              );
-              Database.getUserProfileResponseModel =
-                  getUserProfileResponseModel;
-              Get.toNamed(AppRoutes.bottomBar);
-            }
-          } else {
-            Get.back(); // Stop loading
-            Utils.showToast(
-                Get.context!,
-                loginModel?.message ??
-                    EnumLocale.txtSomeThingWentWrong.name.tr);
-            Utils.showLog("Login API call failed: ${loginModel?.message}");
-          }
-        } catch (firebaseError) {
-          // Firebase sign-in error handling
+        if (firebaseUID == null || firebaseUID.isEmpty) {
           Get.back();
-          isLoading = false;
-          Utils.showToast(Get.context!, "Error: ${firebaseError.toString()}");
-          Utils.showLog("Firebase Sign-In Failed => $firebaseError");
+          Utils.showToast(
+            Get.context!,
+            "Unable to establish a secure session. Please sign in again.",
+          );
+          Utils.showLog(
+              "Email/password login aborted because Firebase session setup failed");
+          return;
+        }
+
+        Database.onSetIsLogin(true);
+        Database.onSetLoginType(successfulLoginModel.user?.loginType ?? 0);
+        Database.onSetSeenOnboarding(true);
+
+        // Store user data from login response IMMEDIATELY
+        // (this ensures profile data is available even if profile API fails)
+        _storeUserFromLoginResponse(successfulLoginModel, firebaseUID: firebaseUID);
+
+        Get.back(); // Stop loading
+
+        if (successfulLoginModel.signUp == true) {
+          Database.onSetFillProfile(false);
+          Get.offAllNamed(AppRoutes.fillProfileScreen, arguments: [
+            Database.loginUserName,
+            Database.loginUserProfilePic,
+            Database.loginUserEmail,
+          ]);
+        } else {
+          Database.onSetFillProfile(true);
+          final loginUser = successfulLoginModel.user;
+          final loginUserId = firebaseUID.isNotEmpty
+              ? firebaseUID
+              : (loginUser?.firebaseUid ?? loginUser?.id ?? '');
+
+          // Try to enrich with full profile data (non-critical)
+          try {
+            await onGetProfile(
+              loginUserId: loginUserId,
+              loginType: 4,
+            );
+            Database.getUserProfileResponseModel = getUserProfileResponseModel;
+          } catch (e) {
+            Utils.showLog("Profile enrichment failed (non-critical): $e");
+          }
+
+          Get.offAllNamed(AppRoutes.bottomBar);
         }
       } else {
-        if (checkUserExistModel?.status == false &&
-            checkUserExistModel?.isLogin == false) {
-          Get.back();
-          Utils.showToast(
-              Get.context!,
-              checkUserExistModel?.message ??
-                  "Password doesn't match for this user.");
-        } else {
-          Get.back();
-          Utils.showToast(
-              Get.context!, EnumLocale.txtYoumusthavesignup.name.tr);
-          registerArguments.addAll({
-            'email': emailTxtController.text.trim(),
-          });
-
-          Utils.showLog("registerArguments:::::::::::$registerArguments");
-          Get.toNamed(AppRoutes.register, arguments: registerArguments);
-        }
+        Get.back();
+        Utils.showToast(
+            Get.context!,
+            loginModel?.message ?? EnumLocale.txtSomeThingWentWrong.name.tr);
+        Utils.showLog("Login API call failed: ${loginModel?.message}");
       }
     } catch (e) {
       Get.back();
@@ -396,7 +489,8 @@ class LoginScreenController extends GetxController {
     FocusManager.instance.primaryFocus?.unfocus();
     Utils.showLog("Demo Email => $demoEmail");
     Utils.showLog("DEmo Password => $demoPass");
-    final fcmToken = await FirebaseMessaging.instance.getToken();
+    String? fcmToken;
+    try { fcmToken = await FirebaseMessaging.instance.getToken().timeout(const Duration(seconds: 5)); } catch (_) {}
     Database.onSetFcmToken(fcmToken ?? "");
     Utils.showLog("fcmToken => ${Database.fcmToken}");
 
@@ -432,7 +526,7 @@ class LoginScreenController extends GetxController {
           String? firebaseUID = userCredential.user?.uid;
 
           Utils.showLog("Firebase UID => $firebaseUID");
-          Utils.showLog("Firebase Token => $token");
+          Utils.showLog("Firebase token fetched successfully");
 
           // Now call the login API with the Firebase credentials
           loginModel = await LoginApi.callApi(
@@ -450,7 +544,9 @@ class LoginScreenController extends GetxController {
             Database.onSetIsLogin(true);
             Database.onSetLoginType(loginModel?.user?.loginType ?? 0);
             Database.onSetSeenOnboarding(true);
-            Database.onSetFillProfile(true);
+
+            // Store user data from login response immediately
+            _storeUserFromLoginResponse(loginModel!, firebaseUID: firebaseUID);
 
             Get.back(); // Stop loading
 
@@ -463,12 +559,16 @@ class LoginScreenController extends GetxController {
               ]);
             } else {
               Database.onSetFillProfile(true);
-              await onGetProfile(
-                loginUserId: userCredential.user!.uid,
-                loginType: 4,
-              );
-              Database.getUserProfileResponseModel =
-                  getUserProfileResponseModel;
+              try {
+                await onGetProfile(
+                  loginUserId: firebaseUID ?? loginModel?.user?.firebaseUid ?? '',
+                  loginType: 4,
+                );
+                Database.getUserProfileResponseModel =
+                    getUserProfileResponseModel;
+              } catch (e) {
+                Utils.showLog("Profile enrichment failed (non-critical): $e");
+              }
               Get.toNamed(AppRoutes.bottomBar);
             }
           } else {
@@ -532,7 +632,8 @@ class LoginScreenController extends GetxController {
     Utils.showLog("Password => $demoPassword");
 
     // Get FCM token
-    final fcmToken = await FirebaseMessaging.instance.getToken();
+    String? fcmToken;
+    try { fcmToken = await FirebaseMessaging.instance.getToken().timeout(const Duration(seconds: 5)); } catch (_) {}
     Database.onSetFcmToken(fcmToken ?? "");
     Utils.showLog("fcmToken => ${Database.fcmToken}");
 
@@ -554,7 +655,7 @@ class LoginScreenController extends GetxController {
         String? firebaseUID = userCredential.user?.uid;
 
         Utils.showLog("Firebase UID => $firebaseUID");
-        Utils.showLog("Firebase Token => $token");
+        Utils.showLog("Firebase token fetched successfully");
 
         // Login API Call
         loginModel = await LoginApi.callApi(
@@ -572,7 +673,9 @@ class LoginScreenController extends GetxController {
           Database.onSetIsLogin(true);
           Database.onSetLoginType(loginModel?.user?.loginType ?? 0);
           Database.onSetSeenOnboarding(true);
-          Database.onSetFillProfile(true);
+
+          // Store user data from login response immediately
+          _storeUserFromLoginResponse(loginModel!, firebaseUID: firebaseUID);
 
           Get.back(); // Stop loading
 
@@ -585,10 +688,14 @@ class LoginScreenController extends GetxController {
             ]);
           } else {
             Database.onSetFillProfile(true);
-            await onGetProfile(
-              loginUserId: userCredential.user!.uid,
-              loginType: 2,
-            );
+            try {
+              await onGetProfile(
+                loginUserId: firebaseUID ?? loginModel?.user?.firebaseUid ?? '',
+                loginType: 2,
+              );
+            } catch (e) {
+              Utils.showLog("Profile enrichment failed (non-critical): $e");
+            }
             Get.toNamed(AppRoutes.bottomBar);
           }
         } else {
@@ -641,27 +748,16 @@ class LoginScreenController extends GetxController {
 
   /// google log in api
   Future<void> onGoogleLogin() async {
-    if (selectedValue != 1) {
-      Utils.showToast(
-          Get.context!, "Please agree to the Privacy Policy to proceed.");
-      return;
-    }
     final identity = (await MobileDeviceIdentifier().getDeviceId())!;
-    final fcmToken = await FirebaseMessaging.instance.getToken();
+    String? fcmToken;
+    try { fcmToken = await FirebaseMessaging.instance.getToken().timeout(const Duration(seconds: 5)); } catch (_) {}
     Database.onSetFcmToken(fcmToken ?? "");
     Database.onSetIdentity(identity);
-
-    Utils.showLog("Database.identity :: ${Database.identity}");
-    Utils.showLog("Database.fcmToken :: ${Database.fcmToken}");
 
     UserCredential? userCredential = await signInWithGoogle();
 
     if (userCredential?.user?.email != null) {
       Get.dialog(LoadingWidget(), barrierDismissible: false);
-
-      Utils.showLog("userCredential.name${userCredential?.user?.displayName}");
-      Utils.showLog("userCredential.email${userCredential?.user?.email}");
-      Utils.showLog("userCredential.photo${userCredential?.user?.photoURL}");
 
       loginModel = await LoginApi.callApi(
         authUid: userCredential?.user?.uid,
@@ -680,25 +776,17 @@ class LoginScreenController extends GetxController {
         Database.onSetIsLogin(true);
         Database.onSetLoginType(loginModel?.user?.loginType ?? 0);
         Database.onSetSeenOnboarding(true);
-        Database.onSetFillProfile(true);
-        Utils.showLog("userCredential.user!.uid${userCredential?.user?.uid}");
-        await onGetProfile(
-          loginUserId: userCredential!.user!.uid,
-          loginType: 2,
-        );
+
+        // Store user data from login response immediately
+        _storeUserFromLoginResponse(loginModel!, firebaseUID: userCredential?.user?.uid);
 
         if (loginModel?.signUp == true) {
           Database.onSetFillProfile(false);
 
-          Database.onSetLoginUserName(userCredential.user?.displayName ?? "");
+          Database.onSetLoginUserName(userCredential!.user?.displayName ?? "");
           Database.onSetLoginUserEmail(userCredential.user?.email ?? "");
           Database.onSetLoginUserProfilePic(
               userCredential.user?.photoURL ?? "");
-
-          Utils.showLog("Database.loginUserName:::${Database.loginUserName}");
-          Utils.showLog(
-              "Database.loginUserProfilePic:::${Database.loginUserProfilePic}");
-          Utils.showLog("Database.loginUserEmail:::${Database.loginUserEmail}");
 
           Get.offAllNamed(AppRoutes.fillProfileScreen, arguments: [
             Database.loginUserName,
@@ -706,17 +794,22 @@ class LoginScreenController extends GetxController {
             Database.loginUserEmail,
           ]);
         } else {
-          // get profile api
-
           Database.onSetFillProfile(true);
 
-          Utils.showLog("userCredential.user!.uid${userCredential.user!.uid}");
-          await onGetProfile(
-            loginUserId: userCredential.user!.uid,
-            loginType: 2,
-          );
+          try {
+            await onGetProfile(
+              loginUserId: userCredential!.user!.uid,
+              loginType: 2,
+            );
+          } catch (e) {
+            Utils.showLog("Profile enrichment failed (non-critical): $e");
+          }
 
-          Get.toNamed(AppRoutes.bottomBar);
+          if (Get.isDialogOpen == true) {
+            Get.back();
+          }
+
+          Get.offAllNamed(AppRoutes.bottomBar);
         }
       } else {
         if (Get.isDialogOpen == true) {
@@ -744,13 +837,16 @@ class LoginScreenController extends GetxController {
 
       Get.dialog(LoadingWidget(), barrierDismissible: false);
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      final GoogleSignInAuthentication? googleAuth =
-          await googleUser?.authentication;
+      if (googleUser == null) {
+        Get.back();
+        return null;
+      }
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
-          accessToken: googleAuth?.accessToken, idToken: googleAuth?.idToken);
+          accessToken: googleAuth.accessToken, idToken: googleAuth.idToken);
       final result =
           await FirebaseAuth.instance.signInWithCredential(credential);
-
       Utils.showLog("Google Login Email => ${result.user?.email}");
       Utils.showLog("Google Login uid => ${result.user?.uid}");
 
@@ -760,7 +856,7 @@ class LoginScreenController extends GetxController {
 
       return result;
     } catch (error) {
-      Get.back();
+      if (Get.isDialogOpen == true) Get.back();
       Utils.showLog("Google Login Error => $error");
     }
     return null;

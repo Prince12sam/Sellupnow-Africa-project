@@ -265,4 +265,153 @@ class CategoryWiseListingController extends Controller
         return response(['markup' => $markup ,'total' => $request->total + 12]);
     }
 
+    public function allListings(\Illuminate\Http\Request $request)
+    {
+        $listings_query = Listing::query()->with('user')
+            ->leftJoin('boosts as b', function($join) {
+                $join->on('b.listing_id', '=', 'listings.id')
+                     ->where('b.status', 'active')
+                     ->where('b.expires_at', '>', now());
+            })
+            ->select('listings.*')
+            ->where('listings.status', 1)
+            ->where('listings.is_published', 1);
+
+        // Keyword search
+        if (!empty($request->search)) {
+            $listings_query->where(function($q) use ($request) {
+                $q->where('listings.title', 'LIKE', '%' . $request->search . '%')
+                  ->orWhere('listings.description', 'LIKE', '%' . $request->search . '%');
+            });
+        }
+
+        // Category filter
+        if (!empty($request->cat)) {
+            $listings_query->where('listings.category_id', $request->cat);
+        }
+
+        // Subcategory filter
+        if (!empty($request->subcat)) {
+            $listings_query->where('listings.sub_category_id', $request->subcat);
+        }
+
+        // Child category filter
+        if (!empty($request->childcat)) {
+            $listings_query->where('listings.child_category_id', $request->childcat);
+        }
+
+        // Price range filter (format: "min,max")
+        if (!empty($request->price_range) && $request->price_range !== '0') {
+            $priceParts = explode(',', $request->price_range);
+            if (count($priceParts) === 2) {
+                $minPrice = (float) $priceParts[0];
+                $maxPrice = (float) $priceParts[1];
+                if ($minPrice > 0) {
+                    $listings_query->where('listings.price', '>=', $minPrice);
+                }
+                if ($maxPrice > 0) {
+                    $listings_query->where('listings.price', '<=', $maxPrice);
+                }
+            }
+        }
+
+        // Listing type preferences
+        if (!empty($request->listing_type_preferences)) {
+            if ($request->listing_type_preferences === 'featured') {
+                $listings_query->where('listings.is_featured', 1);
+            } elseif ($request->listing_type_preferences === 'top_listing') {
+                $listings_query->join('featured_ad_activations as faa', function($join) {
+                    $join->on('faa.listing_id', '=', 'listings.id')
+                         ->where('faa.is_active', 1)
+                         ->where('faa.ends_at', '>=', now());
+                });
+            }
+        }
+
+        // Condition filter (new / used)
+        if (!empty($request->listing_condition)) {
+            $listings_query->where('listings.condition', $request->listing_condition);
+        }
+
+        // Date posted filter
+        if (!empty($request->date_posted_listing)) {
+            switch ($request->date_posted_listing) {
+                case 'today':
+                    $listings_query->whereDate('listings.created_at', today());
+                    break;
+                case 'yesterday':
+                    $listings_query->whereDate('listings.created_at', today()->subDay());
+                    break;
+                case 'last_week':
+                    $listings_query->where('listings.created_at', '>=', now()->subWeek());
+                    break;
+            }
+        }
+
+        // Sorting
+        if (!empty($request->sort_by)) {
+            switch ($request->sort_by) {
+                case 'price_asc':
+                    $listings_query->orderBy('listings.price', 'asc');
+                    break;
+                case 'price_desc':
+                    $listings_query->orderBy('listings.price', 'desc');
+                    break;
+                case 'oldest':
+                    $listings_query->orderBy('listings.created_at', 'asc');
+                    break;
+                default:
+                    $listings_query
+                        ->orderByRaw('CASE WHEN b.expires_at > NOW() AND b.status = "active" THEN 1 ELSE 0 END DESC')
+                        ->orderByDesc('listings.created_at');
+            }
+        } else {
+            $listings_query
+                ->orderByRaw('CASE WHEN b.expires_at > NOW() AND b.status = "active" THEN 1 ELSE 0 END DESC')
+                ->orderByDesc('listings.created_at');
+        }
+
+        $all_listings = $listings_query->paginate(12);
+
+        $all_categories = Category::where('status', 1)->orderBy('name')->get();
+
+        // Subcategories for selected category
+        $all_subcategories = collect();
+        if (!empty($request->cat)) {
+            $all_subcategories = SubCategory::where('category_id', $request->cat)
+                ->where('status', 1)->orderBy('name')->get();
+        }
+
+        // Child categories for selected subcategory
+        $all_child_categories = collect();
+        if (!empty($request->subcat)) {
+            $all_child_categories = ChildCategory::where('sub_category_id', $request->subcat)
+                ->where('status', 1)->orderBy('name')->get();
+        }
+
+        // Max price for slider range
+        $max_price = (int) Listing::where('status', 1)->where('is_published', 1)->max('price') ?: 10000;
+
+        // Parse current price range for slider defaults
+        $price_range_min = 0;
+        $price_range_max = $max_price;
+        if (!empty($request->price_range) && $request->price_range !== '0') {
+            $priceParts = explode(',', $request->price_range);
+            if (count($priceParts) === 2) {
+                $price_range_min = (int) $priceParts[0];
+                $price_range_max = (int) $priceParts[1];
+            }
+        }
+
+        return view('frontend.pages.listings.all-listings', compact(
+            'all_listings',
+            'all_categories',
+            'all_subcategories',
+            'all_child_categories',
+            'max_price',
+            'price_range_min',
+            'price_range_max'
+        ));
+    }
+
 }

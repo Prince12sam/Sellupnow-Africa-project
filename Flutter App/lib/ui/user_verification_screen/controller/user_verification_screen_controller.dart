@@ -39,9 +39,9 @@ class UserVerificationScreenController extends GetxController {
   onInit() {
     Utils.showLog("User Profile Response Model: ${Database.getUserProfileResponseModel?.user?.name}");
 
-    name.text = Database.getUserProfileResponseModel?.user?.name ?? '';
-    email.text = Database.getUserProfileResponseModel?.user?.email ?? '';
-    number.text = Database.getUserProfileResponseModel?.user?.phoneNumber ?? '';
+    name.text = Database.getUserProfileResponseModel?.user?.name ?? Database.loginUserName;
+    email.text = Database.getUserProfileResponseModel?.user?.email ?? Database.loginUserEmail;
+    number.text = Database.getUserProfileResponseModel?.user?.phoneNumber ?? Database.loginUserPhoneNumber;
     getIdentityProofApi();
     super.onInit();
   }
@@ -190,16 +190,18 @@ class UserVerificationScreenController extends GetxController {
         idProofBackPath: backImage.toString(),
         idProofFrontPath: frontImage.toString(),
         selfiePath: selfieImage.toString(),
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? '');
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId);
     update([Constant.idUserVerification]);
 
     Utils.showLog("status::::::::::::$userVerificationResponseModel");
 
     if (userVerificationResponseModel?.status == true) {
-      Database.onSetUserVerify(true);
-      Database.onSetUniqueId(userVerificationResponseModel?.data.uniqueId ?? "");
-      Database.onSetUniqueId(userVerificationResponseModel?.data.uniqueId ?? "");
-      Database.onSetVerifyTime(formatVerifyTime("${userVerificationResponseModel?.data.submittedAt}"));
+      Database.syncIdentityVerificationState(
+        isVerified: false,
+        verificationStatus: userVerificationResponseModel?.data.status,
+        verificationId: userVerificationResponseModel?.data.uniqueId,
+        verificationSubmittedAt: formatVerifyTime("${userVerificationResponseModel?.data.submittedAt}"),
+      );
       Utils.showLog("isVerify::::::::::::::::${Database.isVerify}");
       Utils.showLog("verifyTime::::::::::::::::${Database.verifyTime}");
       Get.dialog(

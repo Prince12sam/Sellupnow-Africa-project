@@ -204,9 +204,7 @@ class PopularProductApi {
       ApiParams.contentType: 'application/json',
     };
 
-    final uri = Uri.parse(Api.popularProduct);
-
-    final body = {
+    final queryParams = <String, String>{
       ApiParams.userId: userId ?? "",
       ApiParams.categoryId: categoryId ?? "",
       ApiParams.country: country ?? "",
@@ -219,23 +217,24 @@ class PopularProductApi {
       ApiParams.latitude: latitude ?? "",
       ApiParams.longitude: longitude ?? "",
       ApiParams.sort: sort ?? "",
-      ApiParams.attributes: attributes,
-      "start": start ?? startPagination,
-      "limit": limit ?? limitPagination,
-      "rangeInKm": rangeInKm,
+      "start": (start ?? startPagination).toString(),
+      "limit": (limit ?? limitPagination).toString(),
+      "rangeInKm": rangeInKm ?? "",
     };
 
-    Utils.showLog("Popular Ads API Body => $body");
+    if (attributes.isNotEmpty) {
+      queryParams[ApiParams.attributes] = json.encode(attributes);
+    }
+
+    final uri = Uri.parse(Api.popularProduct).replace(queryParameters: queryParams);
+
+    Utils.showLog("Popular Ads API URL => $uri");
 
     try {
-      final request = http.Request('GET', uri);
-      request.body = json.encode(body);
-      request.headers.addAll(headers);
-
-      final response = await request.send();
+      final response = await http.get(uri, headers: headers);
 
       if (response.statusCode == 200) {
-        final responseBody = await response.stream.bytesToString();
+        final responseBody = response.body;
         Utils.showLog("Popular Ads API Response => $responseBody");
 
         final parsed = json.decode(responseBody);

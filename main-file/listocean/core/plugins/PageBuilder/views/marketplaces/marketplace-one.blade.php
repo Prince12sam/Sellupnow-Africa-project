@@ -56,6 +56,10 @@
                                 @endif
                             </div>
                             @endif
+
+                            <div class="mt-3">
+                                <x-ads.ad-slot placement="marketplace_under_badges" class="mx-auto" />
+                            </div>
                         </div>
                     </div>
                 </div>

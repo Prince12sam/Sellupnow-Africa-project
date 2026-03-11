@@ -96,7 +96,8 @@ class CustomChatAppBar extends StatelessWidget {
                         ),
                       ),
                     ).paddingOnly(right: 8),
-                    Column(
+                    Expanded(
+                      child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
@@ -105,6 +106,7 @@ class CustomChatAppBar extends StatelessWidget {
                             fontSize: 17,
                             fontColor: AppColors.black,
                           ),
+                          overflow: TextOverflow.ellipsis,
                         ).paddingOnly(bottom: 6),
                         controller.isOnline == true
                             ? Container(
@@ -114,7 +116,7 @@ class CustomChatAppBar extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(20),
                                     color: AppColors.lightGreenColor),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Container(
                                       decoration: BoxDecoration(
@@ -147,7 +149,7 @@ class CustomChatAppBar extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(20),
                                     color: AppColors.lightGreyBorder),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Container(
                                       decoration: BoxDecoration(
@@ -175,7 +177,7 @@ class CustomChatAppBar extends StatelessWidget {
                               ),
                       ],
                     ),
-                    Spacer(),
+                    ),
                     GestureDetector(
                       onTapDown: (TapDownDetails details) {
                         _showDropdownMenu(

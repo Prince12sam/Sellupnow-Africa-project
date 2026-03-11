@@ -345,115 +345,29 @@ class PaymentOptionBottomSheet extends StatelessWidget {
                 ],
               ),
 
-              // if (Database.settingApiResponseModel?.data?.enableRazorpay == true)
-              PaymentOptionTile(
-                index: 0,
-                title: EnumLocale.txtRazorpay.name.tr,
-                controller: controller,
-                image: AppAsset.razorPay,
-                height: 26,
-                width: 26,
-              ),
-              Divider(
-                color: AppColors.paymentDividerColor,
-                height: 0,
-              ),
-              // if (Database.settingApiResponseModel?.data?.enableStripe == true)
-              PaymentOptionTile(
-                index: 1,
-                title: EnumLocale.txtStripe.name.tr,
-                controller: controller,
-                image: AppAsset.stripe,
-                height: 30,
-                width: 30,
-              ),
-              Divider(
-                color: AppColors.paymentDividerColor,
-                height: 0,
-              ),
-              // if (Database.settingApiResponseModel?.data?.enableFlutterwave == true)
-              PaymentOptionTile(
-                index: 2,
-                title: EnumLocale.txtFlutterWave.name.tr,
-                controller: controller,
-                image: AppAsset.flutterWave,
-                height: 23,
-                width: 28,
-              ),
-              Divider(
-                color: AppColors.paymentDividerColor,
-                height: 0,
-              ),
-              // if (Database.settingApiResponseModel?.data?.enableFlutterwave == true)
-              PaymentOptionTile(
-                index: 3,
-                title: EnumLocale.txtPayStack.name.tr,
-                controller: controller,
-                image: AppAsset.payStackImage,
-                height: 22,
-                width: 22,
-              ),
-              Divider(
-                color: AppColors.paymentDividerColor,
-                height: 0,
-              ),
-
-              // if (Database.settingApiResponseModel?.data?.enableFlutterwave == true)
-              PaymentOptionTile(
-                index: 4,
-                title: EnumLocale.txtPhonePe.name.tr,
-                controller: controller,
-                image: AppAsset.phonePayImage,
-                height: 28,
-                width: 28,
-              ),
-
-              Divider(
-                color: AppColors.paymentDividerColor,
-                height: 0,
-              ),
-
-              // if (Database.settingApiResponseModel?.data?.enableFlutterwave == true)
-              PaymentOptionTile(
-                index: 5,
-                title: EnumLocale.txtPayPal.name.tr,
-                controller: controller,
-                image: AppAsset.payPalIcon,
-                height: 28,
-                width: 28,
-              ),
-
-
-
-              Divider(
-                color: AppColors.paymentDividerColor,
-                height: 0,
-              ),
-
-              // if (Database.settingApiResponseModel?.data?.enableFlutterwave == true)
-              PaymentOptionTile(
-                index: 6,
-                title: EnumLocale.txtInAppPurchase.name.tr,
-                controller: controller,
-                image: AppAsset.inAppPurchaseIcon,
-                height: 28,
-                width: 28,
-              ),
-
-              Divider(
-                color: AppColors.paymentDividerColor,
-                height: 0,
-              ),
-
-              // if (Database.settingApiResponseModel?.data?.enableFlutterwave == true)
-              PaymentOptionTile(
-                index: 7,
-                title: EnumLocale.txtCashFree.name.tr,
-                controller: controller,
-                image: AppAsset.cashFreeIcon,
-                height: 28,
-                width: 28,
-              ),
+              if (Database.settingApiResponseModel?.data?.enableStripe == true) ...[  
+                PaymentOptionTile(
+                  index: 0,
+                  title: EnumLocale.txtStripe.name.tr,
+                  controller: controller,
+                  image: AppAsset.stripe,
+                  height: 30,
+                  width: 30,
+                ),
+                Divider(
+                  color: AppColors.paymentDividerColor,
+                  height: 0,
+                ),
+              ],
+              if (Database.settingApiResponseModel?.data?.enablePaystack == true)
+                PaymentOptionTile(
+                  index: 1,
+                  title: EnumLocale.txtPayStack.name.tr,
+                  controller: controller,
+                  image: AppAsset.payStackImage,
+                  height: 22,
+                  width: 22,
+                ),
 
               // if (Database.settingApiResponseModel?.data?.enableGooglePlay == true)
               // PaymentOptionTile(

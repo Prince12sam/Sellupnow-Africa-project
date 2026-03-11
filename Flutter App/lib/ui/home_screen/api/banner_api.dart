@@ -8,10 +8,12 @@ import 'package:listify/utils/api_params.dart';
 import 'package:listify/utils/utils.dart';
 
 class BannerApi {
-  static Future<BannerResponseModel?> callApi() async {
+  static Future<BannerResponseModel?> callApi({String? placement}) async {
     Utils.showLog("Banner Api Calling...");
 
-    final uri = Uri.parse(Api.bannerApi);
+    final uri = placement == null || placement.isEmpty
+        ? Uri.parse(Api.bannerApi)
+        : Uri.parse(Api.bannerApi).replace(queryParameters: {'placement': placement});
     final headers = {ApiParams.key: Api.secretKey};
 
     Utils.showLog("Banner Api uri :: $uri");

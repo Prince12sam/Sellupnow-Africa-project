@@ -133,9 +133,9 @@ class SubCategoryProductScreenController extends GetxController {
     update([Constant.idAllAds]);
 
     categoryWiseProductResponseModel = await CategoryWiseProductApi.callApi(
-      userId: Database.getUserProfileResponseModel?.user?.id ?? "",
+      userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
       categoryId: categoryId ?? "",
-      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       search: search,
       resetPagination: true,
     );
@@ -169,9 +169,9 @@ class SubCategoryProductScreenController extends GetxController {
     CategoryWiseProductApi.startPagination = 0;
 
     final result = await CategoryWiseProductApi.callApi(
-      userId: Database.getUserProfileResponseModel?.user?.id ?? "",
+      userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
       // categoryId: categoryId ?? "",
-      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       resetPagination: true,
       sort: sortKey,
     );
@@ -214,9 +214,9 @@ class SubCategoryProductScreenController extends GetxController {
       CategoryWiseProductApi.startPagination += 1;
 
       final nextPageResponse = await CategoryWiseProductApi.callApi(
-        userId: Database.getUserProfileResponseModel?.user?.id ?? "",
+        userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
         categoryId: categoryId ?? "",
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
         search: searchController.text.trim().isEmpty
             ? null
             : searchController.text.trim(),
@@ -263,7 +263,7 @@ class SubCategoryProductScreenController extends GetxController {
     try {
       final resp = await AddLikeApi.callApi(
         adId: adId,
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       );
 
       final serverIsLiked = resp?.like;
@@ -301,7 +301,7 @@ class SubCategoryProductScreenController extends GetxController {
     try {
       final resp = await AddLikeApi.callApi(
         adId: adId,
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       );
 
       if (resp != null && resp.status == true) {
@@ -411,7 +411,7 @@ class SubCategoryProductScreenController extends GetxController {
     update([Constant.idAllAds]);
 
     final resp = await CategoryWiseProductApi.callApi(
-      userId: Database.getUserProfileResponseModel?.user?.id ?? '',
+      userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
       categoryId: (map['categoryId'] ?? categoryId) ?? "",
       country: map['country'],
       state: map['state'],
@@ -422,7 +422,7 @@ class SubCategoryProductScreenController extends GetxController {
       longitude: (map['longitude'] ?? '').toString(),
       attributes: List<Map<String, dynamic>>.from(map['attributes'] ?? const []),
       postedSince: (map['postedSince'] ?? 'all_time').toString(),
-      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       resetPagination: true,
     );
 

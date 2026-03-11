@@ -49,7 +49,6 @@ class AddListingApi {
         ApiParams.key: Api.secretKey,
         ApiParams.authToken: 'Bearer $token',
         ApiParams.authUid: uid,
-        ApiParams.contentType: 'application/json',
       };
 
       request.headers.addAll(headers);
@@ -81,11 +80,11 @@ class AddListingApi {
         ApiParams.location: location,
         ApiParams.saleType: saleType,
         ApiParams.price: price,
-        ApiParams.isOfferAllowed: isOfferAllowed.toString(),
+        ApiParams.isOfferAllowed: isOfferAllowed ? '1' : '0',
         ApiParams.minimumOffer: minimumOffer,
-        ApiParams.isAuctionEnabled: isAuctionEnabled.toString(),
+        ApiParams.isAuctionEnabled: isAuctionEnabled ? '1' : '0',
         ApiParams.scheduledPublishDate: scheduledPublishDate,
-        ApiParams.isReservePriceEnabled: isReservePriceEnabled.toString(),
+        ApiParams.isReservePriceEnabled: isReservePriceEnabled ? '1' : '0',
         ApiParams.availableUnits: availableUnits,
         ApiParams.attributes: jsonEncode(attributes).toString(),
 
@@ -110,7 +109,7 @@ class AddListingApi {
       for (String path in galleryImagePaths) {
         Utils.showLog("image:::::::::::::::::::$path");
 
-        request.files.add(await http.MultipartFile.fromPath('galleryImages', path));
+        request.files.add(await http.MultipartFile.fromPath('galleryImages[]', path));
       }
 
       Utils.showLog("Create Ad Listing Request Fields => ${request.fields}");
@@ -122,12 +121,27 @@ class AddListingApi {
       log("Create Ad Listing Response Code => ${response.statusCode}");
       log("Create Ad Listing Response => $responseBody");
 
-      if (response.statusCode == 200) {
-        final jsonResponse = jsonDecode(responseBody);
-        return CreateAdListingResponseModel.fromJson(jsonResponse);
-      } else {
-        return null;
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final dynamic decoded = jsonDecode(responseBody);
+        if (decoded is Map<String, dynamic>) {
+          final map = Map<String, dynamic>.from(decoded);
+          map['status'] = map['status'] ?? true;
+          return CreateAdListingResponseModel.fromJson(map);
+        }
+
+        return CreateAdListingResponseModel(status: true, message: 'Listing created successfully');
       }
+
+      try {
+        final dynamic decoded = jsonDecode(responseBody);
+        if (decoded is Map<String, dynamic>) {
+          final map = Map<String, dynamic>.from(decoded);
+          map['status'] = map['status'] ?? false;
+          return CreateAdListingResponseModel.fromJson(map);
+        }
+      } catch (_) {}
+
+      return CreateAdListingResponseModel(status: false, message: 'Failed to create listing');
     } catch (e) {
       Utils.showLog("Create Ad Listing Error => $e");
       return null;

@@ -59,6 +59,23 @@ class Utils {
   static String toJson(Map<String, dynamic> map) {
     return jsonEncode(map);
   }
+
+  /// Strips HTML tags from a string and decodes common HTML entities.
+  static String stripHtml(String? html) {
+    if (html == null || html.isEmpty) return '';
+    return html
+        .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n')
+        .replaceAll(RegExp(r'</p>', caseSensitive: false), '\n')
+        .replaceAll(RegExp(r'</div>', caseSensitive: false), '\n')
+        .replaceAll(RegExp(r'<[^>]*>'), '')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&#39;', "'")
+        .replaceAll('&nbsp;', ' ')
+        .trim();
+  }
 }
 
 extension HeightExtension on num {

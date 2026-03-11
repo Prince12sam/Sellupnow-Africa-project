@@ -29,7 +29,6 @@ class UserVerificationApi {
         ApiParams.key: Api.secretKey,
         ApiParams.authToken: 'Bearer $token',
         ApiParams.authUid: uid,
-        'Content-Type': 'application/json',
       };
 
       Utils.showLog("id proof api $headers");
@@ -41,8 +40,12 @@ class UserVerificationApi {
 
       // Attach front, back and selfie images
       request.files.add(await http.MultipartFile.fromPath('idProofFront', idProofFrontPath));
-      request.files.add(await http.MultipartFile.fromPath('idProofBack', idProofBackPath));
-      request.files.add(await http.MultipartFile.fromPath('selfie', selfiePath));
+      if (idProofBackPath.trim().isNotEmpty) {
+        request.files.add(await http.MultipartFile.fromPath('idProofBack', idProofBackPath));
+      }
+      if (selfiePath.trim().isNotEmpty) {
+        request.files.add(await http.MultipartFile.fromPath('selfie', selfiePath));
+      }
 
       Utils.showLog("Submit Verification Request => ${request.fields}");
 

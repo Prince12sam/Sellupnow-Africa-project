@@ -15,6 +15,8 @@ class EditProfileApi {
     String? image,
     String? name,
     String? email,
+    String? phoneCode,
+    String? country,
     bool? notification,
     bool? isNotificationsAllowed,
     bool? isContactInfoVisible,
@@ -22,9 +24,17 @@ class EditProfileApi {
     Utils.showLog("Edit Profile Api Calling...");
     final token = await FirebaseAccessToken.onGet();
 
+    if (token == null || token.isEmpty) {
+      Utils.showLog("Edit Profile Api skipped: Firebase token unavailable");
+      return EditProfileModel(
+        status: false,
+        message: "Your session expired. Please login again.",
+      );
+    }
+
     try {
       var request = http.MultipartRequest(
-        'PATCH',
+        'POST',
         Uri.parse(Api.editProfile),
       );
       Utils.showLog("Edit Profile Api URL => ${request.url}");
@@ -41,10 +51,12 @@ class EditProfileApi {
         ApiParams.email: email ?? '',
         ApiParams.address: address,
         ApiParams.name: name ?? '',
-        ApiParams.phoneNumber: phoneNumber,
+        'phone': phoneNumber,
         ApiParams.profileImage: image ?? '',
         "isNotificationsAllowed": isNotificationsAllowed.toString(),
         "isContactInfoVisible": isContactInfoVisible.toString(),
+        if (phoneCode != null) "phone_code": phoneCode,
+        if (country != null) "country": country,
       });
 
       Utils.showLog("image::::$image");

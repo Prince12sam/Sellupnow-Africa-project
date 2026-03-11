@@ -69,7 +69,7 @@ class ReviewScreenTopView extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                Database.getUserProfileResponseModel?.user?.name ?? "",
+                Database.getUserProfileResponseModel?.user?.name ?? Database.loginUserName,
                 style: AppFontStyle.fontStyleW700(
                     fontSize: 18, fontColor: AppColors.black),
               ).paddingOnly(right: 6),

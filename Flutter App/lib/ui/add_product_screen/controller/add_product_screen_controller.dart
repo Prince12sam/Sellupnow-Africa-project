@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:listify/routes/app_routes.dart';
+import 'package:listify/ui/add_product_screen/api/category_attributes_api.dart';
 import 'package:listify/ui/add_product_screen/model/category_attributes_response_model.dart';
 import 'package:listify/ui/my_ads_screen/model/all_ads_response_model.dart' hide Attribute;
 import 'package:listify/ui/product_detail_screen/model/product_detail_response_model.dart' hide Attribute;
@@ -224,7 +225,7 @@ class AddProductScreenController extends GetxController {
     super.onInit();
   }
 
-  init() {
+  Future<void> init() async {
     Utils.showLog('category id ::  ${Database.categoryId}');
 
     log("arguments api:::::::::::::::::::::$arguments");
@@ -246,10 +247,17 @@ class AddProductScreenController extends GetxController {
 
 
     Utils.showLog('Received Product: $title | $subtitle | $price | $description  |  $categoryId');
-    if (data is List<Attribute>) {
-      attributeDataList = data;
-    } else {
-      Utils.showLog("Attributes not found or invalid type.");
+    attributeDataList = _extractAttributesFromArgs(data);
+
+    // Fallback: fetch directly from API if args did not carry attributes.
+    if (attributeDataList.isEmpty && (categoryId?.toString().isNotEmpty ?? false)) {
+      final resp = await CategoryAttributesApi.callApi(categoryId: categoryId.toString());
+      attributeDataList = resp?.data ?? [];
+      Utils.showLog("Fetched attributes from API fallback: ${attributeDataList.length}");
+    }
+
+    if (attributeDataList.isEmpty) {
+      Utils.showLog("Attributes are empty for categoryId=$categoryId");
     }
 
     // mainImage = arguments['mainImage'];
@@ -257,6 +265,32 @@ class AddProductScreenController extends GetxController {
     preselectValuesFromApi();
 
     Utils.showLog("Main Image:: ${arguments['mainImage']} ||| selected image :: ${arguments['selectedImages']}");
+    update();
+  }
+
+  List<Attribute> _extractAttributesFromArgs(dynamic raw) {
+    if (raw is List<Attribute>) {
+      return raw;
+    }
+
+    if (raw is List) {
+      final out = <Attribute>[];
+      for (final item in raw) {
+        if (item is Attribute) {
+          out.add(item);
+          continue;
+        }
+
+        if (item is Map) {
+          try {
+            out.add(Attribute.fromJson(Map<String, dynamic>.from(item)));
+          } catch (_) {}
+        }
+      }
+      return out;
+    }
+
+    return [];
   }
 
   void preselectValuesFromApi1() {

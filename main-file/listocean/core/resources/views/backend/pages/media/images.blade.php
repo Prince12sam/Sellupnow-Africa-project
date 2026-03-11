@@ -63,9 +63,10 @@
                             <div class="dashboard__rates__card__thumb">
                                 <ul class="media-uploader-image-list media-page">
                                     @foreach($all_media_images as $image)
+                                        @php($imageDetails = get_attachment_image_by_id($image->id, 'full', true))
                                         <li data-date="{{$image->updated_at}}"
                                             data-imgid="{{$image->id}}"
-                                            data-imgsrc="{{asset('assets/uploads/media-uploader/'.$image->path)}}"
+                                            data-imgsrc="{{ $imageDetails['img_url'] ?? asset('assets/uploads/no-image.png') }}"
                                             data-size="{{$image->size}}"
                                             data-dimension="{{$image->dimensions}}"
                                             data-title="{{$image->title}}"

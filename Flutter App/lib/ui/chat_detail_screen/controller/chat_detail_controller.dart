@@ -41,6 +41,8 @@ class ChatDetailController extends GetxController {
   String? offerAmount;
   String? chatTopic;
   String? senderId;
+  String? reviewProductId;
+  String? reviewOrderId;
 
   bool? isOnline = false;
   bool isViewed = false;
@@ -136,6 +138,8 @@ class ChatDetailController extends GetxController {
     receiverId = arguments['receiverId'];
     productName = arguments['productName'];
     senderId = arguments['senderId'];
+    reviewProductId = (arguments['productId'] ?? arguments['product_id'] ?? arguments['adId'])?.toString();
+    reviewOrderId = (arguments['orderId'] ?? arguments['order_id'])?.toString();
     productPrice = arguments['productPrice']?.toString();
     primaryImage = arguments['primaryImage']?.toString();
 
@@ -256,7 +260,7 @@ class ChatDetailController extends GetxController {
   //       SocketEmit.seenMessage({
   //         SocketParams.messageId: chatOldHistory.first.id ?? '',
   //         SocketParams.senderId:
-  //             Database.getUserProfileResponseModel?.user?.id ?? '',
+  //             Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
   //       });
   //       onScrollDown();
   //     }
@@ -323,7 +327,7 @@ class ChatDetailController extends GetxController {
 
       if (chatOldHistory.isNotEmpty) {
         final firstMessageId = chatOldHistory.first.id ?? '';
-        final senderId = Database.getUserProfileResponseModel?.user?.id ?? '';
+        final senderId = Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId;
 
         SocketEmit.seenMessage({
           SocketParams.messageId: firstMessageId,
@@ -805,7 +809,7 @@ class ChatDetailController extends GetxController {
   Future<void> blockApi() async {
     final response = await BlockUserApi.toggleBlockUser(
       blockedId: receiverId ?? "",
-      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? '',
+      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
     );
 
     if (response != null) {
@@ -874,7 +878,7 @@ class ChatDetailController extends GetxController {
     final result = await ReportUserApi.reportUser(
       reportedUserId: receiverId ?? "",
       reason: finalReason,
-      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? '',
+      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
     );
 
     if (result != null && result.status == true) {
@@ -889,20 +893,49 @@ class ChatDetailController extends GetxController {
   ///---------------------get review api-----------------------
 
   Future<void> giveReview() async {
+    final trimmedReview = reviewController.text.trim();
+    final normalizedProductId = (reviewProductId ?? '').trim();
+    final normalizedOrderId = (reviewOrderId ?? '').trim();
+
+    if (rating.value < 1) {
+      Utils.showToast(Get.context!, 'Please select a star rating.');
+      return;
+    }
+
+    if (trimmedReview.isEmpty) {
+      Utils.showToast(Get.context!, 'Please enter a review.');
+      return;
+    }
+
+    if (normalizedProductId.isEmpty || normalizedOrderId.isEmpty) {
+      Utils.showToast(
+        Get.context!,
+        'Review submission is only available when the product and order details are present.',
+      );
+      Utils.showLog(
+        'Review submit blocked: missing product/order context. productId=$normalizedProductId orderId=$normalizedOrderId adId=$adId receiverId=$receiverId',
+      );
+      return;
+    }
+
     final response = await GiveReviewApi.giveReview(
       revieweeId: receiverId ?? "",
-      rating: rating.toDouble(),
-      reviewText: reviewController.text.toString(),
-      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? '',
+      rating: rating.value,
+      reviewText: trimmedReview,
+      uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
+      productId: normalizedProductId,
+      orderId: normalizedOrderId,
     );
 
     if (response != null && response.status == true) {
       Utils.showLog("Review submitted: ${response.message}");
+      Utils.showToast(Get.context!, response.message ?? 'Review submitted successfully.');
       Get.back();
       reviewController.clear();
+      rating.value = 0;
     } else {
-      Utils.showLog("Failed to submit review");
-      reviewController.clear();
+      Utils.showLog("Failed to submit review: ${response?.message}");
+      Utils.showToast(Get.context!, response?.message ?? 'Failed to submit review.');
     }
   }
 }

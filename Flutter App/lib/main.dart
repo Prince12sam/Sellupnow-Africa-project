@@ -96,14 +96,18 @@
 
 import 'dart:async';
 import 'dart:developer';
+import 'dart:io';
 import 'dart:ui';
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:google_maps_flutter_android/google_maps_flutter_android.dart';
+import 'package:google_maps_flutter_platform_interface/google_maps_flutter_platform_interface.dart';
 import 'package:listify/custom/common.dart';
 import 'package:listify/localization/localizations_delegate.dart';
 import 'package:listify/routes/app_pages.dart';
@@ -115,6 +119,7 @@ import 'package:mobile_device_identifier/mobile_device_identifier.dart';
 
 import 'localization/locale_constant.dart';
 import 'ui/near_by_listing_screen/controller/map_controller.dart';
+import 'utils/google_maps_runtime.dart';
 import 'utils/like_manager.dart';
 import 'utils/utils.dart';
 
@@ -123,11 +128,79 @@ Future<void> _firebaseBgHandler(RemoteMessage message) async {
   await NotificationServices.onShowBackgroundNotification(message);
 }
 
+Future<bool> _shouldDisableNativeMaps() async {
+  const disableNativeMaps = bool.fromEnvironment('DISABLE_NATIVE_MAPS');
+  if (disableNativeMaps || !Platform.isAndroid) {
+    return disableNativeMaps;
+  }
+
+  try {
+    final androidInfo = await DeviceInfoPlugin().androidInfo;
+    if (!androidInfo.isPhysicalDevice) {
+      Utils.showLog('Google Maps native renderer disabled on Android emulator');
+      return true;
+    }
+  } catch (error) {
+    Utils.showLog('Unable to inspect Android device info for maps guard: $error');
+  }
+
+  return false;
+}
+
+Future<void> _configureGoogleMapsRenderer() async {
+  final disableNativeMaps = await _shouldDisableNativeMaps();
+
+  if (Platform.isAndroid && disableNativeMaps) {
+    GoogleMapsRuntime.setRendererState(
+      enabled: false,
+      renderer: 'disabled_for_android_emulator',
+    );
+    Utils.showLog('Google Maps native renderer disabled before startup');
+    return;
+  }
+
+  final mapsPlatform = GoogleMapsFlutterPlatform.instance;
+  if (mapsPlatform is! GoogleMapsFlutterAndroid) {
+    return;
+  }
+
+  try {
+    // Force texture-based composition first. The legacy renderer crash we saw
+    // only happened when Play Services reported there was no TextureView.
+    mapsPlatform.useAndroidViewSurface = false;
+    await mapsPlatform.warmup();
+
+    final renderer = await mapsPlatform.initializeWithRenderer(
+      AndroidMapRenderer.latest,
+    );
+    final isSafeRenderer = renderer != AndroidMapRenderer.legacy;
+    GoogleMapsRuntime.setRendererState(
+      enabled: isSafeRenderer,
+      renderer: renderer.name,
+    );
+    Utils.showLog(
+      'Google Maps renderer => $renderer, useAndroidViewSurface=${mapsPlatform.useAndroidViewSurface}',
+    );
+  } catch (error, stackTrace) {
+    GoogleMapsRuntime.setRendererState(
+      enabled: false,
+      renderer: 'error',
+    );
+    Utils.showLog('Google Maps renderer init failed: $error');
+    FirebaseCrashlytics.instance.recordError(
+      error,
+      stackTrace,
+      reason: 'Google Maps renderer initialization',
+    );
+  }
+}
+
 void main() {
   runZonedGuarded<Future<void>>(() async {
     WidgetsFlutterBinding.ensureInitialized();
 
     await Firebase.initializeApp();
+    await _configureGoogleMapsRenderer();
 
     // Crashlytics wiring
     FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
@@ -140,7 +213,13 @@ void main() {
 
     // (Optional) Any app‑specific stuff
     final identity = (await MobileDeviceIdentifier().getDeviceId())!;
-    final fcmToken = await FirebaseMessaging.instance.getToken();
+    String? fcmToken;
+    try {
+      fcmToken = await FirebaseMessaging.instance.getToken()
+          .timeout(const Duration(seconds: 5));
+    } catch (e) {
+      Utils.showLog("FCM token fetch failed (non-blocking): $e");
+    }
     Utils.showLog("Device Id => $identity");
     Utils.showLog("FCM Token => $fcmToken");
 
@@ -169,14 +248,20 @@ void main() {
     FirebaseMessaging.onBackgroundMessage(_firebaseBgHandler);
 
     // ✅ Init notifications (plugin, channels, permissions)
-    await NotificationServices.init();
+    try {
+      await NotificationServices.init().timeout(const Duration(seconds: 10));
+    } catch (e) {
+      Utils.showLog("NotificationServices.init failed (non-blocking): $e");
+    }
 
     // ✅ Wire FCM listeners + initialMessage handling
-    await NotificationServices.firebaseInit();
-
-    if (fcmToken != null) {
-      await Database.init(identity, fcmToken);
+    try {
+      await NotificationServices.firebaseInit().timeout(const Duration(seconds: 10));
+    } catch (e) {
+      Utils.showLog("NotificationServices.firebaseInit failed (non-blocking): $e");
     }
+
+    await Database.init(identity, fcmToken ?? '');
     await Database.initSelectedLocation();
     Database.setSelectedLocationText;
 

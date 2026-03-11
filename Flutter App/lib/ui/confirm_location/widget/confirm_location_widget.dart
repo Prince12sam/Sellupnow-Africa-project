@@ -3,15 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:listify/custom/app_bar/custom_app_bar.dart';
 import 'package:listify/custom/app_button/primary_app_button.dart';
+import 'package:listify/custom/map_fallback/map_unavailable_fallback.dart';
 import 'package:listify/routes/app_routes.dart';
 import 'package:listify/ui/confirm_location/controller/confirm_location_controller.dart';
 import 'package:listify/ui/near_by_listing_screen/controller/map_controller.dart';
 import 'package:listify/utils/app_asset.dart';
 import 'package:listify/utils/app_color.dart';
 import 'package:listify/utils/constant.dart';
-import 'package:listify/utils/database.dart';
 import 'package:listify/utils/enums.dart';
 import 'package:listify/utils/font_style.dart';
+import 'package:listify/utils/google_maps_runtime.dart';
 import 'package:listify/utils/utils.dart';
 import 'package:map_location_picker/map_location_picker.dart';
 
@@ -186,8 +187,6 @@ class MapView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<MapController>();
-
     return Column(
       children: [
         Stack(
@@ -205,6 +204,12 @@ class MapView extends StatelessWidget {
                     if (mapController.latitude == null ||
                         mapController.longitude == null) {
                       return const Center(child: CupertinoActivityIndicator());
+                    }
+
+                    if (!GoogleMapsRuntime.nativeMapsEnabled) {
+                      return const MapUnavailableFallback(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      );
                     }
 
                     return GoogleMap(

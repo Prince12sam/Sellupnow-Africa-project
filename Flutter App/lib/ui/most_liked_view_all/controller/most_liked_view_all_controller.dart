@@ -77,7 +77,7 @@ class MostLikedViewAllController extends GetxController {
     try {
       final resp = await AddLikeApi.callApi(
         adId: adId,
-        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? "",
+        uid: Database.getUserProfileResponseModel?.user?.firebaseUid ?? Database.loginUserFirebaseId,
       );
 
       if (resp != null && resp.status == true) {
@@ -128,7 +128,7 @@ class MostLikedViewAllController extends GetxController {
 
     try {
       final resp = await MostLikedProductApi.fetchMostLikedAds(
-        userId: Database.getUserProfileResponseModel?.user?.id ?? "",
+        userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
         search: search,
         isRefresh: isRefresh,
       );
@@ -195,7 +195,7 @@ class MostLikedViewAllController extends GetxController {
 
     final result = await MostLikedProductApi.fetchMostLikedAds(
       isRefresh: true,
-      userId: Database.getUserProfileResponseModel?.user?.id ?? "",
+      userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
       sort: sortKey,
     );
 
@@ -253,7 +253,7 @@ class MostLikedViewAllController extends GetxController {
 
     final resp = await MostLikedProductApi.fetchMostLikedAds(
       isRefresh: true,
-      userId: Database.getUserProfileResponseModel?.user?.id ?? '',
+      userId: Database.getUserProfileResponseModel?.user?.id ?? Database.loginUserId,
       categoryId: map['categoryId'] ?? "",
       country: map['country'],
       state: map['state'],

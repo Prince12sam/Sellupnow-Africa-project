@@ -4,6 +4,7 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:listify/custom/app_bar/custom_app_bar.dart';
 import 'package:listify/custom/app_button/primary_app_button.dart';
@@ -62,6 +63,32 @@ class AddProductDetailScreenWidget extends StatelessWidget {
             itemCount: controller.attributeDataList.length,
             itemBuilder: (context, index) {
               final field = controller.attributeDataList[index];
+              final fieldName = (field.name ?? '').trim().toLowerCase();
+              dynamic apiAttr;
+              final apiAttributes = controller.adsData?.attributes;
+              if (apiAttributes != null) {
+                for (final a in apiAttributes) {
+                  final apiName = (a.name ?? '').toString().trim().toLowerCase();
+                  if (apiName == fieldName) {
+                    apiAttr = a;
+                    break;
+                  }
+                }
+              }
+
+              final dynamic apiValue = apiAttr?.value;
+              final String? safeDropdownInitialValue = apiValue is List
+                  ? (apiValue.isNotEmpty ? apiValue.first.toString() : null)
+                  : apiValue?.toString();
+
+              String? safeInitialFileName;
+              if (apiValue is Map) {
+                final fileName = apiValue['name']?.toString();
+                if (fileName != null && fileName.trim().isNotEmpty) {
+                  safeInitialFileName = fileName;
+                }
+              }
+
               // Only render if active
               if (field.isActive != true) {
                 return SizedBox.shrink(); // returns an empty widget
@@ -98,8 +125,7 @@ class AddProductDetailScreenWidget extends StatelessWidget {
                                 ).paddingOnly(bottom: 28)
                               : fieldType == 3
                                   ? PickFileView(
-                                      initialFileName: controller.adsData
-                                          ?.attributes![index].value['name'],
+                                  initialFileName: safeInitialFileName,
                                       attributeIndex: index,
                                       baseUrl: Api.baseUrl,
                                     ).paddingOnly(bottom: 28)
@@ -110,9 +136,7 @@ class AddProductDetailScreenWidget extends StatelessWidget {
                                                   .values ??
                                               [],
                                           attributeIndex: index,
-                    initialValue: (controller.adsData?.attributes?[index].value is List)
-                        ? (controller.adsData?.attributes?[index].value as List).first.toString()
-                        : controller.adsData?.attributes?[index].value?.toString(),
+                                initialValue: safeDropdownInitialValue,
 
                     onChanged: (value) {
                                             controller.updateDropdownValue(
@@ -450,6 +474,27 @@ class ProductDetailTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final source = image.trim();
+    final isSvg = source.toLowerCase().contains('.svg');
+    final isNetwork = source.startsWith('http://') || source.startsWith('https://');
+    final svgUrl = isNetwork ? source : (source.isNotEmpty ? '${Api.baseUrl}$source' : '');
+
+    Widget iconChild;
+    if (source.isEmpty) {
+      iconChild = Icon(Icons.image_outlined, color: AppColors.white, size: 22);
+    } else if (isSvg) {
+      iconChild = SvgPicture.network(
+        svgUrl,
+        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+        placeholderBuilder: (_) => Icon(Icons.image_outlined, color: AppColors.white, size: 22),
+      );
+    } else {
+      iconChild = CustomImageView(
+        color: AppColors.white,
+        image: source,
+      );
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -462,12 +507,7 @@ class ProductDetailTile extends StatelessWidget {
           child: SizedBox(
             height: 30,
             width: 30,
-            child:
-
-            CustomImageView(
-              color: AppColors.white,
-              image: image,
-            ),
+            child: iconChild,
           ),
         ).paddingOnly(right: 14),
         Text(

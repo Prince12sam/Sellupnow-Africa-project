@@ -551,19 +551,25 @@ class ProductBottomSheet extends StatelessWidget {
                                                 borderRadius: BorderRadius.circular(8),
                                                 child: CustomImageView(image: controller.allAdsList[index].primaryImage ?? '')),
                                           ).paddingOnly(right: 16),
-                                          Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                            children: [
-                                              Text(controller.allAdsList[index].title ?? '',
-                                                  style: AppFontStyle.fontStyleW600(fontSize: 15, fontColor: AppColors.darkGrey)),
-                                              Text(controller.allAdsList[index].subTitle ?? '',
-                                                  style:
-                                                      AppFontStyle.fontStyleW600(fontSize: 12, fontColor: AppColors.darkGrey.withValues(alpha: 0.7))),
-                                              Text(
-                                                  '${Database.settingApiResponseModel?.data?.currency?.symbol}${controller.allAdsList[index].price ?? ' '}',
-                                                  style: AppFontStyle.fontStyleW600(fontSize: 15, fontColor: AppColors.appRedColor)),
-                                            ],
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                              children: [
+                                                Text(controller.allAdsList[index].title ?? '',
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: AppFontStyle.fontStyleW600(fontSize: 15, fontColor: AppColors.darkGrey)),
+                                                Text(controller.allAdsList[index].subTitle ?? '',
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style:
+                                                        AppFontStyle.fontStyleW600(fontSize: 12, fontColor: AppColors.darkGrey.withValues(alpha: 0.7))),
+                                                Text(
+                                                    '${Database.settingApiResponseModel?.data?.currency?.symbol}${controller.allAdsList[index].price ?? ' '}',
+                                                    style: AppFontStyle.fontStyleW600(fontSize: 15, fontColor: AppColors.appRedColor)),
+                                              ],
+                                            ),
                                           )
                                         ],
                                       ),

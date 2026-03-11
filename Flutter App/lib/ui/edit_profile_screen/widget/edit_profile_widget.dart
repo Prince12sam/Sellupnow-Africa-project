@@ -80,7 +80,7 @@ class EditImageView extends StatelessWidget {
                       },
                     )
                   : CustomProfileImage(
-                      image: Database.getUserProfileResponseModel?.user?.profileImage ?? '',
+                      image: Database.getUserProfileResponseModel?.user?.profileImage ?? Database.loginUserProfilePic,
                     ),
             ),
           ),
@@ -396,10 +396,11 @@ class EditTextFieldView extends StatelessWidget {
 
                     onCountryChanged: (value) {
                       logic.selectedCountryCode = value.code; // only in controller, not in DB
+                      logic.dialCode = value.dialCode;
                       log("TEMP selectedCountryCode: ${logic.selectedCountryCode}");
                     },
 
-                    initialCountryCode: Database.selectedCountryCode,
+                    initialCountryCode: logic.selectedCountryCode ?? Database.selectedCountryCode,
                     onChanged: (phone) {
                       logic.dialCode = phone.countryCode; // example: +91
                       logic.number.text = phone.number; // only number part

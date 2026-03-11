@@ -41,6 +41,7 @@ class SocialLoginController extends Controller
             } else {
                 $new_user = User::create([
                     'username' => 'fb_' . explode('@', $user_fb_details->getEmail())[0],
+                    'name' => $user_fb_details->getName(),
                     'first_name' => $user_fb_details->getName(),
                     'last_name' => $user_fb_details->getName(),
                     'email' => $user_fb_details->getEmail(),
@@ -59,13 +60,20 @@ class SocialLoginController extends Controller
 
     public function google_redirect()
     {
-        return Socialite::driver('google')->redirect();
+        $callbackUrl = config('services.google.redirect') ?: route('google.callback');
+
+        return Socialite::driver('google')
+            ->redirectUrl($callbackUrl)
+            ->redirect();
     }
 
     public function google_callback()
     {
         try {
-            $user_go_details = Socialite::driver('google')->user();
+            $callbackUrl = config('services.google.redirect') ?: route('google.callback');
+            $user_go_details = Socialite::driver('google')
+                ->redirectUrl($callbackUrl)
+                ->user();
             $user_details = User::where('email', $user_go_details->getEmail())->first();
 
             if ($user_details) {
@@ -74,6 +82,7 @@ class SocialLoginController extends Controller
             } else {
                 $new_user = User::create([
                     'username' => 'go_' . explode('@', $user_go_details->getEmail())[0],
+                    'name' => $user_go_details->getName(),
                     'first_name' => $user_go_details->getName(),
                     'last_name' => $user_go_details->getName(),
                     'email' => $user_go_details->getEmail(),

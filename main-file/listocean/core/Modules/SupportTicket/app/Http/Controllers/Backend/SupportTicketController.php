@@ -130,13 +130,13 @@ class SupportTicketController extends Controller
 
             if(!empty($request->attachment) || empty($request->message)){
                 $request->validate([
-                    'attachment'=> 'mimes:jpg,jpeg,png,gif,pdf,svg,xlsx,xls,txt,webp',
+                    'attachment'=> 'nullable|file|max:5120|mimes:jpg,jpeg,png,gif,pdf,xlsx,xls,txt,webp',
                 ]);
             }
 
             if($attachment = $request->file('attachment')){
                 $imageName = time().'-'.uniqid().'.'.$attachment->getClientOriginalExtension();
-                $attachment->move('assets/uploads/ticket/chat-messages',$imageName);
+                $attachment->move(public_path('assets/uploads/ticket/chat-messages'),$imageName);
             }
 
             if ($ticket_details->admin_id === null) {

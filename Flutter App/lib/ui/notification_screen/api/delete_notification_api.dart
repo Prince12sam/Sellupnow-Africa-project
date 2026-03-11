@@ -20,8 +20,7 @@ class ClearNotificationsApi {
     final headers = {
       ApiParams.key: Api.secretKey,
       ApiParams.authToken: "Bearer $token",
-      ApiParams.authUid:
-          '${Database.getUserProfileResponseModel?.user?.firebaseUid}',
+        ApiParams.authUid: Database.authUid,
       ApiParams.contentType: "application/json",
     };
 
