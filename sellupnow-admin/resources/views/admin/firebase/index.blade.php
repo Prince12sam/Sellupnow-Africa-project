@@ -141,11 +141,6 @@
                         </div>
 
                         <div class="d-flex justify-content-center gap-3">
-                            <!-- Download Button -->
-                            <a href="{{ $filePath }}" class="btn btn-primary px-4 py-2.5" download target="_blank">
-                                <i class="fa-solid fa-download"></i> {{ __('Download JSON File') }}
-                            </a>
-
                             <!-- Change Configuration Button -->
                             <button id="changeConfigBtn" class="btn btn-info px-4 py-2.5">
                                 <i class="fa-solid fa-pen-to-square"></i> {{ __('Change Configuration') }}

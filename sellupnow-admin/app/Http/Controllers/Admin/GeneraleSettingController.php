@@ -29,7 +29,7 @@ class GeneraleSettingController extends Controller
     {
         $currencies = Currency::all();
 
-        $customerWebUrl = rtrim(env('CUSTOMER_WEB_URL', 'http://127.0.0.1:8090'), '/');
+        $customerWebUrl = rtrim((string) config('app.customer_web_url', ''), '/');
 
         $listoceanGeneralKeys = [
             // SEO
@@ -88,7 +88,7 @@ class GeneraleSettingController extends Controller
         $androidLink = (string) ($this->listocean()->table('static_options')->where('option_name', 'android_app_link')->value('option_value') ?? '');
         $iosLink = (string) ($this->listocean()->table('static_options')->where('option_name', 'ios_app_link')->value('option_value') ?? '');
 
-        $customerWebUrl = rtrim(env('CUSTOMER_WEB_URL', 'http://127.0.0.1:8090'), '/');
+        $customerWebUrl = rtrim((string) config('app.customer_web_url', ''), '/');
 
         $insertion = '';
         if ($androidLink !== '' || $iosLink !== '') {
@@ -434,8 +434,11 @@ class GeneraleSettingController extends Controller
             $this->upsertListoceanStaticOption($key, (string) ($data[$key] ?? ''));
         }
 
-        $this->writeListoceanAssetFile('assets/frontend/css/dynamic-style.css', (string) ($data['custom_css_area'] ?? ''));
-        $this->writeListoceanAssetFile('assets/frontend/js/dynamic-script.js', (string) ($data['custom_js_area'] ?? ''));
+        // Custom CSS/JS is written directly to the customer frontend — restrict to root only.
+        if (auth()->user()?->hasRole('root')) {
+            $this->writeListoceanAssetFile('assets/frontend/css/dynamic-style.css', (string) ($data['custom_css_area'] ?? ''));
+            $this->writeListoceanAssetFile('assets/frontend/js/dynamic-script.js', (string) ($data['custom_js_area'] ?? ''));
+        }
 
         try {
             $this->clearListoceanCaches();
@@ -607,7 +610,26 @@ class GeneraleSettingController extends Controller
     private function storeListoceanMediaUpload($uploadedFile): int
     {
         $originalName = (string) $uploadedFile->getClientOriginalName();
-        $extension = strtolower((string) $uploadedFile->getClientOriginalExtension());
+
+        // Derive the extension from the real MIME type — never trust the client-supplied extension.
+        $allowedMimeExtensions = [
+            'image/jpeg'  => 'jpg',
+            'image/png'   => 'png',
+            'image/gif'   => 'gif',
+            'image/webp'  => 'webp',
+            'image/svg+xml' => 'svg',
+            'image/bmp'   => 'bmp',
+            'image/tiff'  => 'tiff',
+        ];
+        $realMime = $uploadedFile->getMimeType() ?? '';
+        $extension = $allowedMimeExtensions[$realMime] ?? null;
+        if (! $extension) {
+            // Fallback: use client extension only if it's in the safe list.
+            $clientExt = strtolower((string) $uploadedFile->getClientOriginalExtension());
+            $extension = in_array($clientExt, ['jpg','jpeg','png','gif','webp','svg','bmp','tiff'], true)
+                ? $clientExt
+                : 'jpg';
+        }
         $baseName = pathinfo($originalName, PATHINFO_FILENAME);
 
         $slug = Str::slug($baseName);
@@ -854,6 +876,9 @@ class GeneraleSettingController extends Controller
      */
     public function updateCommand()
     {
+        // Shell execution on the server — root only.
+        abort_unless(auth()->user()?->hasRole('root'), 403, 'Only the root administrator may run server update commands.');
+
         $commands = config('installer.update_commands');
 
         $errors = [];

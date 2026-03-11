@@ -35,7 +35,7 @@ class CountriesNowLocationImporter
         $usingInsecure = false;
 
         try {
-            $statesResponse = $client->post(self::BASE_URL.'/countries/states', [
+            $statesResponse = $client->get(self::BASE_URL.'/countries/states/q', [
                 'country' => $countryName,
             ]);
         } catch (\Throwable $th) {
@@ -43,7 +43,7 @@ class CountriesNowLocationImporter
                 try {
                     $client = $this->makeClient(withoutVerifying: true);
                     $usingInsecure = true;
-                    $statesResponse = $client->post(self::BASE_URL.'/countries/states', [
+                    $statesResponse = $client->get(self::BASE_URL.'/countries/states/q', [
                         'country' => $countryName,
                     ]);
                 } catch (\Throwable $th2) {
@@ -97,7 +97,7 @@ class CountriesNowLocationImporter
             }
 
             try {
-                $citiesResponse = $client->post(self::BASE_URL.'/countries/state/cities', [
+                $citiesResponse = $client->get(self::BASE_URL.'/countries/state/cities/q', [
                     'country' => $countryName,
                     'state' => $stateName,
                 ]);
@@ -106,7 +106,7 @@ class CountriesNowLocationImporter
                     try {
                         $client = $this->makeClient(withoutVerifying: true);
                         $usingInsecure = true;
-                        $citiesResponse = $client->post(self::BASE_URL.'/countries/state/cities', [
+                        $citiesResponse = $client->get(self::BASE_URL.'/countries/state/cities/q', [
                             'country' => $countryName,
                             'state' => $stateName,
                         ]);

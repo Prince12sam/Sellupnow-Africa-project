@@ -7,6 +7,7 @@ use App\Http\Requests\PaymentGatewayRequest;
 use App\Models\PaymentGateway;
 use App\Repositories\PaymentGatewayRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -43,6 +44,7 @@ class PaymentGatewayController extends Controller
     public function update(PaymentGatewayRequest $request, PaymentGateway $paymentGateway)
     {
         PaymentGatewayRepository::updateByRequest($request, $paymentGateway);
+        Cache::forget('payment_gateway');
 
         return back()->withSuccess(__('Payment Gateway Updated Successfully'));
     }
@@ -55,6 +57,7 @@ class PaymentGatewayController extends Controller
         $paymentGateway->update([
             'is_active' => ! $paymentGateway->is_active,
         ]);
+        Cache::forget('payment_gateway');
 
         return back()->withSuccess(__('Status Updated Successfully'));
     }

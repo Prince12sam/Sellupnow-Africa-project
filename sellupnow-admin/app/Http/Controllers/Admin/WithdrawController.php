@@ -37,6 +37,11 @@ class WithdrawController extends Controller
      */
     public function update(Withdraw $withdraw, Request $request)
     {
+        $request->validate([
+            'status' => 'required|in:pending,approved,rejected',
+            'reason' => 'nullable|string|max:500',
+        ]);
+
         WithdrawRepository::updateWithdraw($withdraw, $request);
 
         // admin notification message

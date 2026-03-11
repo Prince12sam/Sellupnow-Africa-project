@@ -12,15 +12,18 @@ class FollowController extends Controller
     /** Toggle follow status for a user. */
     public function toggle(Request $request)
     {
-        $data = $request->validate([
-            'user_id' => 'required|integer|exists:users,id',
-        ]);
+        // Flutter sends toUserId as query param
+        $followingId = $request->input('toUserId') ?? $request->input('user_id');
+
+        if (!$followingId || !User::where('id', $followingId)->exists()) {
+            return response()->json(['status' => false, 'message' => 'Invalid user'], 422);
+        }
 
         $followerId  = auth('api')->id();
-        $followingId = $data['user_id'];
+        $followingId = (int) $followingId;
 
         if ($followerId === $followingId) {
-            return $this->json('You cannot follow yourself', [], 422);
+            return response()->json(['status' => false, 'message' => 'You cannot follow yourself'], 422);
         }
 
         $existing = Follow::where('follower_id', $followerId)->where('following_id', $followingId)->first();
@@ -33,9 +36,10 @@ class FollowController extends Controller
             $isFollowing = true;
         }
 
-        return $this->json('follow status updated', [
-            'user_id'      => $followingId,
-            'is_following' => $isFollowing,
+        return response()->json([
+            'status'  => true,
+            'message' => 'follow status updated',
+            'isFollow' => $isFollowing,
         ]);
     }
 

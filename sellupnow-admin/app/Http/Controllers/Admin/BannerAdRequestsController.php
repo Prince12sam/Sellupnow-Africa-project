@@ -14,10 +14,10 @@ class BannerAdRequestsController extends Controller
     private array $slotOptions = [
         'none' => 'None',
         'homepage_hero_banner' => 'Homepage (Hero banner)',
+        'homepage_footer_banner' => 'Homepage (Footer banner)',
         'listing_details_left' => 'Listing details (Left)',
         'listing_details_right' => 'Listing details (Right)',
         'listing_details_under_gallery' => 'Listing details (Under images)',
-        'user_profile_sidebar' => 'User profile (Sidebar)',
         'user_profile_under_header' => 'User profile (Under header)',
         'listings_under_image' => 'Listings grid (Under listing image)',
     ];
@@ -111,11 +111,13 @@ class BannerAdRequestsController extends Controller
 
         if (! $ad) abort(404);
 
-        $slot = $this->listocean()->table('frontend_ad_slots')
-            ->select(['slot_key', 'listing_id'])
-            ->where('status', 1)
-            ->where('advertisement_id', $id)
-            ->first();
+        $slot = null;
+        if ($this->hasFrontendAdSlotsTable()) {
+            $slot = $this->listocean()->table('frontend_ad_slots')
+                ->select(['slot_key', 'listing_id'])
+                ->where('advertisement_id', $id)
+                ->first();
+        }
 
         $currentSlotKey   = (string) ($slot->slot_key ?? 'none');
         if ($currentSlotKey === '') $currentSlotKey = 'none';
@@ -151,17 +153,19 @@ class BannerAdRequestsController extends Controller
             return back()->withError('Invalid slot');
         }
 
-        // Clear existing slot assignment for this ad.
-        $this->listocean()->table('frontend_ad_slots')->where('advertisement_id', $id)->delete();
+        if ($this->hasFrontendAdSlotsTable()) {
+            $this->listocean()->table('frontend_ad_slots')->where('advertisement_id', $id)->delete();
+        }
 
-        if ($slotKey !== 'none') {
+        if ($slotKey !== 'none' && $this->hasFrontendAdSlotsTable()) {
             // Allow multiple ads per listing-scoped slot; keep one-per-slot only for global (no listing).
+            $slotStatus = (int) ($ad->status ?? 0) === 1 ? 1 : 0;
             if ($listingId) {
                 $this->listocean()->table('frontend_ad_slots')->updateOrInsert(
                     ['slot_key' => $slotKey, 'listing_id' => $listingId],
                     [
                         'advertisement_id' => $id,
-                        'status' => 1,
+                        'status' => $slotStatus,
                         'start_at' => null,
                         'end_at' => null,
                         'updated_at' => now(),
@@ -173,7 +177,7 @@ class BannerAdRequestsController extends Controller
                     ['slot_key' => $slotKey, 'listing_id' => null],
                     [
                         'advertisement_id' => $id,
-                        'status' => 1,
+                        'status' => $slotStatus,
                         'start_at' => null,
                         'end_at' => null,
                         'updated_at' => now(),
@@ -210,6 +214,8 @@ class BannerAdRequestsController extends Controller
                 ]);
         }
 
+        $this->syncFrontendAdSlotStatus($id, 1);
+
         return back()->withSuccess('Banner ad approved and placement activated');
     }
 
@@ -236,7 +242,28 @@ class BannerAdRequestsController extends Controller
                 ]);
         }
 
+        $this->syncFrontendAdSlotStatus($id, 0);
+
         return back()->withSuccess('Banner ad deactivated');
+    }
+
+    private function hasFrontendAdSlotsTable(): bool
+    {
+        return Schema::connection('listocean')->hasTable('frontend_ad_slots');
+    }
+
+    private function syncFrontendAdSlotStatus(int $advertisementId, int $status): void
+    {
+        if (! $this->hasFrontendAdSlotsTable()) {
+            return;
+        }
+
+        $this->listocean()->table('frontend_ad_slots')
+            ->where('advertisement_id', $advertisementId)
+            ->update([
+                'status' => $status,
+                'updated_at' => now(),
+            ]);
     }
 
     private function listocean()

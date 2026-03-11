@@ -61,6 +61,17 @@
                                                 </button>
                                             @endhasPermission
 
+                                            @hasPermission('admin.siteCountry.store')
+                                                <form method="POST" action="{{ route('admin.siteCountry.reimport', $country->id) }}" style="display:inline">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-outline-info circleIcon btn-sm"
+                                                        title="{{ __('Re-import States & Cities') }}"
+                                                        onclick="return confirm('Re-import all states and cities for {{ addslashes($country->country) }}?')">
+                                                        <i class="fa fa-refresh"></i>
+                                                    </button>
+                                                </form>
+                                            @endhasPermission
+
                                             @hasPermission('admin.siteCountry.destroy')
                                                 <a href="{{ route('admin.siteCountry.destroy', $country->id) }}"
                                                     class="circleIcon btn btn-outline-danger btn-sm deleteConfirm">
@@ -96,23 +107,35 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
+                        @if ($errors->any())
+                            <div class="alert alert-danger py-2 mb-3">
+                                <ul class="mb-0 ps-3">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
                         <div class="mb-3">
                             <label class="form-label">{{ __('Country') }} *</label>
-                            <input type="text" name="country" class="form-control" required>
+                            <input type="text" name="country" class="form-control {{ $errors->has('country') ? 'is-invalid' : '' }}"
+                                value="{{ old('country') }}" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">{{ __('Country Code (ISO2)') }}</label>
-                            <input type="text" name="country_code" class="form-control" placeholder="e.g. GH" maxlength="2">
+                            <input type="text" name="country_code" class="form-control {{ $errors->has('country_code') ? 'is-invalid' : '' }}"
+                                placeholder="e.g. GH" maxlength="2" value="{{ old('country_code') }}">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">{{ __('Dial Code') }}</label>
-                            <input type="text" name="dial_code" class="form-control" placeholder="e.g. 233">
+                            <input type="text" name="dial_code" class="form-control"
+                                placeholder="e.g. 233" value="{{ old('dial_code') }}">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">{{ __('Status') }}</label>
                             <select name="status" class="form-control" required>
-                                <option value="1" selected>{{ __('Active') }}</option>
-                                <option value="0">{{ __('Inactive') }}</option>
+                                <option value="1" {{ old('status', '1') === '1' ? 'selected' : '' }}>{{ __('Active') }}</option>
+                                <option value="0" {{ old('status') === '0' ? 'selected' : '' }}>{{ __('Inactive') }}</option>
                             </select>
                         </div>
                     </div>
@@ -168,6 +191,15 @@
 
 @push('scripts')
     <script>
+        @if ($errors->any())
+            document.addEventListener('DOMContentLoaded', function () {
+                var modalEl = document.getElementById('createCountry');
+                if (modalEl && window.bootstrap?.Modal) {
+                    window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                }
+            });
+        @endif
+
         const openUpdateModal = (row) => {
             document.getElementById('u_country').value = row.country ?? '';
             document.getElementById('u_country_code').value = row.country_code ?? '';

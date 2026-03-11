@@ -24,7 +24,7 @@ class FooterController extends Controller
 
         // Listocean footer bridge (Listocean renders footer via widgets, not this admin footer builder)
         // This is best-effort: the secondary DB/app may be missing in some deployments.
-        $customerWebUrl = rtrim(env('CUSTOMER_WEB_URL', 'http://127.0.0.1:8090'), '/');
+        $customerWebUrl = rtrim((string) config('app.customer_web_url', ''), '/');
         $listoceanFooterLogoUrl = null;
         $listoceanFooterContact = [];
         $listoceanCopyrightText = '';
@@ -381,7 +381,17 @@ class FooterController extends Controller
     private function storeListoceanMediaUpload($uploadedFile): int
     {
         $originalName = (string) $uploadedFile->getClientOriginalName();
-        $extension = strtolower((string) $uploadedFile->getClientOriginalExtension());
+        // Derive extension from real MIME type — never trust the client-supplied extension.
+        $allowedMimeExtensions = [
+            'image/jpeg' => 'jpg', 'image/png' => 'png', 'image/gif' => 'gif',
+            'image/webp' => 'webp', 'image/svg+xml' => 'svg', 'image/bmp' => 'bmp',
+        ];
+        $realMime = $uploadedFile->getMimeType() ?? '';
+        $extension = $allowedMimeExtensions[$realMime] ?? null;
+        if (! $extension) {
+            $clientExt = strtolower((string) $uploadedFile->getClientOriginalExtension());
+            $extension = in_array($clientExt, ['jpg','jpeg','png','gif','webp','svg','bmp'], true) ? $clientExt : 'jpg';
+        }
         $baseName = pathinfo($originalName, PATHINFO_FILENAME);
 
         $slug = Str::slug($baseName);

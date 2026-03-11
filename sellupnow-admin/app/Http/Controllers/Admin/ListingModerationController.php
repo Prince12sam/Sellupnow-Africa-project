@@ -12,7 +12,7 @@ class ListingModerationController extends Controller
 {
     public function index(Request $request)
     {
-        $customerWebUrl = rtrim((string) env('CUSTOMER_WEB_URL', 'http://127.0.0.1:8090'), '/');
+        $customerWebUrl = rtrim((string) config('app.customer_web_url', ''), '/');
 
         $queue = (string) $request->get('queue', 'all');
 
@@ -55,7 +55,7 @@ class ListingModerationController extends Controller
 
     public function show(int $id)
     {
-        $customerWebUrl = rtrim((string) env('CUSTOMER_WEB_URL', 'http://127.0.0.1:8090'), '/');
+        $customerWebUrl = rtrim((string) config('app.customer_web_url', ''), '/');
 
         $listing = $this->listocean()->table('listings as l')
             ->leftJoin('users as u', 'u.id', '=', 'l.user_id')
@@ -249,6 +249,22 @@ class ListingModerationController extends Controller
         $imageValue = trim($imageValue);
         if ($imageValue === '') {
             return $fallback;
+        }
+
+        if (preg_match('~^https?://~i', $imageValue)) {
+            return $imageValue;
+        }
+
+        if (str_starts_with($imageValue, 'storage/')) {
+            return $customerWebUrl . '/' . ltrim($imageValue, '/');
+        }
+
+        if (str_starts_with($imageValue, 'listings/')) {
+            return $customerWebUrl . '/storage/' . ltrim($imageValue, '/');
+        }
+
+        if (str_starts_with($imageValue, 'assets/uploads/')) {
+            return $customerWebUrl . '/' . ltrim($imageValue, '/');
         }
 
         // Listocean stores listing image as a media_uploads id (string) in many installs.

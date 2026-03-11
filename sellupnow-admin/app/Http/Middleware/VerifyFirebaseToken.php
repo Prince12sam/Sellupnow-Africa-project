@@ -19,8 +19,8 @@ class VerifyFirebaseToken
      * The token is a short-lived (~1 hour) JWT issued by Firebase Auth.
      * The Flutter SDK auto-refreshes it via FirebaseAccessToken.onGet().
      *
-     * Required: storage/app/public/firebase_credentials.json (Admin SDK
-     *           service-account file — uploaded via /admin/firebase).
+    * Required: storage/app/firebase_credentials.json (Admin SDK
+    *           service-account file — uploaded via /admin/firebase).
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -40,7 +40,7 @@ class VerifyFirebaseToken
         }
 
         // ── 2. Verify the token via Firebase Admin SDK ───────────────────────
-        $credPath = env('FIREBASE_CREDENTIALS', storage_path('app/public/firebase_credentials.json'));
+        $credPath = (string) config('firebase.projects.app.credentials.file', storage_path('app/firebase_credentials.json'));
 
         if (! file_exists($credPath)) {
             return response()->json([
@@ -71,8 +71,13 @@ class VerifyFirebaseToken
         }
 
         // ── 4. Set the authenticated user so auth()->user() works everywhere ──
+        // Set on both the default guard AND the 'api' (Sanctum) guard so that
+        // both auth()->id() and auth('api')->id() resolve to the correct user.
         Auth::setUser($user);
+        Auth::guard('api')->setUser($user);
         $request->setUserResolver(fn () => $user);
+
+        \Illuminate\Support\Facades\Log::info('[VerifyFirebaseToken] uid='.$firebaseUid.' user_id='.$user->id);
 
         return $next($request);
     }

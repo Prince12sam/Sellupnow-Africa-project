@@ -38,6 +38,18 @@
 
                         {{-- ── Homepage Banner Position ─── --}}
                         <div class="mt-4">
+                            <label class="form-label fw-bold" for="placement">{{ __('Banner Placement') }}</label>
+                            <select class="form-select" id="placement" name="placement">
+                                @foreach(($placementOptions ?? []) as $key => $label)
+                                    <option value="{{ $key }}" {{ old('placement', $banner->placement ?? \App\Models\Banner::PLACEMENT_HOMEPAGE) === $key ? 'selected' : '' }}>{{ __($label) }}</option>
+                                @endforeach
+                            </select>
+                            @error('placement')
+                                <p class="text-danger mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div class="mt-4" id="homepage-position-group">
                             <label class="form-label fw-bold">{{ __('Position on Homepage') }}</label>
                             <div class="d-flex gap-3 mt-1">
                                 <div class="form-check">
@@ -58,6 +70,7 @@
                                 </div>
                                 <!-- Marketplace position removed — managed in standalone Marketplace Banner -->
                             </div>
+                            <small class="text-muted d-block mt-1">{{ __('Only used when placement is Homepage Banner.') }}</small>
                         </div>
 
                         @if ($businessModel != 'single')
@@ -84,3 +97,20 @@
 
     </form>
 @endsection
+
+@push('script')
+<script>
+    (function () {
+        const placementSelect = document.getElementById('placement');
+        const homepagePositionGroup = document.getElementById('homepage-position-group');
+
+        const refreshPlacementUi = function () {
+            if (!placementSelect || !homepagePositionGroup) return;
+            homepagePositionGroup.style.display = placementSelect.value === '{{ \App\Models\Banner::PLACEMENT_HOMEPAGE }}' ? '' : 'none';
+        };
+
+        placementSelect?.addEventListener('change', refreshPlacementUi);
+        refreshPlacementUi();
+    })();
+</script>
+@endpush

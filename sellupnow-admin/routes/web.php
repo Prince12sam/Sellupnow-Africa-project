@@ -210,6 +210,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/', [siteCountryController::class, 'index'])->name('index');
             Route::post('/', [siteCountryController::class, 'store'])->name('store');
             Route::put('/{id}', [siteCountryController::class, 'update'])->name('update')->whereNumber('id');
+            Route::post('/{id}/reimport', [siteCountryController::class, 'reimport'])->name('reimport')->whereNumber('id');
             Route::match(['post', 'delete'], '/{id}/delete', [siteCountryController::class, 'destroy'])->name('destroy')->whereNumber('id');
         });
 
@@ -835,6 +836,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/category-palette/{categoryThemeColor}/default', [ThemeColorController::class, 'setDefaultCategoryPalette'])->name('categoryPalette.default');
             Route::post('/header-footer-palette', [ThemeColorController::class, 'storeHeaderFooterPalette'])->name('headerFooterPalette.store');
             Route::post('/header-footer-palette/{headerFooterThemeColor}/default', [ThemeColorController::class, 'setDefaultHeaderFooterPalette'])->name('headerFooterPalette.default');
+            Route::delete('/category-palette/{categoryThemeColor}', [ThemeColorController::class, 'destroyCategoryPalette'])->name('categoryPalette.destroy');
+            Route::delete('/header-footer-palette/{headerFooterThemeColor}', [ThemeColorController::class, 'destroyHeaderFooterPalette'])->name('headerFooterPalette.destroy');
             Route::get('/status/{homeTheme}', [ThemeColorController::class, 'themeStatus'])->name('status');
         });
 

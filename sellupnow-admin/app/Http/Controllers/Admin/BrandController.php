@@ -16,11 +16,13 @@ class BrandController extends Controller
     {
         // Listocean listing-creation uses Brands from the Listocean DB.
         // Keep Sellupnow as the single admin by managing Listocean brands here.
+        $search = request('search');
         $brands = DB::connection('listocean')
             ->table('brands')
             ->select(['id', 'title', 'status', 'created_at', 'updated_at'])
-            ->orderByDesc('id')
-            ->paginate(20)
+            ->when($search, fn($q) => $q->where('title', 'like', '%' . $search . '%'))
+            ->orderBy('title')
+            ->paginate(50)
             ->through(function ($row) {
                 // Map Listocean schema (title/status) into the fields this view expects.
                 $row->name = $row->title;

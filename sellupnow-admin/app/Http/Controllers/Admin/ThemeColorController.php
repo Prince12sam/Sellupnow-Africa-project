@@ -294,4 +294,22 @@ class ThemeColorController extends Controller
         OfferBannerRepository::updateByRequest($offerBanner, $request);
         return back()->with('success', 'Offer Banner updated successfully');
     }
+
+    public function destroyCategoryPalette(CategoryThemeColor $categoryThemeColor)
+    {
+        if ($categoryThemeColor->is_default) {
+            return back()->with('error', __('Cannot delete the active palette.'));
+        }
+        $categoryThemeColor->delete();
+        return back()->with('success', __('Category palette deleted successfully'));
+    }
+
+    public function destroyHeaderFooterPalette(HeaderFooterThemeColor $headerFooterThemeColor)
+    {
+        if ($headerFooterThemeColor->is_default) {
+            return back()->with('error', __('Cannot delete the active palette.'));
+        }
+        $headerFooterThemeColor->delete();
+        return back()->with('success', __('Header/footer palette deleted successfully'));
+    }
 }

@@ -34,6 +34,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Use Bootstrap 5 pagination throughout the admin (default is Tailwind which has no CSS loaded here)
+        Paginator::useBootstrapFive();
+
         Notification::observe(NotificationObserver::class);
 
         if(request()->ip() != '127.0.0.1'){

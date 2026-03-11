@@ -60,8 +60,7 @@ class ImagePicker extends Component
                 return null;
             }
 
-            $customerWebUrl = rtrim((string) env('CUSTOMER_WEB_URL', env('APP_URL', 'http://127.0.0.1:8090')), '/');
-            return $customerWebUrl . '/assets/uploads/media-uploader/' . ltrim((string) $path, '/');
+            return Storage::disk('listocean_media')->url((string) $path);
         } catch (\Throwable $e) {
             return null;
         }

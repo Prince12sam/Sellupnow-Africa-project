@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\SubscriptionPlanResource;
 use App\Models\SubscriptionPlan;
 use Illuminate\Http\Request;
 
@@ -15,12 +16,9 @@ class SubscriptionPlanController extends Controller
     {
         $plans = SubscriptionPlan::query()
             ->active()
-            ->orderBy('price')
+            ->orderBy('sort_order')
             ->get();
 
-        return $this->json('subscription plans', [
-            'total' => $plans->count(),
-            'plans' => $plans,
-        ]);
+        return $this->json('subscription plans', SubscriptionPlanResource::collection($plans)->toArray($request));
     }
 }

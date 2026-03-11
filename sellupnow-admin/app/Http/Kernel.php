@@ -16,7 +16,7 @@ class Kernel extends HttpKernel
     protected $middleware = [
         // Blocks /update/* always (RCE risk) and /install/* unless INSTALLER_ENABLED=true in .env
         \App\Http\Middleware\BlockSetupWizards::class,
-        // \App\Http\Middleware\TrustHosts::class,
+        \App\Http\Middleware\TrustHosts::class,
         \App\Http\Middleware\TrustProxies::class,
         \Illuminate\Http\Middleware\HandleCors::class,
         \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
@@ -83,5 +83,6 @@ class Kernel extends HttpKernel
         'chack_root_user' => \App\Http\Middleware\CheckHasRootUser::class,
         // Flutter mobile: verify Firebase ID token and resolve the DB user
         'firebase.auth' => \App\Http\Middleware\VerifyFirebaseToken::class,
+        'api.key' => \App\Http\Middleware\ValidateApiKey::class,
     ];
 }

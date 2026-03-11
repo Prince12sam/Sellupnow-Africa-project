@@ -7,6 +7,8 @@ use App\Models\VerifyOtp;
 
 class VerificationCodeRepository extends Repository
 {
+    private const OTP_TTL_MINUTES = 10;
+
     /**
      * Get the model associated with the repository.
      *
@@ -39,6 +41,7 @@ class VerificationCodeRepository extends Repository
     public static function checkOTP($phone, $otp): ?VerifyOtp
     {
         return self::query()->where(['phone' => $phone, 'otp' => $otp])
+            ->where('updated_at', '>=', now()->subMinutes(self::OTP_TTL_MINUTES))
             ->latest()
             ->first();
     }
@@ -48,7 +51,11 @@ class VerificationCodeRepository extends Repository
      */
     public static function checkByToken($token)
     {
-        return self::query()->where('token', $token)->latest()->first();
+        return self::query()
+            ->where('token', $token)
+            ->where('updated_at', '>=', now()->subMinutes(self::OTP_TTL_MINUTES))
+            ->latest()
+            ->first();
     }
 
     /**

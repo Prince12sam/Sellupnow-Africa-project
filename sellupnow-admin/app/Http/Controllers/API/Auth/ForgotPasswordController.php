@@ -36,11 +36,11 @@ class ForgotPasswordController extends Controller
                 return VerifyManage::first();
             });
 
-            $type = $request->forgot_password ? $verifyManage?->forgot_otp_type : $verifyManage?->register_otp_type;
+            $type = $verifyManage?->forgot_otp_type ?? 'email';
 
             $responseMessage = null;
             $emailOrPhone = null;
-            $messageType = $request->forgot_password ? 'Forgot Password' : 'Verification';
+            $messageType = 'Forgot Password';
 
             // Create a new verification code
             $verificationCode = VerificationCodeRepository::findOrCreateByContact($user->phone ?? $user->email);
@@ -98,12 +98,12 @@ class ForgotPasswordController extends Controller
         $verifyManage = Cache::rememberForever('verify_manage', function () {
             return VerifyManage::first();
         });
-        $type = $verifyManage?->register_otp_type ?? 'email';
+        $type = $verifyManage?->forgot_otp_type ?? 'email';
 
         $verificationCode = VerificationCodeRepository::checkOTP($user->phone ?? $user->email, $request->otp);
 
         if (! $verificationCode) {
-            return $this->json('Invalid otp', [], Response::HTTP_BAD_REQUEST);
+            return $this->json('Invalid or expired otp', [], Response::HTTP_BAD_REQUEST);
         }
 
         // Mark the user as verified
@@ -126,6 +126,10 @@ class ForgotPasswordController extends Controller
     public function resetPassword(PasswordResetRequest $request)
     {
         $verifyOTP = VerificationCodeRepository::checkByToken($request->token);
+
+        if (! $verifyOTP) {
+            return $this->json('Invalid or expired reset token.', [], 422);
+        }
 
         $user = UserRepository::findByPhone($verifyOTP->phone);
 

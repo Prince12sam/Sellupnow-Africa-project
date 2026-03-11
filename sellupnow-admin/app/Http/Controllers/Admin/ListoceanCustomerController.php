@@ -20,7 +20,7 @@ class ListoceanCustomerController extends Controller
 
     private function customerWebUrl(): string
     {
-        return rtrim((string) env('CUSTOMER_WEB_URL', 'http://127.0.0.1:8090'), '/');
+        return rtrim((string) config('app.customer_web_url', ''), '/');
     }
 
     private function resolveThumbnail($imageValue): string

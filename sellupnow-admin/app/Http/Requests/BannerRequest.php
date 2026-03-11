@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Banner;
 use Illuminate\Foundation\Http\FormRequest;
 
 class BannerRequest extends FormRequest
@@ -26,6 +27,7 @@ class BannerRequest extends FormRequest
         return [
             'title' => ['nullable', 'string', 'max:255'],
             'banner' => [$required, 'string', 'max:255'],
+            'placement' => ['nullable', 'string', 'in:' . implode(',', array_keys(Banner::placementOptions()))],
         ];
     }
 

@@ -1,5 +1,6 @@
 # Ignore Firebase service account credentials
 /storage/app/public/firebase_credentials.json
+/storage/app/firebase_credentials.json
 
 # Ignore any local firebase SDK files
 /public/storage/firebase_credentials.json

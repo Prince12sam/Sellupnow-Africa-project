@@ -61,7 +61,7 @@ class CheckPermission
             ]);
         }
 
-        $role = Cache::remember('role_'.$userRole, 60 * 24 * 60, function () use ($userRole) {
+        $role = Cache::remember('role_'.$userRole, 15, function () use ($userRole) {
             return Role::where('name', $userRole)->first();
         });
 
@@ -78,15 +78,15 @@ class CheckPermission
             ]);
         }
 
-        $rolePermissions = Cache::remember('role_permissions_'.$role->id, 60 * 24 * 30, function () use ($role) {
+        $rolePermissions = Cache::remember('role_permissions_'.$role->id, 15, function () use ($role) {
             return $role->getPermissionNames()->toArray();
         });
 
-        $userPermissions = Cache::remember('user_permissions_'.$user->id, 60 * 24 * 30, function () use ($user) {
+        $userPermissions = Cache::remember('user_permissions_'.$user->id, 15, function () use ($user) {
             return $user->getPermissionNames()->toArray();
         });
 
-        $userNonPermissions = Cache::remember('user_non_permissions_'.$user->id, 60 * 24 * 30, function () use ($user) {
+        $userNonPermissions = Cache::remember('user_non_permissions_'.$user->id, 15, function () use ($user) {
             return UserNonPermission::where('user_id', $user->id)->pluck('name')->toArray();
         });
 
@@ -297,7 +297,7 @@ class CheckPermission
                     'message' => 'You do not have permission to perform this action.'
                 ], 403);
             }
-            return redirect()->back();
+            abort(403, 'You do not have permission to perform this action.');
         }
 
 

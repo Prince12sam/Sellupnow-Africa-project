@@ -18,11 +18,19 @@ class CaptchaValidate implements ValidationRule
     {
         $reCaptcha = GoogleReCaptcha::first();
 
-        $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-            'secret' => $reCaptcha?->secret_key,
-            'response' => $value,
-            'remoteip' => request()->ip(),
-        ]);
+        if ($reCaptcha?->provider === 'cloudflare') {
+            $response = Http::asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+                'secret' => $reCaptcha->turnstile_secret_key,
+                'response' => $value,
+                'remoteip' => request()->ip(),
+            ]);
+        } else {
+            $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+                'secret' => $reCaptcha?->secret_key,
+                'response' => $value,
+                'remoteip' => request()->ip(),
+            ]);
+        }
 
         $captchaResponse = $response->json();
 

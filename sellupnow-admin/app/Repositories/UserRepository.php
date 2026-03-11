@@ -209,6 +209,7 @@ class UserRepository extends Repository
             'vehicle_type' => $request->vehicle_type,
             'country' => $request->country ?? $user->country,
             'phone_code' => $request->phone_code ?? $user->phone_code,
+            'address' => $request->address ?? $user->address,
         ]);
 
         return $user;
@@ -220,17 +221,19 @@ class UserRepository extends Repository
     private static function updateProfilePhoto($request, $user)
     {
         $thumbnail = $user->media;
-        if ($request->hasFile('profile_photo') && !$thumbnail) {
+        $fileKey = $request->hasFile('profileImage') ? 'profileImage' : 'profile_photo';
+
+        if ($request->hasFile($fileKey) && !$thumbnail) {
             $thumbnail = MediaRepository::storeByRequest(
-                $request->profile_photo,
+                $request->file($fileKey),
                 'users/profile',
             );
             return $thumbnail;
         }
 
-        if ($request->hasFile('profile_photo') && $thumbnail) {
+        if ($request->hasFile($fileKey) && $thumbnail) {
             $thumbnail = MediaRepository::updateByRequest(
-                $request->profile_photo,
+                $request->file($fileKey),
                 'users/profile',
                 'image',
                 $thumbnail

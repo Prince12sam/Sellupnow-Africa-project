@@ -87,27 +87,40 @@ class AuthController extends Controller
         $loginType = (int) $request->input('loginType', 0);
         $fcmToken = $request->input('fcmToken');
         $authIdentity = $request->input('authIdentity');
+        $signUp = false;
 
         // loginType 1: Phone (Firebase phone OTP)
         if ($loginType === 1) {
             $user = User::where('phone', $request->input('phoneNumber'))->first();
             if (!$user) {
-                return response()->json(['error' => 'User not found'], 404);
+                return response()->json(['status' => false, 'message' => 'User not found'], 404);
             }
             // No password check, phone verified by Firebase
         }
         // loginType 2: Google (Firebase Google login, passwordless)
         elseif ($loginType === 2) {
+            // Get the real Firebase UID from the verified token in the header
+            $firebaseUid = $this->verifyFirebaseIdToken($request)
+                         ?? $request->header('x-meta-auth-id')
+                         ?? $authIdentity;
+
             $user = User::where('email', $request->input('email'))
-                ->orWhere('firebase_uid', $authIdentity)
+                ->orWhere('firebase_uid', $firebaseUid)
                 ->first();
             if (!$user) {
-                // Optionally create user if not found
+                // Create user if not found (first-time Google sign-in)
                 $user = User::create([
                     'email' => $request->input('email'),
                     'name' => $request->input('name', ''),
-                    'firebase_uid' => $authIdentity,
+                    'firebase_uid' => $firebaseUid,
                 ]);
+                $signUp = true;
+            } else {
+                // Ensure firebase_uid is set for existing users
+                if (empty($user->firebase_uid) || $user->firebase_uid !== $firebaseUid) {
+                    $user->firebase_uid = $firebaseUid;
+                    $user->save();
+                }
             }
             // No password check, Google verified by Firebase
         }
@@ -115,25 +128,53 @@ class AuthController extends Controller
         elseif ($loginType === 4) {
             $user = User::where('email', $request->input('email'))->first();
             if (!$user || !Hash::check($request->input('password'), $user->password)) {
-                return response()->json(['error' => 'Invalid credentials'], 401);
+                return response()->json(['status' => false, 'message' => 'Invalid credentials'], 401);
+            }
+
+            // Ensure user has a firebase_uid for the VerifyFirebaseToken middleware
+            if (empty($user->firebase_uid)) {
+                $user->firebase_uid = 'email_user_' . $user->id;
+                $user->save();
             }
         }
         // Legacy web admin login
         else {
             $user = User::where('phone', $request->input('phone'))->first();
             if (!$user || !Hash::check($request->input('password'), $user->password)) {
-                return response()->json(['error' => 'Invalid credentials'], 401);
+                return response()->json(['status' => false, 'message' => 'Invalid credentials'], 401);
             }
         }
 
         // Attach FCM token if provided
-        if ($fcmToken) {
-            $user->device_key = $fcmToken;
-            $user->save();
+        if ($fcmToken && $user->id) {
+            DeviceKey::updateOrCreate(
+                ['user_id' => $user->id, 'key' => $fcmToken],
+                ['device_type' => 'android']
+            );
         }
 
-        // Return user resource
-        return new UserResource($user);
+        // Generate Firebase custom token for loginType 4 (email/password)
+        // so Flutter can establish a Firebase session for subsequent API calls
+        $firebaseCustomToken = null;
+        if ($loginType === 4) {
+            $firebaseCustomToken = $this->createFirebaseCustomToken($user->firebase_uid);
+
+            if (! $firebaseCustomToken) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unable to initialize secure session. Please try again.',
+                ], 503);
+            }
+        }
+
+        // Return in the format Flutter expects
+        return response()->json([
+            'status' => true,
+            'message' => 'Login successful',
+            'signUp' => $signUp,
+            'firebaseCustomToken' => $firebaseCustomToken,
+            'user' => (new UserResource($user))->toArray(request()),
+        ]);
     }
 
     /**
@@ -164,7 +205,7 @@ class AuthController extends Controller
         }
         $idToken = substr($authHeader, 7);
 
-        $credPath = env('FIREBASE_CREDENTIALS', storage_path('app/public/firebase_credentials.json'));
+        $credPath = (string) config('firebase.projects.app.credentials.file', storage_path('app/firebase_credentials.json'));
         if (! file_exists($credPath)) {
             return null; // Firebase not configured — skip verification in dev
         }
@@ -192,6 +233,28 @@ class AuthController extends Controller
             ['user_id' => $user->id],
             ['key' => $fcmToken, 'device_type' => 'mobile']
         );
+    }
+
+    /**
+     * Create a Firebase custom token for the given UID.
+     * Flutter uses signInWithCustomToken() to establish a Firebase session.
+     */
+    private function createFirebaseCustomToken(string $firebaseUid): ?string
+    {
+        $credPath = (string) config('firebase.projects.app.credentials.file', storage_path('app/firebase_credentials.json'));
+        if (! file_exists($credPath)) {
+            return null;
+        }
+
+        try {
+            $auth = (new \Kreait\Firebase\Factory)->withServiceAccount($credPath)->createAuth();
+            $customToken = $auth->createCustomToken($firebaseUid);
+
+            return $customToken->toString();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('[AuthController] Failed to create custom token: ' . $e->getMessage());
+            return null;
+        }
     }
 
     /**

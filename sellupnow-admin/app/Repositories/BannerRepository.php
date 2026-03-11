@@ -43,6 +43,7 @@ class BannerRepository extends Repository
             'title' => $request->title,
             'description' => $request->description,
             'banner' => $request->banner,
+            'placement' => $request->input('placement', Banner::PLACEMENT_HOMEPAGE),
             'status' => true,
         ]);
     }
@@ -65,6 +66,7 @@ class BannerRepository extends Repository
             'title' => $request->title,
             'description' => $request->description,
             'banner' => $request->banner ?? $banner->banner,
+            'placement' => $request->input('placement', $banner->placement ?? Banner::PLACEMENT_HOMEPAGE),
         ]);
 
         return $banner;

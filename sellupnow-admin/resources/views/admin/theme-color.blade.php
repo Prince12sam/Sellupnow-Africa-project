@@ -174,6 +174,18 @@
                                     @csrf
                                     <button type="submit" class="btn btn-sm btn-primary">{{ __('Make Active') }}</button>
                                 </form>
+                                <form id="del-cat-pal-{{ $palette->id }}"
+                                      action="{{ route('admin.themeColor.categoryPalette.destroy', $palette->id) }}"
+                                      method="POST" class="d-none">
+                                    @csrf
+                                    @method('DELETE')
+                                </form>
+                                <button type="button"
+                                        class="btn btn-sm btn-danger palette-delete-btn"
+                                        data-form-id="del-cat-pal-{{ $palette->id }}"
+                                        data-name="{{ $palette->name }}">
+                                    {{ __('Delete') }}
+                                </button>
                             @else
                                 <span class="badge bg-success">{{ __('Active') }}</span>
                             @endif
@@ -218,6 +230,18 @@
                                     @csrf
                                     <button type="submit" class="btn btn-sm btn-primary">{{ __('Make Active') }}</button>
                                 </form>
+                                <form id="del-hf-pal-{{ $palette->id }}"
+                                      action="{{ route('admin.themeColor.headerFooterPalette.destroy', $palette->id) }}"
+                                      method="POST" class="d-none">
+                                    @csrf
+                                    @method('DELETE')
+                                </form>
+                                <button type="button"
+                                        class="btn btn-sm btn-danger palette-delete-btn"
+                                        data-form-id="del-hf-pal-{{ $palette->id }}"
+                                        data-name="{{ $palette->name }}">
+                                    {{ __('Delete') }}
+                                </button>
                             @else
                                 <span class="badge bg-success">{{ __('Active') }}</span>
                             @endif
@@ -590,5 +614,28 @@
                 colorContainer.appendChild(colorDiv);
             }
         }
+    </script>
+    <script>
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('.palette-delete-btn');
+            if (!btn) return;
+            const formId = btn.dataset.formId;
+            const palName = btn.dataset.name || '';
+            Swal.fire({
+                title: "Delete Palette?",
+                html: palName ? "<b>" + palName + "</b><br>This action cannot be undone." : "This action cannot be undone.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: "Yes, delete it!",
+                cancelButtonText: "Cancel",
+                reverseButtons: true,
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    document.getElementById(formId).submit();
+                }
+            });
+        });
     </script>
 @endpush

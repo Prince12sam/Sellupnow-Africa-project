@@ -27,7 +27,13 @@ class ListoceanAdvertisementController extends Controller
             @mkdir($targetDir, 0775, true);
         }
 
-        $ext      = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+        $allowedImageMimes = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/gif' => 'gif', 'image/webp' => 'webp', 'image/svg+xml' => 'svg'];
+        $realMime = $file->getMimeType() ?? '';
+        $ext = $allowedImageMimes[$realMime] ?? null;
+        if (! $ext) {
+            $clientExt = strtolower($file->getClientOriginalExtension() ?: '');
+            $ext = in_array($clientExt, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'], true) ? $clientExt : 'jpg';
+        }
         $safeBase = preg_replace('/[^a-zA-Z0-9_\-]/', '-', pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) ?: 'advertisement';
         $fileName = $safeBase . '-' . time() . '.' . $ext;
         $targetPath = $targetDir . DIRECTORY_SEPARATOR . $fileName;
@@ -72,7 +78,13 @@ class ListoceanAdvertisementController extends Controller
             @mkdir($targetDir, 0775, true);
         }
 
-        $ext      = strtolower($file->getClientOriginalExtension() ?: 'mp4');
+        $allowedVideoMimes = ['video/mp4' => 'mp4', 'video/webm' => 'webm', 'video/ogg' => 'ogv', 'video/quicktime' => 'mov'];
+        $realMime = $file->getMimeType() ?? '';
+        $ext = $allowedVideoMimes[$realMime] ?? null;
+        if (! $ext) {
+            $clientExt = strtolower($file->getClientOriginalExtension() ?: '');
+            $ext = in_array($clientExt, ['mp4', 'webm', 'ogv', 'mov'], true) ? $clientExt : 'mp4';
+        }
         $safeBase = preg_replace('/[^a-zA-Z0-9_\-]/', '-', pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) ?: 'ad-video';
         $fileName = $safeBase . '-' . time() . '.' . $ext;
         $targetPath = $targetDir . DIRECTORY_SEPARATOR . $fileName;
@@ -352,13 +364,15 @@ class ListoceanAdvertisementController extends Controller
             'updated_at'   => now(),
         ]);
 
-        // Sync frontend_ad_slots for this ad.
-        // Always wipe prior rows for this ad first — prevents stale slot assignments
+        // Sync frontend_ad_slots for this ad when the mapping table exists.
+        // Always wipe prior rows for this ad first to prevent stale slot assignments
         // accumulating when the admin changes the slot from one value to another.
-        $this->listocean()->table('frontend_ad_slots')->where('advertisement_id', $id)->delete();
+        if (Schema::connection('listocean')->hasTable('frontend_ad_slots')) {
+            $this->listocean()->table('frontend_ad_slots')->where('advertisement_id', $id)->delete();
 
-        if ($slotKey !== '') {
-            $this->syncFrontendAdSlot($slotKey, $id, (bool) $isActive, $listingIdScope);
+            if ($slotKey !== '') {
+                $this->syncFrontendAdSlot($slotKey, $id, (bool) $isActive, $listingIdScope);
+            }
         }
 
         return to_route('admin.siteAdvertisement.index')->withSuccess(__('Advertisement updated successfully'));
@@ -371,16 +385,31 @@ class ListoceanAdvertisementController extends Controller
             abort(404);
         }
 
+        $nextStatus = $ad->status ? 0 : 1;
+
         $this->listocean()->table('advertisements')->where('id', $id)->update([
-            'status'     => $ad->status ? 0 : 1,
+            'status'     => $nextStatus,
             'updated_at' => now(),
         ]);
+
+        if (Schema::connection('listocean')->hasTable('frontend_ad_slots')) {
+            $this->listocean()->table('frontend_ad_slots')
+                ->where('advertisement_id', $id)
+                ->update([
+                    'status' => $nextStatus,
+                    'updated_at' => now(),
+                ]);
+        }
 
         return back()->withSuccess(__('Status updated'));
     }
 
     public function destroy(int $id)
     {
+        if (Schema::connection('listocean')->hasTable('frontend_ad_slots')) {
+            $this->listocean()->table('frontend_ad_slots')->where('advertisement_id', $id)->delete();
+        }
+
         $this->listocean()->table('advertisements')->where('id', $id)->delete();
 
         return back()->withSuccess(__('Advertisement deleted successfully'));

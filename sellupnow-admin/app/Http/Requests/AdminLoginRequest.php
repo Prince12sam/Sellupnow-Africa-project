@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use App\Models\GoogleReCaptcha;
-use App\Models\User;
 use App\Rules\CaptchaValidate;
 use App\Rules\EmailRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -33,11 +32,11 @@ class AdminLoginRequest extends FormRequest
         ];
 
         if ($reCaptcha && $reCaptcha->is_active) {
-
-            $user = User::where('email', $this->email)->first();
-            $isAdmin = ($user && $user->hasRole('root')) ? true : false;
-
-            if (! $isAdmin) {
+            // All roles must pass reCAPTCHA — the root account is the highest-value
+            // target and must not be exempted from this protection.
+            if ($reCaptcha->provider === 'cloudflare') {
+                $rules['cf-turnstile-response'] = ['required', new CaptchaValidate];
+            } else {
                 $rules['g-recaptcha-response'] = ['required', new CaptchaValidate];
             }
         }
@@ -52,6 +51,7 @@ class AdminLoginRequest extends FormRequest
     {
         return [
             'g-recaptcha-response.required' => 'The captcha field is required.',
+            'cf-turnstile-response.required' => 'The captcha field is required.',
         ];
     }
 }

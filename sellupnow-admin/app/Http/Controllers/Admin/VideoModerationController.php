@@ -15,7 +15,7 @@ class VideoModerationController extends Controller
 {
     public function index(Request $request)
     {
-        $customerWebUrl = rtrim((string) env('CUSTOMER_WEB_URL', 'http://127.0.0.1:8090'), '/');
+        $customerWebUrl = rtrim((string) config('app.customer_web_url', ''), '/');
 
         $approval = (string) $request->get('approval', 'all'); // pending|approved|all
 
@@ -106,7 +106,7 @@ class VideoModerationController extends Controller
 
     public function show(int $id)
     {
-        $customerWebUrl = rtrim((string) env('CUSTOMER_WEB_URL', 'http://127.0.0.1:8090'), '/');
+        $customerWebUrl = rtrim((string) config('app.customer_web_url', ''), '/');
 
         $row = $this->listocean()->table('listings as l')
             ->leftJoin('users as u', 'u.id', '=', 'l.user_id')
@@ -261,7 +261,12 @@ class VideoModerationController extends Controller
             }
         } catch (\Throwable $e) {
             // Email failure must not block the approval update
-            logger()->error('VideoModerationController: email failed — ' . $e->getMessage());
+            try {
+                logger()->error('VideoModerationController: email failed — ' . $e->getMessage());
+            } catch (\Throwable) {
+                // Swallow logging failures (e.g. log file owned by root)
+                error_log('VideoModerationController: email failed — ' . $e->getMessage());
+            }
         }
 
         return back()->withSuccess('Video approval status updated successfully');

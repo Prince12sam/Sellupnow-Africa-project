@@ -34,7 +34,8 @@ class BannerController extends Controller
      */
     public function create()
     {
-        return view('admin.banner.create');
+        $placementOptions = Banner::placementOptions();
+        return view('admin.banner.create', compact('placementOptions'));
     }
 
     /**
@@ -43,8 +44,10 @@ class BannerController extends Controller
     public function store(BannerRequest $request)
     {
         $banner = BannerRepository::storeByRequest($request);
-        // When creating a new Banner, insert a new advertisement row (allow multiple)
-        $this->syncListoceanHomepageBannerAdvertisement($banner, $request->input('position', 'after_hero'), true);
+        if ($banner->isHomepagePlacement()) {
+            // When creating a new homepage banner, insert a new advertisement row (allow multiple)
+            $this->syncListoceanHomepageBannerAdvertisement($banner, $request->input('position', 'after_hero'), true);
+        }
 
         return to_route('admin.banner.index')->withSuccess(__('Banner created successfully'));
     }
@@ -55,7 +58,8 @@ class BannerController extends Controller
     public function edit(Banner $banner)
     {
         $currentPosition = $this->detectListoceanBannerPosition();
-        return view('admin.banner.edit', compact('banner', 'currentPosition'));
+        $placementOptions = Banner::placementOptions();
+        return view('admin.banner.edit', compact('banner', 'currentPosition', 'placementOptions'));
     }
 
     /**
@@ -63,9 +67,17 @@ class BannerController extends Controller
      */
     public function update(BannerRequest $request, Banner $banner)
     {
+        $oldPlacement = $banner->placement ?? Banner::PLACEMENT_HOMEPAGE;
         BannerRepository::updateByRequest($request, $banner);
+        $banner = $banner->refresh();
+        $newPlacement = $banner->placement ?? Banner::PLACEMENT_HOMEPAGE;
 
-        $this->syncListoceanHomepageBannerAdvertisement($banner->refresh(), $request->input('position', 'after_hero'));
+        if ($newPlacement === Banner::PLACEMENT_HOMEPAGE) {
+            $this->syncListoceanHomepageBannerAdvertisement($banner, $request->input('position', 'after_hero'));
+        } elseif ($oldPlacement === Banner::PLACEMENT_HOMEPAGE) {
+            // Banner moved away from homepage placement; remove mirrored homepage ad.
+            $this->deleteListoceanHomepageBannerAdvertisement($banner);
+        }
 
         return to_route('admin.banner.index')->withSuccess(__('Banner updated successfully'));
     }
@@ -79,7 +91,10 @@ class BannerController extends Controller
             'status' => ! $banner->status,
         ]);
 
-        $this->syncListoceanHomepageBannerAdvertisement($banner->refresh(), $this->detectListoceanBannerPosition());
+        $banner = $banner->refresh();
+        if ($banner->isHomepagePlacement()) {
+            $this->syncListoceanHomepageBannerAdvertisement($banner, $this->detectListoceanBannerPosition());
+        }
 
         return to_route('admin.banner.index')->withSuccess(__('Banner status updated'));
     }
@@ -89,7 +104,9 @@ class BannerController extends Controller
      */
     public function destroy(Banner $banner)
     {
-        $this->deleteListoceanHomepageBannerAdvertisement($banner);
+        if ($banner->isHomepagePlacement()) {
+            $this->deleteListoceanHomepageBannerAdvertisement($banner);
+        }
         $banner->delete();
 
         return to_route('admin.banner.index')->withSuccess(__('Banner deleted successfully'));
@@ -122,9 +139,6 @@ class BannerController extends Controller
             $slot     = 'sellupnow:homepage_after_hero';
             $title    = $banner->title ?: 'Homepage Banner';
             $redirect = rtrim((string) config('listocean.base_url', ''), '/');
-            if ($redirect === '') {
-                $redirect = 'http://127.0.0.1:8090';
-            }
 
             $attachmentId = $this->resolveListoceanAttachmentId($banner->banner);
             if (!$attachmentId) {

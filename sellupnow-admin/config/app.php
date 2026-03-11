@@ -62,6 +62,35 @@ return [
 
     'asset_url' => env('ASSET_URL'),
 
+    'customer_web_url' => env(
+        'CUSTOMER_WEB_URL',
+        env('LISTOCEAN_BASE_URL', env('LISTOCEAN_APP_URL', env('APP_URL', '')))
+    ),
+
+    /*
+    |--------------------------------------------------------------------------
+    | API Secret Key
+    |--------------------------------------------------------------------------
+    |
+    | Shared secret used by mobile/client API key middleware.
+    |
+    */
+
+    'api_secret_key' => env('API_SECRET_KEY', ''),
+
+    // Supports key rotation. Comma-separated list from API_SECRET_KEYS,
+    // with API_SECRET_KEY automatically included for backward compatibility.
+    'api_secret_keys' => array_values(array_filter(array_unique(array_map(
+        static fn ($value) => trim((string) $value),
+        array_merge(
+            explode(',', (string) env('API_SECRET_KEYS', '')),
+            [(string) env('API_SECRET_KEY', '')]
+        )
+    )))),
+
+    // API key enforcement mode: "strict" = block invalid, "log" = log-only
+    'api_key_enforce' => env('API_KEY_ENFORCE', 'strict'),
+
     'mail_mailer' => (string) env('MAIL_MAILER'),
     'mail_host' => (string) env('MAIL_HOST'),
     'mail_port' => (string) env('MAIL_PORT'),

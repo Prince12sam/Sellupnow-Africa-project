@@ -12,7 +12,7 @@ class NotificationServices
     {
         $notification = Notification::create($title, $body);
 
-        $firebaseCredentials = env('FIREBASE_CREDENTIALS', storage_path('app/public/firebase_credentials.json'));
+        $firebaseCredentials = (string) config('firebase.projects.app.credentials.file', storage_path('app/firebase_credentials.json'));
 
         if (! file_exists($firebaseCredentials)) {
             return [

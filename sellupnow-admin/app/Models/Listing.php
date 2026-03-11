@@ -9,12 +9,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
+use App\Models\MediaUpload;
 
 class Listing extends Model
 {
     use HasFactory, SoftDeletes;
 
     protected $guarded = ['id'];
+
+    protected $casts = [
+        'auction_start_date' => 'datetime',
+        'auction_end_date'   => 'datetime',
+    ];
 
     public function user(): BelongsTo
     {
@@ -61,6 +67,11 @@ class Listing extends Model
         return $this->hasMany(AdVideo::class);
     }
 
+    public function mediaUpload(): BelongsTo
+    {
+        return $this->belongsTo(MediaUpload::class, 'image');
+    }
+
     public function scopeIsActive($query)
     {
         return $query->where('status', true)->where('is_published', true);
@@ -69,8 +80,23 @@ class Listing extends Model
     public function thumbnail(): Attribute
     {
         $thumbnail = asset('default/default.jpg');
-        if ($this->image && Storage::exists($this->image)) {
-            $thumbnail = Storage::url($this->image);
+
+        if ($this->image) {
+            if (filter_var($this->image, FILTER_VALIDATE_URL)) {
+                $thumbnail = $this->image;
+            } elseif (str_starts_with((string) $this->image, 'assets/uploads/')) {
+                $thumbnail = rtrim(config('app.url'), '/') . '/' . ltrim((string) $this->image, '/');
+            }
+
+            if (is_numeric($this->image)) {
+                // image is a media_uploads.id reference (from Listocean)
+                if ($this->relationLoaded('mediaUpload') && $this->mediaUpload) {
+                    $thumbnail = rtrim(config('app.url'), '/') . '/assets/uploads/media-uploader/' . $this->mediaUpload->path;
+                }
+            } elseif (Storage::disk('public')->exists($this->image)) {
+                // image is a storage path (from sellupnow-admin file uploads)
+                $thumbnail = Storage::disk('public')->url($this->image);
+            }
         }
 
         return Attribute::make(

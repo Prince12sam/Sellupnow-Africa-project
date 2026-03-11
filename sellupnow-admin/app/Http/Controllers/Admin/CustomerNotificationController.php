@@ -15,7 +15,7 @@ class CustomerNotificationController extends Controller
     {
         $users = (new UserRepository)->query()->role('customer')->get();
 
-        $firebaseCredentials = env('FIREBASE_CREDENTIALS', storage_path('app/public/firebase_credentials.json'));
+        $firebaseCredentials = (string) config('firebase.projects.app.credentials.file', storage_path('app/firebase_credentials.json'));
         $hasConfig = file_exists($firebaseCredentials);
 
         return view('admin.notification.index', compact('users', 'hasConfig'));

@@ -15,6 +15,22 @@ class LoginRequest extends FormRequest
     }
 
     /**
+     * Re-merge raw JSON body data before validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->isJson()) {
+            $rawBody = $this->getContent();
+            if (!empty($rawBody)) {
+                $data = json_decode($rawBody, true) ?? [];
+                if (!empty($data)) {
+                    $this->merge($data);
+                }
+            }
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>

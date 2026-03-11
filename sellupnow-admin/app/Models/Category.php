@@ -63,8 +63,8 @@ class Category extends Model
     public function thumbnail(): Attribute
     {
         $thumbnail = asset('default/default.jpg');
-        if ($this->image && Storage::exists($this->image)) {
-            $thumbnail = Storage::url($this->image);
+        if ($this->image && Storage::disk('public')->exists($this->image)) {
+            $thumbnail = Storage::disk('public')->url($this->image);
         }
 
         return Attribute::make(

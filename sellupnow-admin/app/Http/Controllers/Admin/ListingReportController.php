@@ -12,7 +12,7 @@ class ListingReportController extends Controller
 {
     public function index(Request $request)
     {
-        $customerWebUrl = rtrim((string) env('CUSTOMER_WEB_URL', 'http://127.0.0.1:8090'), '/');
+        $customerWebUrl = rtrim((string) config('app.customer_web_url', ''), '/');
 
         $query = $this->listocean()->table('listing_reports as lr')
             ->leftJoin('listings as l', 'l.id', '=', 'lr.listing_id')
@@ -55,7 +55,7 @@ class ListingReportController extends Controller
 
     public function show(int $id)
     {
-        $customerWebUrl = rtrim((string) env('CUSTOMER_WEB_URL', 'http://127.0.0.1:8090'), '/');
+        $customerWebUrl = rtrim((string) config('app.customer_web_url', ''), '/');
 
         $row = $this->listocean()->table('listing_reports as lr')
             ->leftJoin('listings as l', 'l.id', '=', 'lr.listing_id')
@@ -172,6 +172,22 @@ class ListingReportController extends Controller
         $imageValue = trim($imageValue);
         if ($imageValue === '') {
             return $fallback;
+        }
+
+        if (preg_match('~^https?://~i', $imageValue)) {
+            return $imageValue;
+        }
+
+        if (str_starts_with($imageValue, 'storage/')) {
+            return $customerWebUrl . '/' . ltrim($imageValue, '/');
+        }
+
+        if (str_starts_with($imageValue, 'listings/')) {
+            return $customerWebUrl . '/storage/' . ltrim($imageValue, '/');
+        }
+
+        if (str_starts_with($imageValue, 'assets/uploads/')) {
+            return $customerWebUrl . '/' . ltrim($imageValue, '/');
         }
 
         if (ctype_digit($imageValue)) {

@@ -26,9 +26,10 @@ class UserRequest extends FormRequest
 
         return [
             'name' => 'required|string|max:255',
-            'phone' => 'required|string|unique:users,phone,' . $userId,
+            'phone' => 'nullable|string|unique:users,phone,' . $userId,
             'email' => ['nullable', 'email', 'max:255', new EmailRule, 'unique:users,email,' . $userId],
             'profile_photo' => 'nullable|image|max:2048|mimes:png,jpg,jpeg,gif',
+            'profileImage' => 'nullable|image|max:2048|mimes:png,jpg,jpeg,gif',
         ];
     }
 

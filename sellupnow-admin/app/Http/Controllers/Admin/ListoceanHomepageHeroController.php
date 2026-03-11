@@ -181,7 +181,7 @@ class ListoceanHomepageHeroController extends Controller
     private function listoceanBaseUrl(): string
     {
         $url = rtrim((string) config('listocean.base_url', ''), '/');
-        return $url !== '' ? $url : 'http://127.0.0.1:8090';
+        return $url;
     }
 
     private function listoceanMediaUrlById(int $id): ?string

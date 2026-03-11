@@ -22,8 +22,10 @@ class UserController extends Controller
     {
         $user = auth()->user();
 
-        return $this->json('profile details', [
-            'user' => UserResource::make($user),
+        return response()->json([
+            'status' => true,
+            'message' => 'profile details',
+            'user' => (new UserResource($user))->toArray(request()),
         ]);
     }
 
@@ -37,8 +39,10 @@ class UserController extends Controller
         $user = UserRepository::updateByRequest($request, auth()->user());
         $user->refresh();
 
-        return $this->json('Profile updated successfully', [
-            'user' => UserResource::make($user),
+        return response()->json([
+            'status' => true,
+            'message' => 'Profile updated successfully',
+            'user' => (new UserResource($user))->toArray(request()),
         ]);
     }
 
@@ -56,13 +60,19 @@ class UserController extends Controller
         $user = auth()->user();
 
         if (! Hash::check($request->current_password, $user->password)) {
-            return $this->json('Current password does not match', [], 422);
+            return response()->json([
+                'status' => false,
+                'message' => 'Current password does not match',
+            ], 422);
         }
         $user->update([
             'password' => Hash::make($request->password),
         ]);
 
-        return $this->json('Password changed successfully');
+        return response()->json([
+            'status' => true,
+            'message' => 'Password changed successfully',
+        ]);
     }
 
     public function deactivateAccount(Request $request)

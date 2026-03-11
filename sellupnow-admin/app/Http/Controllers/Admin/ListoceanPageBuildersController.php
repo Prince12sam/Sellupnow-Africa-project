@@ -76,7 +76,7 @@ class ListoceanPageBuildersController extends Controller
                     $bannerImageInfo = [
                         'id'   => $media->id,
                         'path' => $media->path,
-                        'url'  => rtrim(env('LISTOCEAN_APP_URL', 'http://127.0.0.1:8090'), '/')
+                        'url'  => rtrim((string) config('listocean.base_url', ''), '/')
                                . '/assets/uploads/media-uploader/' . $media->path,
                     ];
                 }

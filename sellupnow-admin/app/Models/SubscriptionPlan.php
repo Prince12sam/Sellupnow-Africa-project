@@ -10,7 +10,14 @@ class SubscriptionPlan extends Model
 {
     use HasFactory;
 
+    protected $table = 'membership_plans';
+
     protected $guarded = ['id'];
+
+    protected $casts = [
+        'features' => 'array',
+        'is_active' => 'boolean',
+    ];
 
     public function subscriptions(): HasMany
     {

@@ -3,6 +3,8 @@
 use App\Http\Controllers\API\Auth\AuthController;
 use App\Http\Controllers\API\Auth\ForgotPasswordController;
 use App\Http\Controllers\API\AiListingAssistantController;
+use App\Http\Controllers\API\EscrowApiController;
+use App\Http\Controllers\API\BannerAdApiController;
 use App\Http\Controllers\API\WalletController;
 use App\Http\Controllers\API\WithdrawController;
 use App\Http\Controllers\API\SupportTicketController;
@@ -20,6 +22,7 @@ use App\Http\Controllers\API\BlockController;
 use App\Http\Controllers\API\BlogController;
 use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\ChatController;
+use App\Http\Controllers\API\MobileChatController;
 use App\Http\Controllers\API\CountryController;
 use App\Http\Controllers\API\FaqController;
 use App\Http\Controllers\API\FeatureAdPackageController;
@@ -50,7 +53,7 @@ Route::get('/health', function () {
     return response()->json(['status' => 'ok']);
 });
 
-Route::prefix('v1')->group(function () {
+Route::prefix('v1')->middleware('api.key')->group(function () {
     Route::get('master', [MasterController::class, 'index']);
     Route::get('home', [HomeController::class, 'index']);
     Route::get('home/popular-products', [HomeController::class, 'popularProducts']);
@@ -88,7 +91,7 @@ Route::prefix('v1')->group(function () {
         Route::get('chat/unread', [ChatController::class, 'unreadMessages']);
     });
 
-    Route::prefix('admin')->middleware(['auth:api', 'role:root|admin'])->group(function () {
+    Route::prefix('admin')->middleware(['auth:api', 'role:root|admin', 'throttle:60,1'])->group(function () {
         Route::prefix('users')->group(function () {
             Route::get('/', [UserAdminController::class, 'index']);
             Route::post('/', [UserAdminController::class, 'store']);
@@ -130,7 +133,7 @@ Route::prefix('v1')->group(function () {
     });
 });
 
-Route::prefix('client')->group(function () {
+Route::prefix('client')->middleware('api.key')->group(function () {
     Route::prefix('setting')->group(function () {
         Route::get('retrieveSystemConfig', [MasterController::class, 'index']);
     });
@@ -147,7 +150,7 @@ Route::prefix('client')->group(function () {
 
     Route::prefix('category')->group(function () {
         Route::get('retrieveCategoryList', [CategoryController::class, 'index']);
-        Route::get('fetchSubcategoriesByParent', [CategoryController::class, 'index']);
+        Route::get('fetchSubcategoriesByParent', [CategoryController::class, 'fetchSubcategoriesByParent']);
         Route::get('getHierarchicalCategories', [CategoryController::class, 'index']);
     });
 
@@ -172,35 +175,34 @@ Route::prefix('client')->group(function () {
     });
 
     Route::prefix('chatTopic')->middleware('firebase.auth')->group(function () {
-        Route::get('getChatList', [ChatController::class, 'getShops']);
+        Route::get('getChatList', [MobileChatController::class, 'getChatList']);
     });
 
     Route::prefix('chat')->middleware('firebase.auth')->group(function () {
-        Route::get('getChatHistory', [ChatController::class, 'getMessage']);
-        Route::post('sendChatMessage', [ChatController::class, 'sendMessage']);
+        Route::get('getChatHistory', [MobileChatController::class, 'getChatHistory']);
+        Route::post('sendChatMessage', [MobileChatController::class, 'sendChatMessage']);
     });
 
     Route::prefix('user')->group(function () {
-        Route::get('verifyUserExistence', function (Request $request) {
+        Route::match(['get', 'post'], 'verifyUserExistence', function (Request $request) {
             $query = User::query();
 
             if ($request->filled('phone')) {
-                $query->where('phone', $request->query('phone'));
+                $query->where('phone', $request->input('phone'));
             }
 
             if ($request->filled('email')) {
-                $query->orWhere('email', $request->query('email'));
+                $query->orWhere('email', $request->input('email'));
             }
 
             $exists = $query->exists();
 
             return response()->json([
-                'message' => 'user existence check',
-                'data' => [
-                    'exists' => $exists,
-                ],
+                'status' => $exists,
+                'message' => $exists ? 'User exists' : 'User not found',
+                'isLogin' => $exists,
             ]);
-        });
+        })->middleware('throttle:20,1');
 
         Route::post('loginOrSignupUser', [AuthController::class, 'login'])->middleware('throttle:10,1');
         Route::post('initiatePasswordReset', [ForgotPasswordController::class, 'resendOTP'])->middleware('throttle:5,1');
@@ -247,6 +249,7 @@ Route::prefix('client')->group(function () {
         Route::post('removeAdListing',            [ListingController::class, 'destroy']);
         Route::post('promoteAds',                 [ListingController::class, 'promoteAds']);
         Route::get('getSellerProductsBasicInfo',  [ListingController::class, 'sellerProductsBasicInfo']);
+        Route::get('fetchMyListings',             [ListingController::class, 'myListings']);
     });
     Route::prefix('adListing')->group(function () {
         Route::get('fetchAdsByRelatedCategory',   [ListingController::class, 'relatedByCategory']);
@@ -321,6 +324,14 @@ Route::prefix('client')->group(function () {
         Route::get('listHelpfulHints', [TipController::class, 'index']);
     });
 
+    // ── Escrow ────────────────────────────────────────────────────────────────
+    Route::prefix('escrow')->middleware('firebase.auth')->group(function () {
+        Route::get('getOrders',      [EscrowApiController::class, 'getOrders']);
+        Route::get('getOrderDetail', [EscrowApiController::class, 'getOrderDetail']);
+        Route::get('getBreakdown',   [EscrowApiController::class, 'getBreakdown']);
+        Route::post('initiateEscrow',[EscrowApiController::class, 'initiateEscrow']);
+    });
+
     // ── Subscription Plans ────────────────────────────────────────────────────
     Route::prefix('subscriptionPlan')->group(function () {
         Route::get('fetchSubscriptionPlans', [SubscriptionPlanController::class, 'index']);
@@ -340,7 +351,10 @@ Route::prefix('client')->group(function () {
     // ── Payments (Paystack / PayPal) ──────────────────────────────────────────
     Route::prefix('paystack')->middleware('firebase.auth')->group(function () {
         Route::post('initialize-package-payment', [PaymentController::class, 'paystackInit']);
-        Route::get('verify-package-payment',      [PaymentController::class, 'paystackVerify']);
+        Route::post('verify-package-payment',     [PaymentController::class, 'paystackVerify']);
+    });
+    Route::prefix('stripe')->middleware('firebase.auth')->group(function () {
+        Route::post('create-payment-intent', [PaymentController::class, 'stripeCreatePaymentIntent']);
     });
     Route::prefix('paypal')->middleware('firebase.auth')->group(function () {
         Route::post('create-order',   [PaymentController::class, 'paypalCreateOrder']);
@@ -371,6 +385,8 @@ Route::prefix('client')->group(function () {
     Route::prefix('wallet')->middleware('firebase.auth')->group(function () {
         Route::get('getBalance',       [WalletController::class, 'getBalance']);
         Route::get('getTransactions',  [WalletController::class, 'getTransactions']);
+        Route::post('topup/init',      [WalletController::class, 'topupInit']);
+        Route::post('topup/verify',    [WalletController::class, 'topupVerify']);
     });
 
     // ── Withdraw Requests ─────────────────────────────────────────────────────
@@ -385,5 +401,11 @@ Route::prefix('client')->group(function () {
         Route::post('createTicket',       [SupportTicketController::class, 'store']);
         Route::get('getTicket/{id}',      [SupportTicketController::class, 'showById']);
         Route::post('replyTicket/{id}',   [SupportTicketController::class, 'addReply']);
+    });
+
+    // ── Banner Ad Requests (seller) ─────────────────────────────────────────
+    Route::prefix('bannerAd')->middleware('firebase.auth')->group(function () {
+        Route::get('getMyBannerAds', [BannerAdApiController::class, 'getMyBannerAds'])->middleware('throttle:30,1');
+        Route::post('submitBannerAd', [BannerAdApiController::class, 'submitBannerAd'])->middleware('throttle:20,1');
     });
 });

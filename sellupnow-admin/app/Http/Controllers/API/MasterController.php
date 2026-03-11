@@ -123,6 +123,8 @@ class MasterController extends Controller
                 'symbol' => $generaleSetting?->currency ?? '$',
                 'rate' => (float) $defaultRate,
                 'position' => $generaleSetting?->currency_position ?? 'prefix',
+                'currencyCode' => $defaultCurrency?->code ?? 'GHS',
+                'countryCode' => 'GH',
             ],
             'currencies' => $currencies,
             'app_name' => $generaleSetting?->name ?? config('app.name'),
@@ -133,6 +135,18 @@ class MasterController extends Controller
             'google_playstore_link' => $generaleSetting?->google_playstore_url ?? null,
             'app_store_link' => $generaleSetting?->app_store_url ?? null,
             'payment_gateways' => PaymentGatewayResource::collection($paymentGateways),
+            'enableStripe'    => $paymentGateways->contains('name', 'stripe'),
+            'stripePublicKey' => (function () use ($paymentGateways) {
+                $g = $paymentGateways->firstWhere('name', 'stripe');
+                $c = $g ? json_decode($g->config, true) : [];
+                return $c['published_key'] ?? null;
+            })(),
+            'enablePaystack'    => $paymentGateways->contains('name', 'paystack'),
+            'paystackPublicKey' => (function () use ($paymentGateways) {
+                $g = $paymentGateways->firstWhere('name', 'paystack');
+                $c = $g ? json_decode($g->config, true) : [];
+                return $c['public_key'] ?? null;
+            })(),
             'multi_vendor' => (bool) ($shopType == 'multi' ? true : false),
             'mobile' => $generaleSetting?->footer_phone ?? '+880123456789',
             'address' => $generaleSetting?->address ?? 'Dhaka, Bangladesh',

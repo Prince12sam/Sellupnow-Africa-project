@@ -163,7 +163,7 @@ class ListoceanReelAdPlacementController extends Controller
         $id = is_int($imageId) ? $imageId : trim((string) $imageId);
         if (! (is_int($id) || (is_string($id) && ctype_digit($id)))) {
             // Treat as a direct path string
-            $customerWebUrl = rtrim(env('CUSTOMER_WEB_URL', 'http://127.0.0.1:8090'), '/');
+            $customerWebUrl = rtrim((string) config('app.customer_web_url', ''), '/');
             return $customerWebUrl . '/assets/uploads/media-uploader/' . ltrim((string) $imageId, '/');
         }
 
@@ -177,7 +177,7 @@ class ListoceanReelAdPlacementController extends Controller
             return null;
         }
 
-        $customerWebUrl = rtrim(env('CUSTOMER_WEB_URL', 'http://127.0.0.1:8090'), '/');
+        $customerWebUrl = rtrim((string) config('app.customer_web_url', ''), '/');
         return $customerWebUrl . '/assets/uploads/media-uploader/' . ltrim((string) $path, '/');
     }
 

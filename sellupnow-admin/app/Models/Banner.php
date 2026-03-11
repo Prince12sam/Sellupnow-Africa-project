@@ -12,7 +12,23 @@ class Banner extends Model
 {
     use HasFactory;
 
+    public const PLACEMENT_HOMEPAGE = 'homepage';
+    public const PLACEMENT_MOBILE_AFTER_LIVE_AUCTION = 'mobile_after_live_auction';
+
     protected $guarded = ['id'];
+
+    public static function placementOptions(): array
+    {
+        return [
+            self::PLACEMENT_HOMEPAGE => 'Homepage Banner',
+            self::PLACEMENT_MOBILE_AFTER_LIVE_AUCTION => 'Mobile Home - After Live Auction',
+        ];
+    }
+
+    public function isHomepagePlacement(): bool
+    {
+        return ($this->placement ?? self::PLACEMENT_HOMEPAGE) === self::PLACEMENT_HOMEPAGE;
+    }
 
     public function shop()
     {
@@ -28,8 +44,12 @@ class Banner extends Model
     public function thumbnail(): Attribute
     {
         $thumbnail = asset('default/default.jpg');
-        if ($this->banner && Storage::exists($this->banner)) {
-            $thumbnail = Storage::url($this->banner);
+        if ($this->banner) {
+            if (Storage::disk('public')->exists($this->banner)) {
+                $thumbnail = Storage::disk('public')->url($this->banner);
+            } elseif (Storage::exists($this->banner)) {
+                $thumbnail = Storage::url($this->banner);
+            }
         }
 
         return Attribute::make(

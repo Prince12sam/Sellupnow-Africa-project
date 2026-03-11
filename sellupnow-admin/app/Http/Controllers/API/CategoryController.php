@@ -3,57 +3,68 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\CategoryResource;
 use App\Repositories\CategoryRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class CategoryController extends Controller
 {
     /**
-     * Retrieves a paginated list of categories with their associated products.
-     *
-     * @param  Request  $request  The HTTP request object.
-     * @return JsonResponse The JSON response containing the categories and the total count.
+     * GET retrieveCategoryList
+     * Returns all top-level (root) categories.
+     * Flutter model: AllCategoryResponseModel — reads json["data"] as list of {_id, name, image}
      */
     public function index(Request $request)
     {
-        $page = $request->page;
-        $perPage = $request->per_page;
-        $skip = ($page * $perPage) - $perPage;
+        $categories = CategoryRepository::query()
+            ->whereNull('parent_id')
+            ->active()
+            ->latest('id')
+            ->get();
 
-        $categories = CategoryRepository::query()->whereNull('parent_id')->active()->latest('id');
+        $data = $categories->map(fn ($c) => [
+            '_id'   => (string) $c->id,
+            'name'  => $c->name,
+            'image' => $this->categoryImageUrl($c->image),
+        ])->values()->all();
 
-        $total = $categories->count();
-
-        $categories = $categories->when($perPage && $page, function ($query) use ($perPage, $skip) {
-            return $query->skip($skip)->take($perPage);
-        })->with('subCategories')->get();
-
-        return $this->json('categories', [
-            'total' => $total,
-            'categories' => $this->formatCategoryTree($categories),
-        ]);
+        return $this->json('categories', $data);
     }
 
-    private function formatCategoryTree($categories)
+    /**
+     * GET fetchSubcategoriesByParent?parentId={id}
+     * Returns sub-categories for the given parent.
+     * Flutter model: SubCategoryResponseModel — reads json["data"] as list of {_id, name, image, parent}
+     */
+    public function fetchSubcategoriesByParent(Request $request)
     {
-        $array = [];
-        foreach ($categories as $category) {
-            $array[] = [
-                'id' => $category->id,
-                'name' => $category->name,
-                'thumbnail' => $category->thumbnail,
-                'total_products' => $category->products()->isActive()->count(),
-                'sub_categories' => $this->formatCategoryTree($category->subCategories()->active()->get()),
-            ];
+        $parentId = $request->query('parentId');
+
+        if (! $parentId) {
+            return $this->json('sub_categories', []);
         }
 
-        return $array;
+        $subs = CategoryRepository::query()
+            ->where('parent_id', $parentId)
+            ->active()
+            ->latest('id')
+            ->get();
+
+        $data = $subs->map(fn ($c) => [
+            '_id'    => (string) $c->id,
+            'name'   => $c->name,
+            'image'  => $this->categoryImageUrl($c->image),
+            'parent' => (string) $c->parent_id,
+        ])->values()->all();
+
+        return $this->json('sub_categories', $data);
     }
 
-     public function getCategoryAttributes(Request $request)
+    public function getCategoryAttributes(Request $request)
     {
-        $category = CategoryRepository::find($request->category_id);
+        $categoryId = $request->query('category_id') ?? $request->query('categoryId');
+        $category = $categoryId ? CategoryRepository::find($categoryId) : null;
 
         if (! $category) {
             return $this->json('attributes', [
@@ -61,10 +72,32 @@ class CategoryController extends Controller
             ]);
         }
 
-        $attributes = $category->attributes()->active()->get();
+        $resolvedCategory = $category;
+        $attributes = collect();
+
+        // If a leaf category has no attributes, walk up to the nearest parent
+        // where attributes are configured in admin/category-attribute.
+        while ($resolvedCategory) {
+            $attributes = $resolvedCategory->attributes()
+                ->active()
+                ->whereNull('parent_id')
+                ->orderBy('position')
+                ->get();
+
+            if ($attributes->isNotEmpty()) {
+                break;
+            }
+
+            if (! $resolvedCategory->parent_id) {
+                break;
+            }
+
+            $resolvedCategory = CategoryRepository::find($resolvedCategory->parent_id);
+        }
 
         return $this->json('attributes', [
             'attributes' => $this->formatCategoryAttributeTree($attributes),
+            'resolved_category_id' => $resolvedCategory?->id,
         ]);
     }
 
@@ -73,11 +106,41 @@ class CategoryController extends Controller
         $array = [];
         foreach ($attributes as $attribute) {
             $array[] = [
-                'id' => $attribute->id,
-                'name' => $attribute->name,
+                'id'             => $attribute->id,
+                'name'           => $attribute->name,
                 'sub_attributes' => $this->formatCategoryAttributeTree($attribute->subAttributes()->active()->get()),
             ];
         }
+
         return $array;
+    }
+
+    private function categoryImageUrl(?string $image): string
+    {
+        if (! $image) {
+            return asset('default/default.jpg');
+        }
+
+        // Numeric ID — resolve path from listocean media_uploads table
+        if (ctype_digit(trim($image))) {
+            $path = DB::connection('listocean')
+                ->table('media_uploads')
+                ->where('id', (int) $image)
+                ->value('path');
+
+            if ($path) {
+                $base = rtrim((string) env('CUSTOMER_WEB_URL', config('app.url')), '/');
+                return $base . '/assets/uploads/media-uploader/' . ltrim((string) $path, '/');
+            }
+
+            return asset('default/default.jpg');
+        }
+
+        // Legacy: storage-relative file path
+        if (Storage::disk('public')->exists($image)) {
+            return Storage::disk('public')->url($image);
+        }
+
+        return asset('default/default.jpg');
     }
 }

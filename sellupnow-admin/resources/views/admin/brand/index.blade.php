@@ -20,10 +20,17 @@
 
         <div class="mb-3 card">
             <div class="card-body">
-                <div class="cardTitleBox">
-                    <h5 class="card-title chartTitle">
+                <div class="cardTitleBox d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <h5 class="card-title chartTitle mb-0">
                         {{ __('Brands') }}
                     </h5>
+                    <form method="GET" action="" class="d-flex gap-2">
+                        <input type="text" name="search" class="form-control form-control-sm" placeholder="{{ __('Search brands...') }}" value="{{ request('search') }}" style="min-width:200px">
+                        <button type="submit" class="btn btn-sm btn-primary">{{ __('Search') }}</button>
+                        @if(request('search'))
+                            <a href="{{ route('admin.brand.index') }}" class="btn btn-sm btn-secondary">{{ __('Clear') }}</a>
+                        @endif
+                    </form>
                 </div>
                 <div class="table-responsive">
                     <table class="table border-left-right table-responsive-md">

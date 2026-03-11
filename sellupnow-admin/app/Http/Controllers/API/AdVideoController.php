@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AdVideo;
 use App\Models\AdVideoLike;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class AdVideoController extends Controller
@@ -37,20 +38,199 @@ class AdVideoController extends Controller
     /** List all active ad videos (paginated). */
     public function index(Request $request)
     {
-        [$page, $perPage, $skip] = $this->paginationParams($request);
-        $userId = auth('api')->id();
+        // Flutter sends start=1,2,3... (1-based page) and limit=N
+        $page    = max((int) $request->query('start', 1), 1);
+        $perPage = min(max((int) $request->query('limit', 20), 1), 50);
+        $offset  = ($page - 1) * $perPage;
+        $authId  = auth('api')->id();
 
-        $query = AdVideo::active()->with('user')->latest('id');
+        // --- SQL-level paginated UNION ---
+        // Sub-query 1: ad_videos (user-uploaded, active)
+        $adVideosQuery = DB::table('ad_videos')
+            ->select(DB::raw("
+                id, user_id, listing_id, video_url, thumbnail, thumbnail_url,
+                caption, title, description, views AS view_count, likes_count,
+                is_sponsored, cta_text, cta_url, start_at, end_at, created_at,
+                NULL AS image, NULL AS price, NULL AS lat, NULL AS lon,
+                'ad_video' AS _source
+            "))
+            ->whereNull('deleted_at')
+            ->where('is_active', 1);
 
-        if ($listingId = $request->query('listing_id')) {
-            $query->where('listing_id', $listingId);
+        // Sub-query 2: listings with approved videos
+        $listingsQuery = DB::table('listings')
+            ->select(DB::raw("
+                id, user_id, NULL AS listing_id, video_url, NULL AS thumbnail, NULL AS thumbnail_url,
+                NULL AS caption, title, description, view AS view_count, 0 AS likes_count,
+                0 AS is_sponsored, NULL AS cta_text, NULL AS cta_url, NULL AS start_at, NULL AS end_at, created_at,
+                image, price, lat, lon,
+                'listing' AS _source
+            "))
+            ->whereNotNull('video_url')
+            ->where('video_url', '!=', '')
+            ->where('video_is_approved', 1)
+            ->where('status', 1)
+            ->where('is_published', 1);
+
+        // UNION + sort + paginate at SQL level
+        $items = $adVideosQuery->unionAll($listingsQuery)
+            ->orderByDesc('view_count')
+            ->offset($offset)
+            ->limit($perPage)
+            ->get();
+
+        // Bulk-load users and media_uploads for the current page
+        $userIds     = $items->pluck('user_id')->filter()->unique()->values()->all();
+        $usersById   = !empty($userIds) ? DB::table('users')
+            ->whereIn('id', $userIds)
+            ->get(['id', 'name', 'image', 'media_id', 'created_at'])
+            ->keyBy('id') : collect();
+
+        // Collect all numeric image IDs from users + listings
+        $mediaIds = collect();
+        foreach ($usersById as $u) {
+            if ($u->media_id) {
+                $mediaIds->push((int) $u->media_id);
+            } elseif ($u->image && ctype_digit(trim((string) $u->image))) {
+                $mediaIds->push((int) $u->image);
+            }
+        }
+        foreach ($items as $v) {
+            if ($v->_source === 'listing' && isset($v->image) && $v->image && ctype_digit(trim((string) $v->image))) {
+                $mediaIds->push((int) $v->image);
+            }
+        }
+        $mediaById = $mediaIds->unique()->isNotEmpty()
+            ? DB::table('media_uploads')->whereIn('id', $mediaIds->unique()->all())->get(['id', 'path'])->keyBy('id')
+            : collect();
+
+        $base = rtrim((string) env('CUSTOMER_WEB_URL', config('app.url')), '/');
+
+        $resolveMediaUrl = function (?string $image) use ($base, $mediaById): ?string {
+            if (! $image) {
+                return null;
+            }
+            if (str_starts_with($image, 'http')) {
+                return $image;
+            }
+            if (ctype_digit(trim($image))) {
+                $row = $mediaById->get((int) $image);
+                return $row ? $base . '/assets/uploads/media-uploader/' . ltrim((string) $row->path, '/') : null;
+            }
+            if (Storage::disk('public')->exists($image)) {
+                return Storage::disk('public')->url($image);
+            }
+            return null;
+        };
+
+        $resolveUserImage = function ($user) use ($resolveMediaUrl): ?string {
+            if (! $user) {
+                return null;
+            }
+            if ($user->media_id) {
+                return $resolveMediaUrl((string) $user->media_id);
+            }
+            return $resolveMediaUrl($user->image);
+        };
+
+        // Bulk load like status for authenticated user
+        $likedIds = collect();
+        if ($authId) {
+            $adVideoIds = $items->where('_source', 'ad_video')->pluck('id')->all();
+            if (! empty($adVideoIds)) {
+                $likedIds = DB::table('ad_video_likes')
+                    ->where('user_id', $authId)
+                    ->whereIn('ad_video_id', $adVideoIds)
+                    ->pluck('ad_video_id')
+                    ->flip();
+            }
         }
 
-        $total  = $query->count();
-        $videos = $query->skip($skip)->take($perPage)->get()
-            ->map(fn ($v) => $this->formatVideo($v, $userId));
+        $data = $items->map(function ($v) use ($usersById, $resolveMediaUrl, $resolveUserImage, $likedIds, $base) {
+            $user     = $v->user_id ? $usersById->get($v->user_id) : null;
+            $isLiked  = $v->_source === 'ad_video' ? $likedIds->has($v->id) : false;
 
-        return $this->json('ad videos', ['total' => $total, 'videos' => $videos]);
+            if ($v->_source === 'ad_video') {
+                $videoUrl = $v->video_url
+                    ? (str_starts_with($v->video_url, 'http') ? $v->video_url : asset('storage/' . $v->video_url))
+                    : null;
+                $thumbUrl = $v->thumbnail_url
+                    ?? ($v->thumbnail ? asset('storage/' . $v->thumbnail) : null);
+                return [
+                    '_id'         => (string) $v->id,
+                    'ad'          => $v->listing_id ? (string) $v->listing_id : null,
+                    'uploader'    => $user ? [
+                        '_id'          => (string) $user->id,
+                        'name'         => $user->name,
+                        'profileImage' => $resolveUserImage($user),
+                        'registeredAt' => $user->created_at,
+                    ] : null,
+                    'videoUrl'    => $videoUrl,
+                    'thumbnailUrl'=> $thumbUrl,
+                    'caption'     => $v->caption ?? $v->title,
+                    'totalLikes'  => (int) ($v->likes_count ?? 0),
+                    'isLike'      => $isLiked,
+                    'isFollow'    => false,
+                    'isSponsored' => (bool) ($v->is_sponsored ?? false),
+                    'isActive'    => true,
+                    'adType'      => null,
+                    'ctaText'     => $v->cta_text ?? null,
+                    'ctaUrl'      => $v->cta_url ?? null,
+                    'adDetails'   => null,
+                    'createdAt'   => $v->created_at,
+                    'shares'      => 0,
+                    'startAt'     => $v->start_at ?? null,
+                    'endAt'       => $v->end_at ?? null,
+                    'priority'    => null,
+                ];
+            }
+
+            // Listing-based video
+            $thumbUrl = $resolveMediaUrl((string) ($v->image ?? ''));
+            return [
+                '_id'         => (string) $v->id,
+                'ad'          => (string) $v->id,
+                'uploader'    => $user ? [
+                    '_id'          => (string) $user->id,
+                    'name'         => $user->name,
+                    'profileImage' => $resolveUserImage($user),
+                    'registeredAt' => $user->created_at,
+                ] : null,
+                'videoUrl'    => $v->video_url,
+                'thumbnailUrl'=> $thumbUrl,
+                'caption'     => $v->title,
+                'totalLikes'  => 0,
+                'isLike'      => false,
+                'isFollow'    => false,
+                'isSponsored' => false,
+                'isActive'    => true,
+                'adType'      => null,
+                'ctaText'     => null,
+                'ctaUrl'      => null,
+                'adDetails'   => [
+                    'title'        => $v->title,
+                    'subTitle'     => null,
+                    'description'  => $v->description ?? null,
+                    'primaryImage' => $thumbUrl,
+                    'location'     => [
+                        'latitude'    => $v->lat ? (float) $v->lat : null,
+                        'longitude'   => $v->lon ? (float) $v->lon : null,
+                        'fullAddress' => null,
+                    ],
+                    'price' => $v->price ? (float) $v->price : null,
+                ],
+                'createdAt'   => $v->created_at,
+                'shares'      => 0,
+                'startAt'     => null,
+                'endAt'       => null,
+                'priority'    => null,
+            ];
+        })->values()->all();
+
+        return response()->json([
+            'message' => 'ad videos',
+            'data'    => $data,
+        ]);
     }
 
     /** List ad videos belonging to a specific seller. */

@@ -60,6 +60,7 @@ class ListoceanCountryController extends Controller
         }
 
         $countryId = (int) $db->table('countries')->insertGetId([
+            'name' => $data['country'],
             'country' => $data['country'],
             'country_code' => $data['country_code'],
             'dial_code' => $data['dial_code'] ?? null,
@@ -107,6 +108,7 @@ class ListoceanCountryController extends Controller
         $data['country_code'] = $this->normalizeIso2($data['country_code'] ?? null);
 
         DB::connection('listocean')->table('countries')->where('id', $id)->update([
+            'name' => $data['country'],
             'country' => $data['country'],
             'country_code' => $data['country_code'],
             'dial_code' => $data['dial_code'] ?? null,
@@ -115,6 +117,35 @@ class ListoceanCountryController extends Controller
         ]);
 
         return to_route('admin.siteCountry.index')->withSuccess(__('Updated Successfully'));
+    }
+
+    public function reimport(int $id)
+    {
+        $db = DB::connection('listocean');
+        $country = $db->table('countries')->where('id', $id)->first();
+
+        if (! $country) {
+            return back()->withError(__('Country not found.'));
+        }
+
+        try {
+            $result = app(CountriesNowLocationImporter::class)->import($id, $country->country);
+
+            if (($result['ok'] ?? false) === true) {
+                $msg = __('Re-import done: :states states and :cities cities imported.', [
+                    'states' => (int) ($result['states_created'] ?? 0),
+                    'cities' => (int) ($result['cities_created'] ?? 0),
+                ]);
+
+                return back()->withSuccess($msg);
+            }
+
+            return back()->withError(__('Import failed: :error', [
+                'error' => (string) ($result['error'] ?? 'unknown error'),
+            ]));
+        } catch (\Throwable $th) {
+            return back()->withError(__('Import failed: :error', ['error' => $th->getMessage()]));
+        }
     }
 
     public function destroy(int $id)

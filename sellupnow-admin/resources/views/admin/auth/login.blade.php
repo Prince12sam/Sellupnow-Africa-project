@@ -24,7 +24,11 @@
     <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/font-awesome.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/login.css') }}">
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    @if ($GoogleReCaptcha?->is_active && $GoogleReCaptcha?->provider === 'google' && !empty($GoogleReCaptcha?->site_key))
+        <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    @elseif ($GoogleReCaptcha?->is_active && $GoogleReCaptcha?->provider === 'cloudflare' && !empty($GoogleReCaptcha?->turnstile_site_key))
+        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    @endif
 </head>
 <style>
     body {
@@ -136,11 +140,18 @@
                         @enderror
                     </div>
 
-                    @if ($GoogleReCaptcha?->is_active)
-                        <div>
-                            <div class="g-recaptcha" data-sitekey="{{ $GoogleReCaptcha?->site_key }}"></div>
+                    @if ($GoogleReCaptcha?->is_active && $GoogleReCaptcha?->provider === 'google' && !empty($GoogleReCaptcha?->site_key))
+                        <div class="mb-3">
+                            <div class="g-recaptcha" data-sitekey="{{ $GoogleReCaptcha->site_key }}"></div>
                         </div>
                         @error('g-recaptcha-response')
+                            <span class="text text-danger">{{ $message }}</span>
+                        @enderror
+                    @elseif ($GoogleReCaptcha?->is_active && $GoogleReCaptcha?->provider === 'cloudflare' && !empty($GoogleReCaptcha?->turnstile_site_key))
+                        <div class="mb-3">
+                            <div class="cf-turnstile" data-sitekey="{{ $GoogleReCaptcha->turnstile_site_key }}"></div>
+                        </div>
+                        @error('cf-turnstile-response')
                             <span class="text text-danger">{{ $message }}</span>
                         @enderror
                     @endif

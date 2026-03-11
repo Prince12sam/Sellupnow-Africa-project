@@ -404,7 +404,7 @@
                         $iosBadgeUrl     = null;
                         try {
                             $loDb   = DB::connection('listocean');
-                            $loBase = rtrim(env('LISTOCEAN_BASE_URL', env('CUSTOMER_WEB_URL', 'http://127.0.0.1:8090')), '/');
+                            $loBase = rtrim((string) config('listocean.base_url', config('app.customer_web_url', '')), '/');
 
                             $androidBadgeId = $loDb->table('static_options')->where('option_name','android_app_badge')->value('option_value');
                             $iosBadgeId     = $loDb->table('static_options')->where('option_name','ios_app_badge')->value('option_value');

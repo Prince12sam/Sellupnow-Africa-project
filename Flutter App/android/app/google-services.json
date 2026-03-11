@@ -14,6 +14,22 @@
       },
       "oauth_client": [
         {
+          "client_id": "272111225360-57sfs0ot90i5hoceju8d7ujh57335j4n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.company.sellupnow",
+            "certificate_hash": "d407f77b4c5f3827fbc4348d7127c4296fc4f6ba"
+          }
+        },
+        {
+          "client_id": "272111225360-o5vm43dkontvocpetdge2iia81nrea9t.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.company.sellupnow",
+            "certificate_hash": "02455002da79abd6d27bb4368a5f2e28cbe28d09"
+          }
+        },
+        {
           "client_id": "272111225360-cms257go6tscqo3qlmg54u88gn1aq2pn.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -27,8 +43,15 @@
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "272111225360-cms257go6tscqo3qlmg54u88gn1aq2pn.apps.googleusercontent.com",
+              "client_id": "272111225360-bsougo72k9tphs61s24rf0qqt9ch0k6s.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "272111225360-pb9s8snv5apiromhr6utaupmqjrj31ek.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "sellupnow"
+              }
             }
           ]
         }

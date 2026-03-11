@@ -19,7 +19,7 @@ class ListoceanIdentityVerificationController extends Controller
 
     public function index(Request $request): View
     {
-        $customerWebUrl = rtrim((string) env('CUSTOMER_WEB_URL', 'http://127.0.0.1:8090'), '/');
+        $customerWebUrl = rtrim((string) config('app.customer_web_url', ''), '/');
 
         $filter = (string) $request->query('status', 'queue');
         $allowed = ['queue', 'pending', 'approved', 'declined', 'all'];
@@ -97,7 +97,7 @@ class ListoceanIdentityVerificationController extends Controller
 
     public function show(int $requestId): View
     {
-        $customerWebUrl = rtrim((string) env('CUSTOMER_WEB_URL', 'http://127.0.0.1:8090'), '/');
+        $customerWebUrl = rtrim((string) config('app.customer_web_url', ''), '/');
 
         $row = $this->listocean()
             ->table('identity_verifications as iv')

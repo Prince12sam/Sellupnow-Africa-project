@@ -21,7 +21,7 @@ class CustomerController extends Controller
     {
         // Listocean frontend users live in a separate DB (connection: listocean).
         // This page is used as the canonical “Customers” list for Listocean.
-        $customerWebUrl = rtrim((string) env('CUSTOMER_WEB_URL', 'http://127.0.0.1:8090'), '/');
+        $customerWebUrl = rtrim((string) config('app.customer_web_url', ''), '/');
 
         $issiteCustomers = false;
 

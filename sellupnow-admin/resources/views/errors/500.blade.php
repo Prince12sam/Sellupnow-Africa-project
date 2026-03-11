@@ -30,15 +30,19 @@
                 </p>
             </div>
 
-            <button class="reload_btn">
+            <button class="reload_btn" onclick="window.location.href=document.referrer||'/admin'">
                 Reload
             </button>
         </section>
     </main>
 </body>
 <script>
-  setInterval(function() {
-    location.reload();
+  // Navigate back (never re-POST the form) — use replaceState so history is clean
+  setTimeout(function() {
+    var back = document.referrer;
+    if (back && back !== window.location.href) {
+      window.location.href = back;
+    }
   }, 5000);
 </script>
 </html>
