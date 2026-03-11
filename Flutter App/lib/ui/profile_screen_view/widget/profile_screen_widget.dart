@@ -79,17 +79,10 @@ class ProfileTopView extends StatelessWidget {
                             ?? (Database.loginUserName.isNotEmpty ? Database.loginUserName : "User Name"),
                         overflow: TextOverflow.ellipsis,
                         style: AppFontStyle.fontStyleW700(fontSize: 20, fontColor: AppColors.black),
-                      ).paddingOnly(right: 5, bottom: 1),
+                      ).paddingOnly(right: 5, bottom: 9),
                       isApprovedUser ? Image.asset(AppAsset.verificationRightIcon,height: 22,width: 22,) : SizedBox(),
                     ],
                   ),
-                  Text(
-                    Database.getUserProfileResponseModel?.user?.email
-                        ?? (Database.loginUserEmail.isNotEmpty ? Database.loginUserEmail : 'username@gmail.com'),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppFontStyle.fontStyleW500(fontSize: 13, fontColor: AppColors.searchText),
-                  ).paddingOnly(bottom: 9),
                     isApprovedUser
                       ? Container(
                           decoration: BoxDecoration(

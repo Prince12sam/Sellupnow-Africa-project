@@ -597,14 +597,7 @@ class SellerDetailView extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: AppFontStyle.fontStyleW700(
                           fontSize: 15, fontColor: AppColors.black),
-                    ).paddingOnly(bottom: 0),
-                    Text(
-                      controller.productDetail?.data?.seller?.email ?? '',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppFontStyle.fontStyleW500(
-                          fontSize: 10, fontColor: AppColors.black),
-                    ).paddingOnly(bottom: 6),
+                      ).paddingOnly(bottom: 6),
                     controller.isFeaturedSeller == true
                         ? Container(
                             padding: EdgeInsets.symmetric(

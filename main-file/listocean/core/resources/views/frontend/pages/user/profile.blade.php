@@ -318,12 +318,6 @@
                                     <span>{!! userProfileLocation($user) !!}</span>
                                 </div>
                                 @endif
-                                @if(!empty($user->email))
-                                <div class="profile-contact-item">
-                                    <svg width="14" height="12" viewBox="0 0 16 14" fill="none"><path d="M.5 2.833A1.667 1.667 0 0 1 2.167 1.167h11.666A1.667 1.667 0 0 1 15.5 2.833M.5 2.833v8.334A1.667 1.667 0 0 0 2.167 12.833h11.666A1.667 1.667 0 0 0 15.5 11.167V2.833M.5 2.833 8 7.833l7.5-5" stroke="#1E293B" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                    <span>{{ $user->email }}</span>
-                                </div>
-                                @endif
                                 @if(!empty($user->phone))
                                 <div class="profile-contact-item">
                                     <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2.167 1.333H5.5l1.667 4.167-2.084 1.25a8.333 8.333 0 0 0 4.167 4.167l1.25-2.084 4.167 1.667v3.333A1.667 1.667 0 0 1 13 15.5 13.333 13.333 0 0 1 .5 3a1.667 1.667 0 0 1 1.667-1.667Z" stroke="#1E293B" stroke-linecap="round" stroke-linejoin="round"/></svg>
